@@ -1,0 +1,23 @@
+{
+  "Name": "Sofa",
+  "Portrait": "Sofa",
+  "CharacterName": "Софа",
+  "Sentences": [
+    {
+      "Id": 0,
+      "Text": "Надо же. А я уж думала, у вас в роду только приказывать умеют.",
+      "NextSentenceId": 1
+    },
+    {
+      "Id": 1,
+      "Text": "Ладно. Слово своё держу. Сварю.",
+      "NextSentenceId": 2
+    },
+    {
+      "Id": 2,
+      "IsPlayer": true,
+      "Text": "Я запомню эту услугу.",
+      "PeopleSatisfaction": 1
+    }
+  ]
+}

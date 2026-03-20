@@ -1,0 +1,23 @@
+{
+	"Name": "CaptainGuard",
+	"Portrait": "CaptainGuard",
+	"CharacterName": "Капитан",
+	"Sentences": [
+		{
+			"Id": 0,
+			"Text": "Хм. Крепче держитесь, чем я думал. Ладно, вижу — не с пустой дурью пришли.",
+			"NextSentenceId": 1
+		},
+		{
+			"Id": 1,
+			"IsPlayer": true,
+			"Text": "Теперь к делу. Возьмёшь новобранца?",
+			"NextSentenceId": 2
+		},
+		{
+			"Id": 2,
+			"Text": "Возьму. Раз уж пан сам за него клинком поручился, посмотрим, выйдет ли из оборванца солдат.",
+			"CastleStrength": 10
+		}
+	]
+}
