@@ -27382,9 +27382,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   NPC:
   - {fileID: 7280076937197616263, guid: ed98974ca8b9a07468bfed5a2b625048, type: 3}
+  - {fileID: 6487916388078063443, guid: a884f683fe814bf4eaec04fa28818bb3, type: 3}
   Parent: {fileID: 57442895}
   StartPoints:
   - {fileID: 583014667}
+  - {fileID: 1656446440}
 --- !u!114 &300978961
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38424,6 +38426,7 @@ Transform:
   m_Children:
   - {fileID: 1890123944}
   - {fileID: 583014667}
+  - {fileID: 1656446440}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &687084497
@@ -65826,6 +65829,37 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 7666064319267002487, guid: b2cc7de08220d814c9b3d3f49ef1bcfd, type: 3}
   m_PrefabInstance: {fileID: 1384119717}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1656446439
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1656446440}
+  m_Layer: 0
+  m_Name: KeyMasterPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: -964228994112308473, guid: 0000000000000000d000000000000000, type: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1656446440
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1656446439}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0.04045754, z: -0, w: 0.99918133}
+  m_LocalPosition: {x: 21.26, y: 0.034, z: 1.29}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 684196303}
+  m_LocalEulerAnglesHint: {x: 0, y: 4.637, z: 0}
 --- !u!1 &1656484569
 GameObject:
   m_ObjectHideFlags: 0

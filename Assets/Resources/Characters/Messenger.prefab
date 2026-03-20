@@ -2945,7 +2945,6 @@ GameObject:
   - component: {fileID: 2702150124994498829}
   - component: {fileID: 923595275632324754}
   - component: {fileID: 3623712443821586599}
-  - component: {fileID: 3603832085651944261}
   m_Layer: 0
   m_Name: Trigger
   m_TagString: QuestForStorage
@@ -3034,22 +3033,7 @@ MonoBehaviour:
   AreaType: 1
   InteractionType: 0
   triggerObject: {fileID: 3984509599709935995}
-  Parameters: 
---- !u!114 &3603832085651944261
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3984509599709935995}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8e5a0ef563608e7409ccc00b81b02432, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Game.DialogueGraph
-  DialogueName: 
-  sentences: []
-  Portrait: 
+  Parameters: First
 --- !u!1 &4044241201480333291
 GameObject:
   m_ObjectHideFlags: 0

@@ -1477,7 +1477,7 @@ MonoBehaviour:
   AreaType: 0
   InteractionType: 0
   triggerObject: {fileID: 2731423153538596674}
-  Parameters: 
+  Parameters: Second
 --- !u!1 &3233203318747099615
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -10,6 +11,8 @@ namespace Game
     {
         [Header("Dialogue Settings")]
         [SerializeField] private List<InfluenceArea> influenceArias = new();
+
+        public Action<TriggerEvent> OnDialogHandled;
 
         private readonly HashSet<InfluenceArea> subscribedAreas = new();
         private NPCPrefabFactory npcFactory;
@@ -53,6 +56,7 @@ namespace Game
             DialogueManager dialogueManager = DialogueManager.Instance;
             if (dialogueManager == null || dialogueManager.IsInDialogue)
             {
+                OnDialogHandled?.Invoke(eventData);
                 return;
             }
 
