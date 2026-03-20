@@ -48,22 +48,46 @@ namespace Game
             if (dialogue.Name == "Thief")
             {
                 Quest thiefQuest = questManager.GetQuest(1);
-                QuestStatus thiefQuestStatus = questManager.GetQuestStatus(thiefQuest.Id);
+                if (questManager.GetQuestState(thiefQuest.Id) == QuestState.InProgress)
+                {
+                    QuestStatus thiefQuestStatus = questManager.GetQuestStatus(thiefQuest.Id);
 
-                QuestTask task = questManager.GetQuestTask(thiefQuest.Id, 0);
-                questManager.UpdateQuestTask(thiefQuest.Id, task.Id, QuestState.Completed);
+                    QuestTask task = questManager.GetQuestTask(thiefQuest.Id, 0);
+                    QuestTask task1 = questManager.GetQuestTask(thiefQuest.Id, 1);
 
-                QuestTask task1 = questManager.GetQuestTask(thiefQuest.Id, 1);
-                questManager.UpdateQuestTask(thiefQuest.Id, task1.Id, QuestState.InProgress);
+
+                    thiefQuestStatus.TasksStatusData.TryGetValue(task.Id, out TaskStatus taskStatus);
+                    thiefQuestStatus.TasksStatusData.TryGetValue(task1.Id, out TaskStatus taskStatus1);
+
+                    if (taskStatus.State == QuestState.InProgress && taskStatus1.State == QuestState.NotStarted)
+                    {
+                        questManager.UpdateQuestTask(thiefQuest.Id, task.Id, QuestState.Completed);
+                        questManager.UpdateQuestTask(thiefQuest.Id, task1.Id, QuestState.InProgress);
+                    }
+
+                }
             }
             if (dialogue.Name == "ChiefGuard")
             {
                 Quest thiefQuest = questManager.GetQuest(1);
+                if (questManager.GetQuestState(thiefQuest.Id) == QuestState.InProgress)
+                {
+                    QuestStatus thiefQuestStatus = questManager.GetQuestStatus(thiefQuest.Id);
 
-                QuestTask task = questManager.GetQuestTask(thiefQuest.Id, 1);
-                questManager.UpdateQuestTask(thiefQuest.Id, task.Id, QuestState.Completed);
+                    QuestTask task = questManager.GetQuestTask(thiefQuest.Id, 0);
+                    QuestTask task1 = questManager.GetQuestTask(thiefQuest.Id, 1);
 
-                questManager.UpdateQuest(thiefQuest.Id, QuestState.Completed);
+
+                    thiefQuestStatus.TasksStatusData.TryGetValue(task.Id, out TaskStatus taskStatus);
+                    thiefQuestStatus.TasksStatusData.TryGetValue(task1.Id, out TaskStatus taskStatus1);
+
+                    if (taskStatus.State == QuestState.Completed && taskStatus1.State == QuestState.InProgress)
+                    {
+                        questManager.UpdateQuestTask(thiefQuest.Id, task1.Id, QuestState.Completed);
+                        questManager.UpdateQuest(thiefQuest.Id, QuestState.Completed);
+                    }
+
+                }
 
             }
             if(dialogue.Name == "Herbalist")
@@ -84,7 +108,7 @@ namespace Game
             }
             if(dialogue.Name == "Blacksmith")
             {
-                Quest blacksmithQuest = questManager.GetQuest(4);
+                Quest blacksmithQuest = questManager.GetQuest(5);
                 QuestStatus blacksmithQuestStatus = questManager.GetQuestStatus(blacksmithQuest.Id);
 
                 QuestTask task = questManager.GetQuestTask(blacksmithQuest.Id, 0);
@@ -108,7 +132,7 @@ namespace Game
         {
             if (itemParameters.ItemName == "BlacksmithChest")
             {
-                Quest blacksmithQuest = questManager.GetQuest(4);
+                Quest blacksmithQuest = questManager.GetQuest(5);
                 QuestStatus blacksmithQuestStatus = questManager.GetQuestStatus(blacksmithQuest.Id);
 
                 QuestTask task = questManager.GetQuestTask(blacksmithQuest.Id, 0);

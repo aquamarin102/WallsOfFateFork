@@ -106,7 +106,7 @@ namespace Game.Data
             int randomIndex = Random.Range(0, questsForCurrentDay.Count);
             CurrentDay.CurrentQuestId = questsForCurrentDay[randomIndex];
 
-            questManager.StartQuest(CurrentDay.CurrentQuestId.Value);
+            questManager.UpdateQuest(CurrentDay.CurrentQuestId.Value, QuestState.InProgress);
         }
     }
 }

@@ -57,6 +57,5 @@ namespace Game.Data
             PlayerSpawnData.ClearData();
         }
 
-
     }
 }

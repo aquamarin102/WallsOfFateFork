@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using TMPro;
 using UnityEngine;
+using System.Linq;
+using Game.Data;
+using Zenject;
 
 namespace Game
 {
@@ -15,87 +17,80 @@ namespace Game
         [SerializeField] private string _defaultTextAllQuests = "Все квесты выполнены! Вы можете закончить день!";
         [SerializeField] private string _defaultTextStillQuests = "Основной квест выполнен! Вы можете пообщаться с другими жителями!";
 
+        private QuestManager questManager;
+
+        [Inject]
+        private void Construct(QuestManager questmanager)
+        {
+            this.questManager = questmanager;
+        }
+
         private void Update()
         {
-            UpdateQuestText();
-            SyncIcons();
+            UpdateQuestUI();
         }
 
-        private void UpdateQuestText()
+        private void UpdateQuestUI()
         {
-            try
+            var currentQuests = questManager.GetCurrentQuests();
+
+            ResetUI();
+
+            if (currentQuests == null || currentQuests.Count == 0)
             {
-                /*var allGroups = Quest.QuestCollection.GetAllQuestGroups();
-
-                int idx = 0;
-                foreach (var group in allGroups
-                                      .Where(q => q.InProgress && !q.Complite)
-                                      .OrderByDescending(q => q.Prime))
-                {
-                    if (idx >= _textMeshProLinks.Count) break;
-                    _textMeshProLinks[idx++].text = group.GetCurrentTask().TaskInfo;
-                }
-
-
-                int idxn = idx;
-                for (; idxn < _textMeshProLinks.Count; idxn++)
-                    _textMeshProLinks[idxn].text = "";
-
-                if (idx > 0) return;
-
-                // 0) Ни одного квеста ещё не стартовано
-                if (allGroups.Count > 0 && allGroups.Any(q => !q.InProgress && !q.Complite))
-                {
-                    ShowSingleMessage(_defaultTextStillQuests);
-                    return;
-                }
-
-                //1) Все квесты этого дня завершены
-                if (allGroups.Count > 0 && allGroups.All(q => !q.InProgress && q.Complite))
-                {
-                    ShowSingleMessage(_defaultTextAllQuests);
-                    return;
-                }*/
+                ShowDefaultMessage(_defaultTextAllQuests);
+                return;
             }
-            catch (Exception e)
+
+            bool hasMainQuest = currentQuests.Any(q => q.Main);
+
+            if (!hasMainQuest)
             {
-                //Debug.LogError($"Error {e.Message}");
+                ShowDefaultMessage(_defaultTextStillQuests);
+                //return;
+            }
+
+            int displayCount = Mathf.Min(currentQuests.Count, _iconsLinks.Count);
+
+            for (int i = 0; i < displayCount; i++)
+            {
+                var quest = currentQuests[i];
+                var questStatus = questManager.GetQuestStatus(quest.Id);
+
+                var activeTaskStatus = questStatus.TasksStatusData.Values
+                    .FirstOrDefault(ts => ts.State == QuestState.InProgress);
+
+                if (activeTaskStatus != null)
+                {
+                    QuestTask task = questManager.GetQuestTask(quest.Id, activeTaskStatus.TaskId);
+
+                    if (task != null)
+                    {
+                        _iconsLinks[i].SetActive(true);
+                        _textMeshProLinks[i].gameObject.SetActive(true);
+                        _textMeshProLinks[i].text = task.Description;
+                    }
+                }
             }
         }
 
-        private void ShowSingleMessage(string msg)
+        private void ShowDefaultMessage(string message)
         {
-            /*var allGroups = Quest.QuestCollection.GetAllQuestGroups();
-
-            var avalibleQuests = allGroups.Where(q => q.InProgress && !q.Complite).OrderByDescending(q => q.Prime);
-            var avalibleQuestsList = avalibleQuests.ToArray();
-            for (int i = 0; i < _textMeshProLinks.Count; i++)
-                _textMeshProLinks[i].text = (i == 0 ? msg : avalibleQuestsList[i].GetCurrentTask().TaskInfo);*/
+            if (_textMeshProLinks.Count > 0)
+            {
+                _iconsLinks[0].SetActive(true); 
+                _textMeshProLinks[0].gameObject.SetActive(true);
+                _textMeshProLinks[0].text = message;
+            }
         }
 
-        private void SyncIcons()
+        private void ResetUI()
         {
-            // Сколько сейчас активных квестов?
-            /*int activeQuests = Quest.QuestCollection.GetActiveQuestGroups().Count;
-            // Проверяем, отображается ли общее сообщение (_defaultTextStillQuests или _defaultTextAllQuests)
-            bool isShowingMessage = activeQuests == 0;
-
-            // Определяем, для каких слотов показываем иконки
             for (int i = 0; i < _iconsLinks.Count; i++)
             {
-                bool shouldShowIcon = false;
-                if (i < _textMeshProLinks.Count)
-                {
-                    // Показываем иконку, если:
-                    // 1) Текст в панели не пустой (для активных квестов или сообщения)
-                    // 2) Индекс в пределах активных квестов или это сообщение в первом слоте
-                    shouldShowIcon = !string.IsNullOrEmpty(_textMeshProLinks[i].text) &&
-                                     (isShowingMessage ? i == 0 : i < activeQuests);
-                }
-                _iconsLinks[i].SetActive(shouldShowIcon);
-            }*/
+                if (_iconsLinks[i] != null) _iconsLinks[i].SetActive(false);
+                if (_textMeshProLinks[i] != null) _textMeshProLinks[i].gameObject.SetActive(false);
+            }
         }
     }
-
 }
-
