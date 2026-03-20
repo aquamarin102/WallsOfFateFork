@@ -93,17 +93,46 @@ namespace Game.Data
             return status != null ? status.State : QuestState.NotStarted;
         }
 
-        public void StartQuest(int questId)
+        public QuestStatus GetQuestStatus(int questId)
         {
-            if (questsStatusData.TryGetValue(questId, out QuestStatus status) && status.State == QuestState.NotStarted)
+            return questsStatusData[questId];
+        }
+
+        public void UpdateQuest(int questId, QuestState state)
+        {
+            if (questsStatusData.TryGetValue(questId, out QuestStatus status))
             {
-                status.State = QuestState.InProgress;
+                status.State = state;
             }
         }
 
         public Quest GetQuest(int questId)
         {
             return questsData.TryGetValue(questId, out Quest quest) ? quest : null;
+        }
+
+        public List<Quest> GetCurrentQuests()
+        {
+            return questsStatusData.Where(q => q.Value.State == QuestState.InProgress)
+                .Select(q => GetQuest(q.Key))
+                .ToList();
+        }
+             
+        public void UpdateQuestTask(int questId, int taskId, QuestState state)
+        {
+            if (questsStatusData.TryGetValue(questId, out QuestStatus status))
+            {
+                status.TasksStatusData[taskId].State = state;
+            }
+        }
+
+        public QuestTask GetQuestTask(int questId, int taskId)
+        {
+            if(questsData.TryGetValue(questId, out Quest quest))
+            {
+                return quest.Tasks.FirstOrDefault(t => t.Id == taskId);
+            }
+            return null;
         }
     }
 }

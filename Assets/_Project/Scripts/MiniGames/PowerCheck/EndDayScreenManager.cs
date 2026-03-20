@@ -1,6 +1,6 @@
-﻿using UnityEngine;
+﻿using System;
 using System.Collections;
-using System;
+using UnityEngine;
 
 namespace Game.MiniGame.PowerCheck
 {
@@ -11,7 +11,7 @@ namespace Game.MiniGame.PowerCheck
         [SerializeField] private GameObject GameProcess;
         [SerializeField] private DexMiniGameController AgilityController;
         [SerializeField] private ExecutionManager InteligenceController;
-        [SerializeField] private float displayTime = 3f; 
+        [SerializeField] private float displayTime = 3f;
 
         public Action<bool> OnEndGame;
         bool playerWonGlobal;
@@ -19,7 +19,7 @@ namespace Game.MiniGame.PowerCheck
         void Start()
         {
 
-            if(GameProcess != null) GameProcess.GetComponent<GameProcess>().OnEndGame += DisplayEndScreen;
+            if (GameProcess != null) GameProcess.GetComponent<GameProcess>().OnEndGame += DisplayEndScreen;
             if (AgilityController != null) AgilityController.OnEndGame += DisplayEndScreen;
             if (InteligenceController != null) InteligenceController.OnEndGame += DisplayEndScreen;
             WinScreen.SetActive(false);

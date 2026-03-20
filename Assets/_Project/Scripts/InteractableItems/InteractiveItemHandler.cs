@@ -17,12 +17,16 @@ namespace Game
         [SerializeField] private GameObject _floatingTextPrefab;
         [SerializeField] private List<InteractibleItemInfluenceArea> influenceArias;
 
-        private PlayerManager _playerManager;
+        public Action<InteractableItemParameters> OnItemHandled;
+
+        private PlayerManager playerManager;
+        private QuestManager questManager;
 
         [Inject]
-        private void Construct(PlayerManager playerManager)
+        private void Construct(PlayerManager playerManager, QuestManager questManager)
         {
-            _playerManager = playerManager;
+            this.playerManager = playerManager;
+            this.questManager = questManager;
         }
 
         private void Start()
@@ -59,11 +63,12 @@ namespace Game
             HandlePostUseBehavior(eventData.TriggerObj, itemParameters);
             UpdateResources(eventData.PlayerObj, itemParameters);
 
+            OnItemHandled?.Invoke(itemParameters);
         }
 
         private void UpdateResources(GameObject player, InteractableItemParameters parameters)
         {
-            _playerManager.PlayerData.AddResource(parameters.ResourceType, parameters.Amount);
+            playerManager.PlayerData.AddResource(parameters.ResourceType, parameters.Amount);
         }
 
 

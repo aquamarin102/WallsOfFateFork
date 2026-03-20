@@ -90,11 +90,18 @@ public class AudienceSessionSpawner : MonoBehaviour
             var advisorDialogueJson = Resources.Load<TextAsset>("Dialogues/StartDay/Advisor/cellar_quest_start");
             var advisorDialogue = JsonConvert.DeserializeObject<DialogueGraph>(advisorDialogueJson.text);
             _dialogueManager.StartDialogue(advisorDialogue);
+
+
+            Quest keyMasterQuest = questManager.GetQuest(3);
+            questManager.UpdateQuest(keyMasterQuest.Id, QuestState.InProgress);
+
+            QuestTask task = questManager.GetQuestTask(keyMasterQuest.Id, 0);
+            questManager.UpdateQuestTask(keyMasterQuest.Id, task.Id, QuestState.InProgress);
+
         }
 
         if (dialogue.Name == "Cellar_Quest_Start")
         {
-            // TODO: start quest
             loadingManager.LoadSceneAsync("MainRoom");
         }
 

@@ -32,7 +32,8 @@ namespace Game
             }
 
             GameObject instance = container.InstantiatePrefab(prefab, position, rotation, parent);
-            instance.name = $"{name}_{System.Guid.NewGuid().ToString().Substring(0, 4)}";
+            //instance.name = $"{name}_{System.Guid.NewGuid().ToString().Substring(0, 4)}";
+            instance.name = $"{name}";
 
             instances[name] = instance;
 

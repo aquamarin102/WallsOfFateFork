@@ -1,0 +1,24 @@
+{
+	"Name": "Blacksmith",
+	"Portrait": "Blacksmith",
+	"CharacterName": "Кузнец",
+	"Sentences": [
+		{
+			"Id": 0,
+			"Text": "Ай, услужил! Спасибо. Без молота я тут как без правой руки.",
+			"NextSentenceId": 1
+		},
+		{
+			"id": 1,
+			"Text": "Не в обиду скажу, сударь, да только на брата ты не похож.",
+			"NextSentenceId": 3
+		},
+		{
+			"id": 2,
+			"Text": "Тот любил, чтоб ему служили. А ты, гляжу, и сам не гнушаешься помочь.",
+			"Food": 1,
+			"CastleStrength": 1,
+			"PeopleSatisfaction": 1
+		},
+	]
+}
