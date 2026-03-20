@@ -20108,7 +20108,7 @@ MonoBehaviour:
   sliderSFX: {fileID: 2020828015}
   sliderUI: {fileID: 1345375045}
   languageDropdown: {fileID: 1424395001}
-  closeButton: {fileID: 0}
+  closeButton: {fileID: 889588573}
 --- !u!114 &128104731
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -41405,9 +41405,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: SettingsPanel, Assembly-CSharp
-        m_MethodName: HideSettingsPanel
+      - m_Target: {fileID: 128104730}
+        m_TargetAssemblyTypeName: Game.UI.SettingsMenuController, Assembly-CSharp
+        m_MethodName: HideSettingsMenu
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -68473,9 +68473,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: SettingsPanel, Assembly-CSharp
-        m_MethodName: ShowSettingsPanel
+      - m_Target: {fileID: 128104730}
+        m_TargetAssemblyTypeName: Game.UI.SettingsMenuController, Assembly-CSharp
+        m_MethodName: ShowSettingsMenu
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

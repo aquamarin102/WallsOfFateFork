@@ -11308,9 +11308,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: SettingsPanel, Assembly-CSharp
-        m_MethodName: ShowSettingsPanel
+      - m_Target: {fileID: 1402067439}
+        m_TargetAssemblyTypeName: Game.UI.SettingsMenuController, Assembly-CSharp
+        m_MethodName: ShowSettingsMenu
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -43283,9 +43283,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: SettingsPanel, Assembly-CSharp
-        m_MethodName: HideSettingsPanel
+      - m_Target: {fileID: 1402067439}
+        m_TargetAssemblyTypeName: Game.UI.SettingsMenuController, Assembly-CSharp
+        m_MethodName: HideSettingsMenu
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -60546,7 +60546,7 @@ MonoBehaviour:
   sliderSFX: {fileID: 1329187509}
   sliderUI: {fileID: 1621800473}
   languageDropdown: {fileID: 397514891}
-  closeButton: {fileID: 0}
+  closeButton: {fileID: 987662181}
 --- !u!224 &1402067440
 RectTransform:
   m_ObjectHideFlags: 0

@@ -29,7 +29,7 @@ namespace Game.UI
             sliderMusic.value = PlayerPrefs.GetFloat("MusicVolume", 1f);
             sliderSFX.value = PlayerPrefs.GetFloat("SFXVolume", 1f);
             sliderUI.value = PlayerPrefs.GetFloat("UIVolume", 1f);
-            closeButton.GetComponent<Button>().onClick.AddListener(HideSettingsMenu);
+            BindCloseButton();
 
             InitializeLanguageDropdown();
             ApplySettings();
@@ -122,6 +122,34 @@ namespace Game.UI
         public void HideSettingsMenu()
         {
             gameObject.SetActive(false);
+        }
+
+        public void ShowSettingsMenu()
+        {
+            gameObject.SetActive(true);
+        }
+
+        private void BindCloseButton()
+        {
+            if (closeButton == null)
+            {
+                Button[] buttons = GetComponentsInChildren<Button>(true);
+
+                foreach (Button button in buttons)
+                {
+                    if (button.gameObject.name == "CloseButton")
+                    {
+                        closeButton = button.gameObject;
+                        break;
+                    }
+                }
+            }
+
+            if (closeButton != null && closeButton.TryGetComponent<Button>(out Button buttonComponent))
+            {
+                buttonComponent.onClick.RemoveListener(HideSettingsMenu);
+                buttonComponent.onClick.AddListener(HideSettingsMenu);
+            }
         }
     }
 }

@@ -1,15 +1,15 @@
-using UnityEngine;
+п»їusing UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 
 public class UIButtonEffects : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler, ISelectHandler, IDeselectHandler
 {
-    [Header("Изображения кнопки")]
+    [Header("Button visuals")]
     [SerializeField] private Image buttonImage;
     [SerializeField] private Sprite normalSprite;
     [SerializeField] private Sprite hoverSprite;
 
-    [Header("Звуковые эффекты")]
+    [Header("Audio")]
     [SerializeField] private AudioClip hoverSound;
     [SerializeField] private AudioClip clickSound;
 
@@ -17,7 +17,7 @@ public class UIButtonEffects : MonoBehaviour, IPointerEnterHandler, IPointerExit
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        if (InputModeTracker.UsingKeyboard) return; // игнорируем наведение
+        if (InputModeTracker.UsingKeyboard) return;
 
         isPointerOver = true;
         SetHoverSprite();
@@ -39,12 +39,13 @@ public class UIButtonEffects : MonoBehaviour, IPointerEnterHandler, IPointerExit
 
     public void OnSelect(BaseEventData eventData)
     {
-        if (!isPointerOver) // Если мышка не наведена, то выбор с клавиатуры
+        if (!isPointerOver)
         {
             SetHoverSprite();
             PlayHoverSound();
         }
     }
+
     public void ForceExit()
     {
         isPointerOver = false;
@@ -59,25 +60,25 @@ public class UIButtonEffects : MonoBehaviour, IPointerEnterHandler, IPointerExit
 
     private void SetHoverSprite()
     {
-        if (hoverSprite != null)
+        if (hoverSprite != null && buttonImage != null)
             buttonImage.sprite = hoverSprite;
     }
 
     private void SetNormalSprite()
     {
-        if (normalSprite != null)
+        if (normalSprite != null && buttonImage != null)
             buttonImage.sprite = normalSprite;
     }
 
     private void PlayHoverSound()
     {
-        if (hoverSound != null)
+        if (hoverSound != null && AudioManager.Instance != null)
             AudioManager.Instance.PlayUI(hoverSound);
     }
 
     private void PlayClickSound()
     {
-        if (clickSound != null)
+        if (clickSound != null && AudioManager.Instance != null)
             AudioManager.Instance.PlayUI(clickSound);
     }
 

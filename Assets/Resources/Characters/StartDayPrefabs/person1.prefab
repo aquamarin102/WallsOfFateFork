@@ -50,7 +50,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 02c9581baba6ec846bd068669a2bdb6d, type: 3}
       propertyPath: m_Name
-      value: NPC1
+      value: person1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -187,8 +187,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _rotationSpeed: 360
-  stepClip1: {fileID: 8300000, guid: 569cc1b8cde87c342a8f88bfb84406f0, type: 3}
-  stepClip2: {fileID: 8300000, guid: cb08dd830ab07104d86c593912717494, type: 3}
+  stepClip1: {fileID: 8300000, guid: 303437860ff78734caad80aa7778c014, type: 3}
+  stepClip2: {fileID: 8300000, guid: a455fe98b408b4d41b0482ced6b3db8e, type: 3}
   baseStepInterval: 0.5
 --- !u!82 &-7697627419865559099
 AudioSource:
@@ -201,7 +201,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 7119323010903739852, guid: c297e275c45b0db4fa8c6c95a825b156, type: 2}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: 569cc1b8cde87c342a8f88bfb84406f0, type: 3}
+  m_Resource: {fileID: 8300000, guid: 303437860ff78734caad80aa7778c014, type: 3}
   m_PlayOnAwake: 1
   m_Volume: 1
   m_Pitch: 1

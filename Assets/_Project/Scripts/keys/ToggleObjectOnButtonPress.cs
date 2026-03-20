@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Zenject;
+using Game.UI;
 
 namespace Game
 {
@@ -21,8 +22,6 @@ namespace Game
         [field: SerializeField]
         public GameObject TargetObject { get; private set; }
 
-        private bool _isPaused = false;
-
         private LoadingManager _loadingManager;
 
         [Inject]
@@ -34,13 +33,18 @@ namespace Game
         void Update()
         {
             //  Если загрузочный экран активен — выходим и не обрабатываем Esc/другие кнопки
-            if (_loadingManager.IsLoading)
+            if (_loadingManager != null && _loadingManager.IsLoading)
                 return;
 
             foreach (var button in toggleButtons)
             {
                 if (Input.GetKeyDown(button.keyCode))
                 {
+                    if (button.setActive && TargetObject != null && TargetObject.activeSelf && TryCloseNestedPanel())
+                    {
+                        return;
+                    }
+
                     Activate(button.setActive);
                 }
             }
@@ -51,10 +55,80 @@ namespace Game
             // Здесь можно ещё добавить защиту от двойного срабатывания:
             // if (LoadingScreenManager.Instance != null && LoadingScreenManager.Instance.IsLoading) return;
 
+            if (TargetObject == null)
+                return;
+
             if (station)
-                TargetObject.SetActive(!TargetObject.activeSelf);
+            {
+                SetTargetState(!TargetObject.activeSelf);
+            }
             else
-                TargetObject.SetActive(false);
+            {
+                SetTargetState(false);
+            }
+        }
+
+        private void SetTargetState(bool isActive)
+        {
+            if (!isActive)
+            {
+                CloseNestedPanels();
+            }
+
+            TargetObject.SetActive(isActive);
+        }
+
+        private bool TryCloseNestedPanel()
+        {
+            if (TryCloseSettingsPanel())
+                return true;
+
+            if (TryCloseChildPanel("ExitConfirmationPanel"))
+                return true;
+
+            return false;
+        }
+
+        private void CloseNestedPanels()
+        {
+            while (TryCloseNestedPanel())
+            {
+            }
+        }
+
+        private bool TryCloseSettingsPanel()
+        {
+            SettingsMenuController[] settingsPanels = TargetObject.GetComponentsInChildren<SettingsMenuController>(true);
+
+            foreach (SettingsMenuController settingsPanel in settingsPanels)
+            {
+                if (settingsPanel != null && settingsPanel.gameObject.activeSelf)
+                {
+                    settingsPanel.HideSettingsMenu();
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool TryCloseChildPanel(string panelName)
+        {
+            Transform[] childTransforms = TargetObject.GetComponentsInChildren<Transform>(true);
+
+            foreach (Transform childTransform in childTransforms)
+            {
+                if (childTransform == null || childTransform == TargetObject.transform)
+                    continue;
+
+                if (childTransform.name == panelName && childTransform.gameObject.activeSelf)
+                {
+                    childTransform.gameObject.SetActive(false);
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

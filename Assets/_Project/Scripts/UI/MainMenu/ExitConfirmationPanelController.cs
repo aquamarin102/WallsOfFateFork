@@ -1,26 +1,39 @@
-using UnityEngine;
+п»їusing UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace Game.UI
 {
     public class ExitConfirmationPanelController : MonoBehaviour
-    {        
+    {
+        [SerializeField] private GameObject panelRoot;
+
         public Button confirmButton;
         public Button declineButton;
 
+        private void Awake()
+        {
+            ResolvePanelRoot();
+        }
+
         private void Start()
         {
-            // назначаем обработчики кнопок
-            confirmButton.onClick.AddListener(QuitGame);
-            declineButton.onClick.AddListener(HideExitPanel);
+            if (confirmButton != null)
+            {
+                confirmButton.onClick.RemoveListener(QuitToMenuGame);
+                confirmButton.onClick.AddListener(QuitToMenuGame);
+            }
+
+            if (declineButton != null)
+            {
+                declineButton.onClick.RemoveListener(HideExitPanel);
+                declineButton.onClick.AddListener(HideExitPanel);
+            }
         }
 
         private void Update()
         {
-            // закрываем панель по Esc, если она уже открыта
-            if (gameObject.activeSelf && Input.GetKeyDown(KeyCode.Escape))
+            if (IsPanelVisible() && Input.GetKeyDown(KeyCode.Escape))
             {
                 HideExitPanel();
             }
@@ -28,22 +41,98 @@ namespace Game.UI
 
         private void OnEnable()
         {
-            // При открытии панели выделяем кнопку «Отмена» по умолчанию
-            EventSystem.current.SetSelectedGameObject(null);
-            declineButton.Select();
+            if (IsPanelVisible())
+            {
+                SelectDeclineButton();
+            }
+        }
+
+        public void ShowExitPanel()
+        {
+            SetPanelActive(true);
+            SelectDeclineButton();
         }
 
         public void HideExitPanel()
         {
-            gameObject.SetActive(false);
-
-            // сброс фокуса, чтобы при закрытии панели ничего не осталось выделенным
-            EventSystem.current.SetSelectedGameObject(null);
+            SetPanelActive(false);
+            ClearSelection();
         }
+
         public void QuitGame()
         {
             Application.Quit();
         }
-    }
 
+        public void QuitToMenuGame()
+        {
+            QuitGame();
+        }
+
+        private void ResolvePanelRoot()
+        {
+            if (panelRoot != null)
+                return;
+
+            panelRoot = FindPanelRoot(confirmButton);
+
+            if (panelRoot == null)
+            {
+                panelRoot = FindPanelRoot(declineButton);
+            }
+        }
+
+        private GameObject FindPanelRoot(Button button)
+        {
+            if (button == null)
+                return null;
+
+            Transform current = button.transform;
+
+            while (current != null)
+            {
+                if (current.name == "ExitConfirmationPanel")
+                    return current.gameObject;
+
+                current = current.parent;
+            }
+
+            return null;
+        }
+
+        private bool IsPanelVisible()
+        {
+            return panelRoot != null ? panelRoot.activeInHierarchy : gameObject.activeInHierarchy;
+        }
+
+        private void SetPanelActive(bool isActive)
+        {
+            if (panelRoot == null)
+            {
+                ResolvePanelRoot();
+            }
+
+            if (panelRoot != null)
+            {
+                panelRoot.SetActive(isActive);
+            }
+        }
+
+        private void SelectDeclineButton()
+        {
+            if (EventSystem.current == null || declineButton == null)
+                return;
+
+            EventSystem.current.SetSelectedGameObject(null);
+            declineButton.Select();
+        }
+
+        private void ClearSelection()
+        {
+            if (EventSystem.current != null)
+            {
+                EventSystem.current.SetSelectedGameObject(null);
+            }
+        }
+    }
 }
