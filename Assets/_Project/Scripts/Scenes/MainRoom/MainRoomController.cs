@@ -1,4 +1,5 @@
 ﻿using Game.Data;
+using Game.UI;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -45,6 +46,12 @@ namespace Game
                 npcPrefabFactory.GetInstance(KeyMasterName).gameObject.SetActive(false);
 
             }
+
+            TutorialSheetService.TryShowOnce(
+                TutorialSheetDefinitions.MainRoomKey,
+                TutorialSheetDefinitions.MainRoomResourcePath,
+                TutorialSheetDefinitions.MainRoomEditorAssetPath,
+                null);
 
         }
 

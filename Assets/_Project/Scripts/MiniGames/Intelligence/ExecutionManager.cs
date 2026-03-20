@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using Game.MiniGame;
+using Game.UI;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
 
@@ -36,13 +37,13 @@ namespace Game
         private MiniGameData _gameData;
         private bool _initialized;
         private int _lastFailedCommandIndex = -1;
+        private bool _hasBootstrappedScene;
+        private bool _isTutorialPending;
 
         public void InitializeWithData(MiniGameData gameData)
         {
             _gameData = gameData;
-            EnsureReferences();
-            ApplyGameData();
-            InitializeSession();
+            BeginSceneBootstrap();
         }
 
         public void OnMiniGameEnded(bool playerWin)
@@ -153,6 +154,41 @@ namespace Game
 
         private void Start()
         {
+            BeginSceneBootstrap();
+        }
+
+        private void BeginSceneBootstrap()
+        {
+            if (_hasBootstrappedScene || _isTutorialPending)
+            {
+                return;
+            }
+
+            if (TutorialSheetService.TryShowOnce(
+                TutorialSheetDefinitions.IntellectKey,
+                TutorialSheetDefinitions.IntellectResourcePath,
+                TutorialSheetDefinitions.IntellectEditorAssetPath,
+                CompleteSceneBootstrap))
+            {
+                _isTutorialPending = true;
+                return;
+            }
+
+            CompleteSceneBootstrap();
+        }
+
+        private void CompleteSceneBootstrap()
+        {
+            if (_hasBootstrappedScene)
+            {
+                return;
+            }
+
+            _isTutorialPending = false;
+            _hasBootstrappedScene = true;
+
+            EnsureReferences();
+            ApplyGameData();
             InitializeSession();
         }
 

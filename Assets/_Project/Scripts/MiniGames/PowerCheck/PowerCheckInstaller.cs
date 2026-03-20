@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Game.UI;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -33,22 +34,52 @@ namespace Game.MiniGame.PowerCheck
         public AIController EnemyInstance;
 
         private MiniGameData _gameData;
+        private bool _isInitializationPending;
+        private bool _isInitialized;
 
         void Start()
         {
-            // Ждем, пока MinigameManager инициализирует данные
-            Invoke(nameof(Initialize), 0.2f);
+            BeginInitialization();
         }
 
         public void InitializeWithData(MiniGameData gameData)
         {
             _gameData = gameData;
             Debug.Log($"Инициализация мини-игры: {gameData.miniGameType}");
+            BeginInitialization();
+        }
+
+        private void BeginInitialization()
+        {
+            if (_isInitialized || _isInitializationPending)
+                return;
+
+            if (TutorialSheetService.TryShowOnce(
+                TutorialSheetDefinitions.StrengthKey,
+                TutorialSheetDefinitions.StrengthResourcePath,
+                TutorialSheetDefinitions.StrengthEditorAssetPath,
+                ContinueInitialization))
+            {
+                _isInitializationPending = true;
+                return;
+            }
+
+            ContinueInitialization();
+        }
+
+        private void ContinueInitialization()
+        {
+            _isInitializationPending = false;
             Initialize();
         }
 
         private void Initialize()
         {
+            if (_isInitialized)
+                return;
+
+            _isInitialized = true;
+
             // Если данных нет, пробуем получить их из MinigameManager
             if (_gameData == null && MinigameManager.Instance != null)
             {

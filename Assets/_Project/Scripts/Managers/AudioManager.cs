@@ -44,8 +44,10 @@ public class AudioManager : MonoBehaviour
     {
         LoadVolumeSettings();
         ActivateNormalSnapshot();
-        ChangeMusicForScene(SceneManager.GetActiveScene().name);
-        ConfigureSceneAudioSources(SceneManager.GetActiveScene().name);
+        string sceneName = SceneManager.GetActiveScene().name;
+        ChangeMusicForScene(sceneName);
+        ConfigureSceneAudioSources(sceneName);
+        TryShowSceneTutorial(sceneName);
     }
 
     private void OnDestroy()
@@ -191,6 +193,19 @@ public class AudioManager : MonoBehaviour
         ActivateNormalSnapshot();
         ChangeMusicForScene(scene.name);
         ConfigureSceneAudioSources(scene.name);
+        TryShowSceneTutorial(scene.name);
+    }
+
+    private void TryShowSceneTutorial(string sceneName)
+    {
+        if (sceneName != "Storage")
+            return;
+
+        Game.UI.TutorialSheetService.TryShowOnce(
+            Game.UI.TutorialSheetDefinitions.StorageKey,
+            Game.UI.TutorialSheetDefinitions.StorageResourcePath,
+            Game.UI.TutorialSheetDefinitions.StorageEditorAssetPath,
+            null);
     }
 
     private void ConfigureSceneAudioSources(string sceneName)

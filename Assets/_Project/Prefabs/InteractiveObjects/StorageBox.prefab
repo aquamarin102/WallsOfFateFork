@@ -407,8 +407,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ffebd590001e40141a2ea7b01371303e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.BoxMover
-  followSharpness: 30
-  maxSpeed: 5
+  followSharpness: 18
+  maxSpeed: 3
+  acceleration: 18
+  lateralCorrectionMaxSpeed: 0.2
+  heldLinearDamping: 8
+  heldAngularDamping: 8
+  releaseVelocityDamping: 0.35
 --- !u!114 &2936802819809769152
 MonoBehaviour:
   m_ObjectHideFlags: 0

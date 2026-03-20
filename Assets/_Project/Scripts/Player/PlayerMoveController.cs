@@ -39,6 +39,8 @@ namespace Game
 
         private Vector3 grabDirection;
         private bool isBoxGrabMode = false;
+        private BoxMover heldBoxMover;
+        private Vector3 heldBoxPlayerOffset;
 
         private bool isHoldMove;
         private bool isClickRun;
@@ -115,15 +117,21 @@ namespace Game
             UpdateFootstepSounds(SceneManager.GetActiveScene().name);
         }
 
-        public void InBoxGrabMode(Vector3 axis)
+        public void InBoxGrabMode(BoxMover boxMover, Vector3 axis, Vector3 playerOffset)
         {
             isBoxGrabMode = true;
             grabDirection = axis.normalized;
+            heldBoxMover = boxMover;
+            heldBoxPlayerOffset = new Vector3(playerOffset.x, 0f, playerOffset.z);
+            StopMovement();
+            AlignToHeldBoxFace(true);
         }
 
         public void StopBoxGrabMode()
         {
             isBoxGrabMode = false;
+            heldBoxMover = null;
+            heldBoxPlayerOffset = Vector3.zero;
         }
 
         private void OnDestroy() => SceneManager.sceneLoaded -= OnSceneLoaded;
@@ -138,6 +146,11 @@ namespace Game
             UpdateFootstep();
         }
 
+        private void LateUpdate()
+        {
+            ApplyHeldBoxCorrection();
+        }
+
         // ==================================================
         #region Mouse Input
         private void HandleMouseInput()
@@ -147,6 +160,23 @@ namespace Game
             {
                 if (Input.GetMouseButtonUp(0))
                     isHoldMove = false;
+                return;
+            }
+
+            if (isBoxGrabMode)
+            {
+                if (Input.GetMouseButtonDown(0))
+                    mouseDownTime = Time.time;
+
+                if (Input.GetMouseButtonUp(0))
+                {
+                    float held = Time.time - mouseDownTime;
+                    if (held < holdThreshold)
+                        ProcessClick();
+
+                    isHoldMove = false;
+                }
+
                 return;
             }
 
@@ -191,6 +221,9 @@ namespace Game
                     return;
 
             }
+
+            if (isBoxGrabMode)
+                return;
 
             if (TryResolveMovementDestination(ray, hits, out Vector3 destination))
                 MoveToAndCallback(destination, isClickRun, null);
@@ -394,9 +427,20 @@ namespace Game
 
             // Скорость + гравитация
             bool hasPlanarInput = desired.sqrMagnitude > 0.0001f;
-            bool running = hasPlanarInput && (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift) || isClickRun);
+            bool running = !isBoxGrabMode && hasPlanarInput &&
+                (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift) || isClickRun);
             float speed = moveSpeed * (running ? runMultiplier : 1f);
-            moveDirection = desired * speed;
+            Vector3 planarMoveDirection = desired * speed;
+
+            if (isBoxGrabMode && heldBoxMover != null)
+            {
+                heldBoxMover.SetDesiredPlanarVelocity(planarMoveDirection);
+                moveDirection = Vector3.zero;
+            }
+            else
+            {
+                moveDirection = planarMoveDirection;
+            }
 
             verticalVelocity = characterController.isGrounded ? -1f : verticalVelocity - gravity * Time.deltaTime;
             moveDirection.y = verticalVelocity;
@@ -404,10 +448,18 @@ namespace Game
             characterController.Move(moveDirection * Time.deltaTime);
             agent.nextPosition = transform.position;
 
-            Vector3 actualDelta = transform.position - positionBeforeMove;
-            actualDelta.y = 0f;
-            currentPlanarSpeed = actualDelta.magnitude / Mathf.Max(Time.deltaTime, 0.0001f);
-            isRunning = running && currentPlanarSpeed > 0.01f;
+            if (isBoxGrabMode && heldBoxMover != null)
+            {
+                currentPlanarSpeed = heldBoxMover.CurrentPlanarSpeed;
+                isRunning = false;
+            }
+            else
+            {
+                Vector3 actualDelta = transform.position - positionBeforeMove;
+                actualDelta.y = 0f;
+                currentPlanarSpeed = actualDelta.magnitude / Mathf.Max(Time.deltaTime, 0.0001f);
+                isRunning = running && currentPlanarSpeed > 0.01f;
+            }
         }
         #endregion
 
@@ -438,6 +490,40 @@ namespace Game
         // ==================================================
         #region Helpers
         private void ClearDynamic() { dynamicTarget = null; _onArriveAction = null; }
+
+        private void ApplyHeldBoxCorrection()
+        {
+            if (!isBoxGrabMode || heldBoxMover == null)
+                return;
+
+            Vector3 targetPlayerPosition = heldBoxMover.Position + heldBoxPlayerOffset;
+            Vector3 currentPosition = transform.position;
+            Vector3 correction = new Vector3(
+                targetPlayerPosition.x - currentPosition.x,
+                0f,
+                targetPlayerPosition.z - currentPosition.z);
+
+            if (correction.sqrMagnitude > 0.000001f)
+                characterController.Move(correction);
+
+            AlignToHeldBoxFace(false);
+        }
+
+        private void AlignToHeldBoxFace(bool instant)
+        {
+            if (!isBoxGrabMode)
+                return;
+
+            Vector3 lookDirection = -heldBoxPlayerOffset;
+            lookDirection.y = 0f;
+            if (lookDirection.sqrMagnitude < 0.0001f)
+                return;
+
+            Quaternion targetRotation = Quaternion.LookRotation(lookDirection.normalized);
+            transform.rotation = instant
+                ? targetRotation
+                : Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+        }
 
         private static bool IsPointerOverUi()
         {

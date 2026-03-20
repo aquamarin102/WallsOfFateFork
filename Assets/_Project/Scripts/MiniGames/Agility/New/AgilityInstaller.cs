@@ -2,6 +2,7 @@ using System.Collections;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using Game;
+using Game.UI;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
 using Zenject;
@@ -39,6 +40,7 @@ namespace Game.MiniGame.Agility
 
         private MiniGameData _gameData;
         private Coroutine _standaloneStartRoutine;
+        private bool _isTutorialPending;
 
         public override void InstallBindings()
         {
@@ -56,6 +58,20 @@ namespace Game.MiniGame.Agility
         {
             StopStandaloneAutoStart();
             _gameData = gameData;
+
+            if (_isTutorialPending)
+                return;
+
+            if (TutorialSheetService.TryShowOnce(
+                TutorialSheetDefinitions.AgilityKey,
+                TutorialSheetDefinitions.AgilityResourcePath,
+                TutorialSheetDefinitions.AgilityEditorAssetPath,
+                ContinueAfterTutorial))
+            {
+                _isTutorialPending = true;
+                return;
+            }
+
             ResolveReferences();
             PrepareScene();
             ApplyGameData();
@@ -77,6 +93,12 @@ namespace Game.MiniGame.Agility
             controller.OnEndGame -= OnMiniGameEnded;
             controller.OnEndGame += OnMiniGameEnded;
             controller.StartMiniGame();
+        }
+
+        private void ContinueAfterTutorial()
+        {
+            _isTutorialPending = false;
+            InitializeWithData(_gameData);
         }
 
         public void OnMiniGameEnded(bool playerWin)
