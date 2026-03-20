@@ -3296,7 +3296,7 @@ MonoBehaviour:
   m_Elasticity: 0.1
   m_Inertia: 0
   m_DecelerationRate: 0.135
-  m_ScrollSensitivity: 1
+  m_ScrollSensitivity: 3
   m_Viewport: {fileID: 2037596632}
   m_HorizontalScrollbar: {fileID: 0}
   m_VerticalScrollbar: {fileID: 0}
@@ -4646,8 +4646,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::dialogueManager
   DialogueUI: {fileID: 104105469}
-  PlayerPanel: {fileID: 2947497137651062322, guid: f803e002af56cb648ab394bf3a2f1a75, type: 3}
-  NPCPanel: {fileID: 3634988932631031838, guid: 406baa0e75dc2804d860f832c760b5f9, type: 3}
+  PlayerPanel: {fileID: 1137950729103118988, guid: 0b2027924cee8dd419a6c4d9d948b077, type: 3}
+  NPCPanel: {fileID: 7748268193640722440, guid: 0eab7fd4a3e780b4ba933439d050a6cf, type: 3}
   NPCPortrait: {fileID: 1966638597}
   SpawnPoint: {fileID: 1859731456}
   resourcesUI: {fileID: 0}

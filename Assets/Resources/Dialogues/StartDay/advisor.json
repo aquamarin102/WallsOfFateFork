@@ -1,0 +1,49 @@
+{
+	"Name": "Advisor1",
+	"Portrait": "Messenger",
+	"CharacterName": "Советник",
+	"Sentences": [
+		{
+			"Id": 0,
+			"Text": "Прощайте, что бужу. Но тянуть больше нельзя — Пана нет уже неделю… Первые дни люд ждал. А теперь превратили двор в курятник.",
+			"NextSentenceId": 1
+		},
+		{
+			"id": 1,
+			"IsPlayer": true,			
+			"IsOption": true,
+			"Text": "И что ты хочешь?",
+			"NextSentenceId": 3
+		},
+		{
+			"id": 2,
+			"IsPlayer": true,			
+			"IsOption": true,
+			"Text": "Ты советник. Реши вопрос.",
+			"NextSentenceId": 3
+		},
+		{
+			"id": 3,			
+			"Text": "Вы ему родня. Люд это знает… Стало быть, нынче вам и держать ответ, раз во имение прибыли.",
+			"NextSentenceId": 4
+		},
+		{
+			"id": 4,		
+			"IsPlayer": true,
+			"IsOption": true,
+			"Text": "Ладно, уговорил.",
+			"NextSentenceId": 5
+		},
+		{
+			"id": 5,
+			"Text": "Сейчас пойдут с бедам по одному. Кто жалиться, кто клянчить.. а кто-то врать. Ты либо так, либо этак. Всем не угодишь..",
+			"NextSentenceId": 6
+		},
+		{
+			"id": 6,
+			"IsPlayer": true,			
+			"IsOption": true,
+			"Text": "Ну посмотрим что у них за проблемы."
+		},
+	]
+}

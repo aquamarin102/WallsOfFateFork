@@ -1,9 +1,10 @@
-﻿using UnityEngine;
-using System.Collections.Generic;
-using Game;
-using Zenject;
+﻿using Game;
 using Game.Data;
+using Newtonsoft.Json;
+using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
+using Zenject;
 
 public class AudienceSessionSpawner : MonoBehaviour
 {
@@ -15,7 +16,7 @@ public class AudienceSessionSpawner : MonoBehaviour
     [SerializeField] private DialogueManager _dialogueManager;
 
     private readonly Queue<NPCDefinition> _sessionQueue = new();
-    private NPCController _current;
+    private NPCController currentNpc;
 
     /* ───────────────────────────────────────────────────────────── */
 
@@ -39,25 +40,24 @@ public class AudienceSessionSpawner : MonoBehaviour
     /* ─────────── подготовка очереди ─────────── */
     private void PrepareQueueAndStart()
     {
-        // 1) три случайных из мешка
-        // TODO: Пока только один для теста
-        for (int i = 0; i < 1; i++)
+        var advisor = Resources.Load<NPCDefinition>("Characters/StartDayPrefabs/Advisor");
+        _sessionQueue.Enqueue(advisor);
+
+        /*for (int i = 0; i < 1; i++)
             if (AudiencePool.Instance.TryTakeRandom(out var def))
-                _sessionQueue.Enqueue(def);
+                _sessionQueue.Enqueue(def);*/
 
-        var mainQuest = gameflowManager.GetCurrentDayQuests().FirstOrDefault(quest => quest.Main);
+        // var mainQuest = gameflowManager.GetCurrentDayQuests().FirstOrDefault(quest => quest.Main);
 
-        if (mainQuest != null)
+        /*if (mainQuest != null)
         {
             var mainQuestGiver = Resources.Load<NPCDefinition>("Characters/StartDayPrefabs/ScriptableObjects/Quest_" + mainQuest.Id + "_npc");
             _sessionQueue.Enqueue(mainQuestGiver);
-        }
+        }*/
 
-        if (_sessionQueue.Count == 0)
-        {
-            EndSession();        // никого нет → сразу выходим
-            return;
-        }
+        _sessionQueue.Enqueue(Resources.Load<NPCDefinition>("Characters/StartDayPrefabs/person1"));
+        _sessionQueue.Enqueue(Resources.Load<NPCDefinition>("Characters/StartDayPrefabs/person2"));
+        _sessionQueue.Enqueue(Resources.Load<NPCDefinition>("Characters/StartDayPrefabs/keymaster"));
 
         _dialogueManager.OnFinished += OnDialogueFinished;
         SpawnNext();
@@ -68,7 +68,7 @@ public class AudienceSessionSpawner : MonoBehaviour
     {
         if (_sessionQueue.Count == 0)
         {
-            EndSession();
+            currentNpc = null;
             return;
         }
 
@@ -76,25 +76,38 @@ public class AudienceSessionSpawner : MonoBehaviour
         GameObject go = Instantiate(def.prefab, _spawnPoint.position, _spawnPoint.rotation);
         go.name = def.npcName;
 
-        _current = go.GetComponent<NPCController>();
-        _current.Init(_dialogSpot, _exitSpot);
+        currentNpc = go.GetComponent<NPCController>();
+        currentNpc.Init(_dialogSpot, _exitSpot);
 
-        _current.Left += OnNpcLeft;
+        currentNpc.Left += OnNpcLeft;
     }
 
     /* ─────────── колбэки ─────────── */
-    private void OnDialogueFinished() => _current?.Leave();
+    private void OnDialogueFinished(DialogueGraph dialogue)
+    {
+        if (dialogue.Name == "Keymaster")
+        {
+            var advisorDialogueJson = Resources.Load<TextAsset>("Dialogues/StartDay/Advisor/cellar_quest_start");
+            var advisorDialogue = JsonConvert.DeserializeObject<DialogueGraph>(advisorDialogueJson.text);
+            _dialogueManager.StartDialogue(advisorDialogue);
+        }
+
+        if (dialogue.Name == "Cellar_Quest_Start")
+        {
+            // TODO: start quest
+            loadingManager.LoadSceneAsync("MainRoom");
+        }
+
+        if (currentNpc != null)
+        {
+            currentNpc?.Leave();
+        }
+    }
 
     private void OnNpcLeft(NPCController npc)
     {
         npc.Left -= OnNpcLeft;
         Destroy(npc.gameObject, 0.3f);
         SpawnNext();
-    }
-
-    private void EndSession()
-    {
-        ////Debug.Log("<color=yellow>Приём окончен — переходим в MainRoom</color>");
-        this.loadingManager.LoadSceneAsync("MainRoom");
     }
 }

@@ -1,0 +1,44 @@
+{
+	"Name": "Person1",
+	"Portrait": "Man",
+	"CharacterName": "Крестьянин",
+	"Sentences": [
+		{
+			"Id": 0,
+			"Text": "Сударь, помоги. Зерно у меня отсырело. Дай мешок из запаса, а то сеять нечем.",
+			"NextSentenceId": 1
+		},
+		{
+			"id": 1,
+			"IsPlayer": true,			
+			"IsOption": true,
+			"Text": "Дать ему мешок — Осенью вернёт.",
+			"NextSentenceId": 3
+		},
+		{
+			"id": 2,
+			"IsPlayer": true,			
+			"IsOption": true,
+			"Text": "Запас не трогать — Сам выкручивайся.",
+			"NextSentenceId": 4
+		},
+		{
+			"id": 3,			
+			"Text": "Спасибо, вы наш спаситель.",
+			"NextSentenceId": 5,
+			"Food": -10,
+			"PeopleSatisfaction": 2
+		},
+		{
+			"id": 4,		
+			"Text": "Эхх, придеться голодать...",
+			"NextSentenceId": 5,
+			"PeopleSatisfaction": -2
+		},
+		{
+			"IsPlayer": true,			
+			"IsOption": true,
+			"Text": "Ведите следующего."
+		},
+	]
+}

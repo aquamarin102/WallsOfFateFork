@@ -29,7 +29,7 @@ namespace Game
 
         #region Utility
         public bool IsInDialogue = false;
-        private readonly WaitForSeconds waitForSeconds0_01 = new(0.01f);
+        private readonly WaitForSeconds typingDelay = new(0.03f);
 
         private List<GameObject> spawnedPanels = new();
 
@@ -65,7 +65,7 @@ namespace Game
         #endregion
 
         #region Events
-        public event Action OnFinished;
+        public event Action<DialogueGraph> OnFinished;
         public event Action<MiniGameData> OnMiniGameStartRequested;
         #endregion
 
@@ -141,7 +141,7 @@ namespace Game
             }
         }
 
-        private void FixedUpdate()
+        private void Update()
         {
             if (currentOptions.Count > 0)
             {
@@ -218,6 +218,11 @@ namespace Game
         public void SelectOption(int optionIndex)
         {           
             var optionSentence = currentOptions[optionIndex];
+
+            foreach (Transform child in OptionsList.transform)
+            {
+                Destroy(child.gameObject);
+            }
 
             currentSentence = optionSentence;
             DisplayCurrentSentence(); 
@@ -298,6 +303,12 @@ namespace Game
                 optionTextComponent.text = optionCounter + ". " + currentSentence.Text;
 
                 optionCounter++;
+
+                if (currentDialogue.Sentences.IndexOf(currentSentence) + 1 >= currentDialogue.Sentences.Count)
+                {
+                    break;
+                }
+
                 currentSentence = currentDialogue.Sentences[currentDialogue.Sentences.IndexOf(currentSentence) + 1];
             }
         }
@@ -309,7 +320,7 @@ namespace Game
                 Destroy(child.gameObject);
             }
 
-            StartCoroutine(CloseDialogueWithDelay(2f));
+            StartCoroutine(CloseDialogueWithDelay(1f));
         }
 
         private IEnumerator CloseDialogueWithDelay(float delay)
@@ -330,8 +341,11 @@ namespace Game
             ClearSpawnedPanels();
 
             IsInDialogue = false;
+            var finishedDialogue = currentDialogue;
+            currentDialogue = null;
             currentSentence = null;
-            OnFinished?.Invoke();
+
+            OnFinished?.Invoke(finishedDialogue);
             OnMiniGameStartRequested?.Invoke(miniGameData);
         }
 
@@ -342,7 +356,7 @@ namespace Game
             textComponent.text = "";
             foreach (var c in textToType)
             {
-                yield return waitForSeconds0_01;
+                yield return typingDelay;
                 textComponent.text += c;
             }
 

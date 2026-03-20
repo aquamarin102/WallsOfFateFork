@@ -1,0 +1,59 @@
+{
+	"Name": "Person2",
+	"Portrait": "CaptainGuard",
+	"CharacterName": "Капитан Стражи",
+	"Sentences": [
+		{
+			"Id": 0,
+			"Text": "Сударь, люди мои голодны. На таком пайке только дохнуть, не сторожить.",
+			"NextSentenceId": 1
+		},
+		{
+			"id": 1,
+			"IsPlayer": true,			
+			"IsOption": true,
+			"Text": "Чего не хватает?",
+			"NextSentenceId": 4
+		},
+		{
+			"id": 2,
+			"IsPlayer": true,			
+			"IsOption": true,
+			"Text": "Дать людям поесть. Голодный страж — плохой страж.",
+			"NextSentenceId": 5
+		},
+		{
+			"id": 3,
+			"IsPlayer": true,			
+			"IsOption": true,
+			"Text": "Служба не пир. Потерпите.",
+			"NextSentenceId": 6
+		},
+		{
+			"id": 4,			
+			"Text": "Хлеба да каши. Днём терпимо, ночью брюхо громче тревоги орёт.",
+			"NextSentenceId": 2,
+		},
+		{
+			"id": 5,		
+			"Text": "Сейчас же раздам еду, будем сторожить пуще прежнего.",
+			"NextSentenceId": 7,
+			"PeopleSatisfaction": 1,
+			"CastleStrength": 20,
+			"Food": -10
+		},
+		{
+			"id": 6,		
+			"Text": "Мои ребята будут недовольны, но что ж поделать...",
+			"NextSentenceId": 7,
+			"CastleStrength": -10,
+			"PeopleSatisfaction": -1
+		},
+		{
+			"id": 7,
+			"IsPlayer": true,			
+			"IsOption": true,
+			"Text": "Что там дальше?"
+		},
+	]
+}
