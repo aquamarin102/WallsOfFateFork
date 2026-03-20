@@ -56,7 +56,7 @@ namespace Game
                 return;
             }
 
-            DialogueGraph dialogueGraph = GetDialogueGraph(eventData.TriggerObj);
+            DialogueGraph dialogueGraph = GetDialogueGraph(eventData.TriggerObj, eventData.Parameters);
             if (dialogueGraph == null)
             {
                 Debug.LogWarning(
@@ -133,9 +133,9 @@ namespace Game
                    && area.GetType() == typeof(InfluenceArea);
         }
 
-        private DialogueGraph GetDialogueGraph(GameObject obj)
+        private DialogueGraph GetDialogueGraph(GameObject obj, string dialogueName)
         {
-            string dialoguePath = "Dialogues/NPC/" + obj.name.ToLower();
+            string dialoguePath = "Dialogues/NPC/" + obj.name.ToLower() + "/" + dialogueName;
 
             TextAsset textAsset = Resources.Load<TextAsset>(dialoguePath);
             if (textAsset == null)

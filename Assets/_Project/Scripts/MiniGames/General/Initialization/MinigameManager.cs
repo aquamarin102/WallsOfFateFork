@@ -37,6 +37,7 @@ namespace Game.MiniGame
         private Transform playerTransform;
         private Vector3 previousPosition;
         private Quaternion previousRotation;
+        private DialogueGraph dialogueGraph;
 
         [Inject]
         public void Construct(PlayerManager playerManager, LoadingManager loadingManager, PlayerMoveController playerController)
@@ -70,8 +71,10 @@ namespace Game.MiniGame
             SceneManager.sceneLoaded -= OnSceneLoaded;
         }
 
-        public void StartMinigame(MiniGameData gameData)
+        public void StartMinigame(MiniGameData gameData, DialogueGraph dialogueGraph)
         {
+
+            this.dialogueGraph = dialogueGraph;
             _currentGameData = gameData;
             _previousScene = SceneManager.GetActiveScene().name;
 

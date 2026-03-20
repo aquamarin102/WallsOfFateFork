@@ -1,0 +1,72 @@
+{
+	"Name": "Messenger",
+	"Portrait": "Messenger",
+	"CharacterName": "Гонец",
+	"Sentences": [
+		{
+			"Id": 0,
+			"Text": "Ну? Коли с вестью, говори. Коли с криком, проходи мимо.",
+			"NextSentenceId": 1
+		},
+		{
+			"Id": 1,
+			"IsPlayer": true,
+			"IsOption": true,
+			"Text": "Гонец, а сам расселся, будто полдороги уже отмахал.",
+			"NextSentenceId": 4
+		},
+		{
+			"Id": 2,
+			"IsPlayer": true,
+			"IsOption": true,
+			"Text": "Вот это служба. Весть, поди, сама доедет, пока ты тут бока греешь?",
+			"NextSentenceId": 4
+		},
+		{
+			"Id": 3,
+			"IsPlayer": true,
+			"IsOption": true,
+			"Text": "Вот это гонец. Сидит так, будто весть сама себя повезёт.",
+			"NextSentenceId": 4
+		},
+		{
+			"Id": 4,
+			"Text": "Не трепи. Сам попробуй. У меня ремесло простое: донёс, дошёл — молодец.",
+			"NextSentenceId": 5
+		},
+		{
+			"Id": 5,
+			"IsPlayer": true,
+			"IsOption": true,
+			"Text": "А давай!",
+			"NextSentenceId": 7
+		},
+		{
+			"Id": 6,
+			"IsPlayer": true,
+			"IsOption": true,
+			"Text": "Ещё чего... бегать мне не хватало...",
+			"NextSentenceId": 8
+		},
+		{
+			"Id": 7,
+			"Text": "Ну так посмотрим, пан, как вы с вестью управитесь.",
+			"NextSentenceId": 10
+		},
+		{
+			"Id": 8,
+			"Text": "То-то же. Языком дорога короче не станет.",
+			"NextSentenceId": 9
+		},
+		{
+			"Id": 9,
+			"Text": "Или как? Только подвалам шастать да находки в пыли ковырять горазды? Дорогу вам, видно, ноги не велят.",
+			"NextSentenceId": 11
+		},
+		{
+			"Id": 10, //мини-игра
+			"Text": "Мини-игра",
+			"MiniGameId": "CourierMiniGame"
+		}
+	]
+}

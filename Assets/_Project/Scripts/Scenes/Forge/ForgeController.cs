@@ -12,6 +12,7 @@ namespace Game
         [SerializeField] private DialogueManager dialogueManager;
         [SerializeField] private InteractiveItemHandler interactiveItemHandler;
         [SerializeField] private string ThiefPrefabName;
+        [SerializeField] private string ChiefGuardfPrefabName;
 
         private QuestManager questManager;
         private NPCPrefabFactory npcPrefabFactory;
@@ -35,38 +36,18 @@ namespace Game
             if (thiefQuestState == QuestState.InProgress)
             {
                 npcPrefabFactory.GetInstance(ThiefPrefabName).gameObject.SetActive(true);
+                npcPrefabFactory.GetInstance(ChiefGuardfPrefabName).gameObject.SetActive(true);
             }
             else
             {
                 npcPrefabFactory.GetInstance(ThiefPrefabName).gameObject.SetActive(false);
+                npcPrefabFactory.GetInstance(ChiefGuardfPrefabName).gameObject.SetActive(false);
             }
         }
 
         public void OnDialogueFinished(DialogueGraph dialogue)
         {
 
-            if (dialogue.Name == "Thief")
-            {
-                Quest thiefQuest = questManager.GetQuest(1);
-                if (questManager.GetQuestState(thiefQuest.Id) == QuestState.InProgress)
-                {
-                    QuestStatus thiefQuestStatus = questManager.GetQuestStatus(thiefQuest.Id);
-
-                    QuestTask task = questManager.GetQuestTask(thiefQuest.Id, 0);
-                    QuestTask task1 = questManager.GetQuestTask(thiefQuest.Id, 1);
-
-
-                    thiefQuestStatus.TasksStatusData.TryGetValue(task.Id, out TaskStatus taskStatus);
-                    thiefQuestStatus.TasksStatusData.TryGetValue(task1.Id, out TaskStatus taskStatus1);
-
-                    if (taskStatus.State == QuestState.InProgress && taskStatus1.State == QuestState.NotStarted)
-                    {
-                        questManager.UpdateQuestTask(thiefQuest.Id, task.Id, QuestState.Completed);
-                        questManager.UpdateQuestTask(thiefQuest.Id, task1.Id, QuestState.InProgress);
-                    }
-
-                }
-            }
             if (dialogue.Name == "ChiefGuard")
             {
                 Quest thiefQuest = questManager.GetQuest(1);
@@ -75,15 +56,13 @@ namespace Game
                     QuestStatus thiefQuestStatus = questManager.GetQuestStatus(thiefQuest.Id);
 
                     QuestTask task = questManager.GetQuestTask(thiefQuest.Id, 0);
-                    QuestTask task1 = questManager.GetQuestTask(thiefQuest.Id, 1);
 
 
                     thiefQuestStatus.TasksStatusData.TryGetValue(task.Id, out TaskStatus taskStatus);
-                    thiefQuestStatus.TasksStatusData.TryGetValue(task1.Id, out TaskStatus taskStatus1);
 
-                    if (taskStatus.State == QuestState.Completed && taskStatus1.State == QuestState.InProgress)
+                    if (taskStatus.State == QuestState.Completed)
                     {
-                        questManager.UpdateQuestTask(thiefQuest.Id, task1.Id, QuestState.Completed);
+                        questManager.UpdateQuestTask(thiefQuest.Id, task.Id, QuestState.Completed);
                         questManager.UpdateQuest(thiefQuest.Id, QuestState.Completed);
                     }
 

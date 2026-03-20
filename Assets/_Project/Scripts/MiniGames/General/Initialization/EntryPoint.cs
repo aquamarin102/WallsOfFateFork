@@ -93,7 +93,7 @@ namespace Game
             this.container = container;
         }
 
-        public void LaunchMinigame(MiniGameData launchData)
+        public void LaunchMinigame(MiniGameData launchData, DialogueGraph dialogueGraph)
         {
             if (IsMinigameActive)
             {
@@ -111,7 +111,7 @@ namespace Game
 
             string jsonData = launchData.ToJson();
 
-            minigameManager.StartMinigame(launchData);
+            minigameManager.StartMinigame(launchData, dialogueGraph);
 
             Debug.Log($"Мини-игра запущена: {launchData.miniGameType}");
         }
