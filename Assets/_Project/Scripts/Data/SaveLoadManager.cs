@@ -20,6 +20,7 @@ namespace Game.Data
         public void LoadGame()
         {
             Repository.LoadState();
+            questManager.ClearMinigameRuntimeState();
             playerManager.LoadSavedPlayerData();
             questManager.LoadSavedQuestsStatus();
             gameflowManager.LoadSavedGameflowData();
@@ -53,6 +54,7 @@ namespace Game.Data
         public void Clear()
         {
             AssembledPickups.Clear();
+            questManager.ClearMinigameRuntimeState();
             Repository.ClearSaveData();
             PlayerSpawnData.ClearData();
         }

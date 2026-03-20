@@ -1,7 +1,6 @@
-﻿using Game.Data;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using Game.Data;
+using Newtonsoft.Json;
+using System.Collections;
 using UnityEngine;
 using Zenject;
 
@@ -27,9 +26,15 @@ namespace Game
         private void Start()
         {
             dialogueManager = DialogueManager.Instance;
-            dialogueManager.OnFinished += OnDialogueFinished;
+            if (dialogueManager != null)
+            {
+                dialogueManager.OnFinished += OnDialogueFinished;
+            }
 
-            interactiveItemHandler.OnItemHandled += OnQuestItemInteraction;
+            if (interactiveItemHandler != null)
+            {
+                interactiveItemHandler.OnItemHandled += OnQuestItemInteraction;
+            }
 
             Quest thiefQuest = questManager.GetQuest(1);
             QuestState thiefQuestState = questManager.GetQuestState(thiefQuest.Id);
@@ -43,10 +48,16 @@ namespace Game
                 npcPrefabFactory.GetInstance(ThiefPrefabName).gameObject.SetActive(false);
                 npcPrefabFactory.GetInstance(ChiefGuardfPrefabName).gameObject.SetActive(false);
             }
+
+            TryStartPendingMinigameDialogue();
         }
 
         public void OnDialogueFinished(DialogueGraph dialogue)
         {
+            if (dialogue == null)
+            {
+                return;
+            }
 
             if (dialogue.Name == "ChiefGuard")
             {
@@ -56,8 +67,6 @@ namespace Game
                     QuestStatus thiefQuestStatus = questManager.GetQuestStatus(thiefQuest.Id);
 
                     QuestTask task = questManager.GetQuestTask(thiefQuest.Id, 0);
-
-
                     thiefQuestStatus.TasksStatusData.TryGetValue(task.Id, out TaskStatus taskStatus);
 
                     if (taskStatus.State == QuestState.Completed)
@@ -65,17 +74,15 @@ namespace Game
                         questManager.UpdateQuestTask(thiefQuest.Id, task.Id, QuestState.Completed);
                         questManager.UpdateQuest(thiefQuest.Id, QuestState.Completed);
                     }
-
                 }
-
             }
-            if(dialogue.Name == "Herbalist")
+
+            if (dialogue.Name == "Herbalist")
             {
                 Quest herbalistQuest = questManager.GetQuest(2);
                 QuestStatus herbalistQuestStatus = questManager.GetQuestStatus(herbalistQuest.Id);
 
                 QuestTask task = questManager.GetQuestTask(herbalistQuest.Id, 0);
-
                 herbalistQuestStatus.TasksStatusData.TryGetValue(task.Id, out TaskStatus taskStatus);
 
                 if (taskStatus.State == QuestState.InProgress)
@@ -83,9 +90,9 @@ namespace Game
                     questManager.UpdateQuest(herbalistQuest.Id, QuestState.Completed);
                     questManager.UpdateQuestTask(herbalistQuest.Id, task.Id, QuestState.Completed);
                 }
-
             }
-            if(dialogue.Name == "Blacksmith")
+
+            if (dialogue.Name == "Blacksmith")
             {
                 Quest blacksmithQuest = questManager.GetQuest(5);
                 QuestStatus blacksmithQuestStatus = questManager.GetQuestStatus(blacksmithQuest.Id);
@@ -94,11 +101,12 @@ namespace Game
                 QuestTask task1 = questManager.GetQuestTask(blacksmithQuest.Id, 1);
 
                 blacksmithQuestStatus.TasksStatusData.TryGetValue(task.Id, out TaskStatus taskStatus);
-                blacksmithQuestStatus.TasksStatusData.TryGetValue(task.Id, out TaskStatus taskStatus1);
+                blacksmithQuestStatus.TasksStatusData.TryGetValue(task1.Id, out TaskStatus taskStatus1);
                 if (taskStatus.State == QuestState.NotStarted && taskStatus1.State == QuestState.NotStarted)
                 {
                     questManager.UpdateQuestTask(blacksmithQuest.Id, task.Id, QuestState.InProgress);
                 }
+
                 if (taskStatus.State == QuestState.Completed && taskStatus1.State == QuestState.InProgress)
                 {
                     questManager.UpdateQuestTask(blacksmithQuest.Id, task1.Id, QuestState.Completed);
@@ -118,12 +126,76 @@ namespace Game
                 QuestTask task1 = questManager.GetQuestTask(blacksmithQuest.Id, 1);
 
                 blacksmithQuestStatus.TasksStatusData.TryGetValue(task.Id, out TaskStatus taskStatus);
-                blacksmithQuestStatus.TasksStatusData.TryGetValue(task.Id, out TaskStatus taskStatus1);
+                blacksmithQuestStatus.TasksStatusData.TryGetValue(task1.Id, out TaskStatus taskStatus1);
                 if (taskStatus.State == QuestState.InProgress && taskStatus1.State == QuestState.NotStarted)
                 {
                     questManager.UpdateQuestTask(blacksmithQuest.Id, task.Id, QuestState.Completed);
                     questManager.UpdateQuestTask(blacksmithQuest.Id, task1.Id, QuestState.InProgress);
                 }
+            }
+        }
+
+        private void TryStartPendingMinigameDialogue()
+        {
+            Quest blacksmithQuest = questManager.GetQuest(5);
+            if (blacksmithQuest == null)
+            {
+                return;
+            }
+
+            if (!questManager.TryConsumePendingMinigameDialogue(blacksmithQuest.Id, out string dialoguePath, out _))
+            {
+                return;
+            }
+
+            StartCoroutine(StartPendingDialogueNextFrame(dialoguePath));
+        }
+
+        private IEnumerator StartPendingDialogueNextFrame(string dialoguePath)
+        {
+            yield return null;
+
+            if (dialogueManager == null)
+            {
+                dialogueManager = DialogueManager.Instance;
+            }
+
+            if (dialogueManager == null)
+            {
+                yield break;
+            }
+
+            while (dialogueManager.IsInDialogue)
+            {
+                yield return null;
+            }
+
+            DialogueGraph dialogueGraph = LoadDialogueGraph(dialoguePath);
+            if (dialogueGraph == null)
+            {
+                yield break;
+            }
+
+            dialogueManager.StartDialogue(dialogueGraph);
+        }
+
+        private DialogueGraph LoadDialogueGraph(string dialoguePath)
+        {
+            TextAsset textAsset = Resources.Load<TextAsset>(dialoguePath);
+            if (textAsset == null)
+            {
+                Debug.LogError($"ForgeController: failed to load dialogue graph at path: {dialoguePath}");
+                return null;
+            }
+
+            try
+            {
+                return JsonConvert.DeserializeObject<DialogueGraph>(textAsset.text);
+            }
+            catch (JsonException ex)
+            {
+                Debug.LogError($"ForgeController: failed to deserialize dialogue graph at path: {dialoguePath}. Error: {ex.Message}");
+                return null;
             }
         }
     }

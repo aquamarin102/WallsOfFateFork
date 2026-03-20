@@ -164,6 +164,8 @@ namespace Game
 
             this.currentDialogue = currentDialogue;
             IsInDialogue = true;
+            startMinigame = false;
+            miniGameData = null;
 
             ClearSpawnedPanels();
 
@@ -233,6 +235,7 @@ namespace Game
             if (currentSentence == null) return;
 
             UpdateResources();
+            ConfigMiniGame();
 
             bool pannelSpawned = TryInstantiatePannel(out GameObject sentencePanel);
 
@@ -325,8 +328,11 @@ namespace Game
 
         private IEnumerator CloseDialogueWithDelay(float delay)
         {
-            // Ждем указанное количество секунд
             yield return new WaitForSeconds(delay);
+
+            var finishedDialogue = currentDialogue;
+            bool shouldStartMinigame = startMinigame && miniGameData != null;
+            MiniGameData launchData = miniGameData;
 
             if (resourcesUI != null)
             {
@@ -341,12 +347,16 @@ namespace Game
             ClearSpawnedPanels();
 
             IsInDialogue = false;
-            var finishedDialogue = currentDialogue;
             currentDialogue = null;
             currentSentence = null;
+            startMinigame = false;
+            miniGameData = null;
 
             OnFinished?.Invoke(finishedDialogue);
-            OnMiniGameStartRequested?.Invoke(miniGameData, currentDialogue);
+            if (shouldStartMinigame)
+            {
+                OnMiniGameStartRequested?.Invoke(launchData, finishedDialogue);
+            }
         }
 
         IEnumerator TypeSentence(string textToType, TMP_Text textComponent)

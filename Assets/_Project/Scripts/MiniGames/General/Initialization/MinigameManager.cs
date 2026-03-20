@@ -33,6 +33,7 @@ namespace Game.MiniGame
 
         private PlayerManager playerManager;
         private LoadingManager loadingManager;
+        private QuestManager questManager;
 
         private Transform playerTransform;
         private Vector3 previousPosition;
@@ -40,11 +41,12 @@ namespace Game.MiniGame
         private DialogueGraph dialogueGraph;
 
         [Inject]
-        public void Construct(PlayerManager playerManager, LoadingManager loadingManager, PlayerMoveController playerController)
+        public void Construct(PlayerManager playerManager, LoadingManager loadingManager, QuestManager questManager, PlayerMoveController playerController)
         {
             this.playerTransform = playerController.transform;
             this.playerManager = playerManager;
             this.loadingManager = loadingManager;
+            this.questManager = questManager;
         }
 
         void Awake()
@@ -73,10 +75,16 @@ namespace Game.MiniGame
 
         public void StartMinigame(MiniGameData gameData, DialogueGraph dialogueGraph)
         {
+            if (gameData == null)
+            {
+                Debug.LogError("Minigame data is null.");
+                return;
+            }
 
             this.dialogueGraph = dialogueGraph;
             _currentGameData = gameData;
             _previousScene = SceneManager.GetActiveScene().name;
+            questManager?.RegisterMinigameContext(gameData);
 
             if(playerTransform != null)
             {
@@ -133,12 +141,12 @@ namespace Game.MiniGame
 
         public void EndMinigame(bool playerWon)
         {
-
             string outcomeKey = playerWon ? "Win" : "Lose";
 
             try
             {
-                if (_currentGameData.customParameters.TryGetValue(outcomeKey, out object outcomeObj) &&
+                if (_currentGameData?.customParameters != null &&
+                    _currentGameData.customParameters.TryGetValue(outcomeKey, out object outcomeObj) &&
                     outcomeObj is Newtonsoft.Json.Linq.JObject outcomeJObject)
                 {
                     if (outcomeJObject.TryGetValue("Resources", out Newtonsoft.Json.Linq.JToken resourcesToken) &&
@@ -162,6 +170,8 @@ namespace Game.MiniGame
             {
                 Debug.LogError($"Error processing minigame result: {e.Message}");
             }
+
+            questManager?.CompletePendingMinigame(playerWon);
 
             PlayerSpawnData.SpawnPosition = previousPosition;
             PlayerSpawnData.SpawnRotation = previousRotation;

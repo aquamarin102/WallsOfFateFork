@@ -1,7 +1,6 @@
-﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using Zenject;
 using Game.MiniGame;
 
@@ -47,6 +46,7 @@ namespace Game
     public class EntryPoint : MonoBehaviour
     {
         [Inject] private DiContainer container;
+        private DialogueManager subscribedDialogueManager;
 
         #region Singleton
         private static EntryPoint _instance;
@@ -64,6 +64,7 @@ namespace Game
                         DontDestroyOnLoad(singleton);
                     }
                 }
+
                 return _instance;
             }
         }
@@ -76,10 +77,49 @@ namespace Game
                 return;
             }
 
-            DialogueManager.Instance.OnMiniGameStartRequested += LaunchMinigame;
-
             _instance = this;
             DontDestroyOnLoad(gameObject);
+            SubscribeToDialogueManager();
+        }
+
+        private void OnEnable()
+        {
+            SceneManager.sceneLoaded += OnSceneLoaded;
+        }
+
+        private void OnDisable()
+        {
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+            UnsubscribeFromDialogueManager();
+        }
+
+        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            SubscribeToDialogueManager();
+        }
+
+        private void SubscribeToDialogueManager()
+        {
+            DialogueManager dialogueManager = FindObjectOfType<DialogueManager>();
+            if (dialogueManager == null || dialogueManager == subscribedDialogueManager)
+            {
+                return;
+            }
+
+            UnsubscribeFromDialogueManager();
+            subscribedDialogueManager = dialogueManager;
+            subscribedDialogueManager.OnMiniGameStartRequested += LaunchMinigame;
+        }
+
+        private void UnsubscribeFromDialogueManager()
+        {
+            if (subscribedDialogueManager == null)
+            {
+                return;
+            }
+
+            subscribedDialogueManager.OnMiniGameStartRequested -= LaunchMinigame;
+            subscribedDialogueManager = null;
         }
         #endregion
 
@@ -95,25 +135,26 @@ namespace Game
 
         public void LaunchMinigame(MiniGameData launchData, DialogueGraph dialogueGraph)
         {
-            if (IsMinigameActive)
+            if (launchData == null)
             {
-                Debug.LogWarning("Мини-игра уже запущена!");
+                Debug.LogWarning("LaunchMinigame called without minigame data.");
                 return;
             }
 
-            //GameObject managerObj = new GameObject("MinigameManager");
-            //MinigameManager minigameManager = managerObj.AddComponent<MinigameManager>();
-            //DontDestroyOnLoad(managerObj);
+            if (IsMinigameActive)
+            {
+                Debug.LogWarning("Minigame is already running.");
+                return;
+            }
+
             MinigameManager minigameManager = container.InstantiateComponentOnNewGameObject<MinigameManager>("MinigameManager");
             DontDestroyOnLoad(minigameManager.gameObject);
 
-            Debug.Log("Создан новый MinigameManager");
-
-            string jsonData = launchData.ToJson();
+            Debug.Log("Created new MinigameManager");
 
             minigameManager.StartMinigame(launchData, dialogueGraph);
 
-            Debug.Log($"Мини-игра запущена: {launchData.miniGameType}");
+            Debug.Log($"Minigame started: {launchData.miniGameType}");
         }
 
         #endregion
