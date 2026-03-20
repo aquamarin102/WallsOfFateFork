@@ -1,0 +1,23 @@
+{
+  "Name": "CaptainGuard",
+  "Portrait": "CaptainGuard",
+  "CharacterName": "Капитан",
+  "Sentences": [
+    {
+      "Id": 0,
+      "Text": "Надо же. Не рассыпался. И даже после встречи с вами на ногах остался.",
+      "NextSentenceId": 1
+    },
+    {
+      "Id": 1,
+      "IsPlayer": true,
+      "Text": "Я ж говорил: толк из него будет.",
+      "NextSentenceId": 2
+    },
+    {
+      "Id": 2,
+      "Text": "Ладно. Возьму. Не в лучшие люди, конечно, но при деле будет. А там уж поглядим, выбьется в человека или нет.",
+      "CastleStrength": 10
+    }
+  ]
+}

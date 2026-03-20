@@ -66,7 +66,7 @@ namespace Game
 
         #region Events
         public event Action<DialogueGraph> OnFinished;
-        public event Action<MiniGameData> OnMiniGameStartRequested;
+        public event Action<MiniGameData, DialogueGraph> OnMiniGameStartRequested;
         #endregion
 
         [Inject]
@@ -346,7 +346,7 @@ namespace Game
             currentSentence = null;
 
             OnFinished?.Invoke(finishedDialogue);
-            OnMiniGameStartRequested?.Invoke(miniGameData);
+            OnMiniGameStartRequested?.Invoke(miniGameData, currentDialogue);
         }
 
         IEnumerator TypeSentence(string textToType, TMP_Text textComponent)

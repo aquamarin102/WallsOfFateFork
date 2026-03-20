@@ -12472,6 +12472,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eaaecb713c350a94f8c30e5388fb9310, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  panelRoot: {fileID: 0}
   confirmButton: {fileID: 648617688}
   declineButton: {fileID: 662337915}
 --- !u!224 &298086827
@@ -17810,7 +17811,6 @@ MonoBehaviour:
     DependFromQuests: 0
     RequiredQuestIds: 
     ItemName: 
-    questId: -1
   hasBeenUsed: 0
 --- !u!1 &415696908
 GameObject:
@@ -22538,10 +22538,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fc3f5b9e436605d4c9d76350dadafc5d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  uiPanels:
-  - {fileID: 0}
-  - {fileID: 1822668983}
-  - {fileID: 0}
 --- !u!1001 &520832874
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -32684,7 +32680,6 @@ MonoBehaviour:
     DependFromQuests: 0
     RequiredQuestIds: 
     ItemName: 
-    questId: -1
   hasBeenUsed: 0
 --- !u!1001 &735561540
 PrefabInstance:
@@ -36580,7 +36575,6 @@ MonoBehaviour:
     DependFromQuests: 0
     RequiredQuestIds: 
     ItemName: 
-    questId: -1
   hasBeenUsed: 0
 --- !u!1 &831124378
 GameObject:
@@ -38953,6 +38947,7 @@ Transform:
   - {fileID: 797640525}
   - {fileID: 1343182839}
   - {fileID: 1567624388}
+  - {fileID: 1838080738}
   m_Father: {fileID: 1790365801}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &891997965 stripped
@@ -41593,7 +41588,6 @@ MonoBehaviour:
     DependFromQuests: 0
     RequiredQuestIds: 
     ItemName: 
-    questId: -1
   hasBeenUsed: 0
 --- !u!1001 &951276817
 PrefabInstance:
@@ -61121,7 +61115,6 @@ MonoBehaviour:
     DependFromQuests: 0
     RequiredQuestIds: 
     ItemName: 
-    questId: -1
   hasBeenUsed: 0
 --- !u!1 &1413384900
 GameObject:
@@ -68361,7 +68354,6 @@ MonoBehaviour:
     DependFromQuests: 0
     RequiredQuestIds: 
     ItemName: 
-    questId: -1
   hasBeenUsed: 0
 --- !u!1 &1595690465
 GameObject:
@@ -70381,7 +70373,6 @@ MonoBehaviour:
     DependFromQuests: 0
     RequiredQuestIds: 
     ItemName: 
-    questId: -1
   hasBeenUsed: 0
 --- !u!1 &1633916236
 GameObject:
@@ -78041,6 +78032,53 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 426038735}
   m_SourcePrefab: {fileID: 100100000, guid: cd2b5495c228c9744b09d3a6316695ce, type: 3}
+--- !u!1 &1838080737
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1838080738}
+  - component: {fileID: 1838080739}
+  m_Layer: 0
+  m_Name: CellarController
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1838080738
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1838080737}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 891882940}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1838080739
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1838080737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 636e744691c429f48920ff0f2bb93fb2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Game.CellarController
+  dialogueManager: {fileID: 1804792146}
+  interactiveItemHandler: {fileID: 327432779}
+  ThiefPrefabName: StorageBomj
 --- !u!1001 &1840284423
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -78341,7 +78379,6 @@ MonoBehaviour:
     DependFromQuests: 0
     RequiredQuestIds: 
     ItemName: 
-    questId: -1
   hasBeenUsed: 0
 --- !u!1001 &1842710185
 PrefabInstance:
@@ -79335,7 +79372,6 @@ MonoBehaviour:
     DependFromQuests: 0
     RequiredQuestIds: 
     ItemName: 
-    questId: -1
   hasBeenUsed: 0
 --- !u!1 &1895475428
 GameObject:
@@ -82385,7 +82421,6 @@ MonoBehaviour:
     DependFromQuests: 0
     RequiredQuestIds: 
     ItemName: 
-    questId: -1
   hasBeenUsed: 0
 --- !u!1001 &1978743180
 PrefabInstance:
