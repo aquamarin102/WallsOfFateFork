@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+using Game;
+using UnityEngine;
 
 /// <summary>
 /// Handles animation parameters for the player character and plays footstep sounds.
@@ -10,7 +11,7 @@ public class PlayerAnimator : MonoBehaviour
 {
     #region Inspector
     [Header("Movement")]
-    [Tooltip("Top‑end speed of the character in m/s. Used for normalising the blend‑tree parameter.")]
+    [Tooltip("Top-end speed of the character in m/s. Used for normalising the blend-tree parameter.")]
     [SerializeField] private float maxSpeed = 4.5f;
 
     [Tooltip("Time it takes for the Speed parameter to reach the target value (seconds).")]
@@ -33,21 +34,25 @@ public class PlayerAnimator : MonoBehaviour
     #endregion
 
     private Animator animator;
+    private CharacterController characterController;
+    private PlayerMoveController moveController;
     private Vector3 lastPos;
-    private float currentSpeedParam; // smoothed animator parameter [0‑1]
+    private float currentSpeedParam; // smoothed animator parameter [0-1]
     private float speedRef;          // velocity reference for SmoothDamp
     private float footstepTimer;
-    private bool isPushing = false;
+    private bool isPushing;
 
-    // ──────────────────────────────────────────────────────────────────────────────
+    // -----------------------------------------------------------------------------
     #region Unity
     private void Awake()
     {
         animator = GetComponent<Animator>();
+        characterController = GetComponent<CharacterController>();
+        moveController = GetComponent<PlayerMoveController>();
         lastPos = transform.position;
     }
 
-    private void Update()
+    private void LateUpdate()
     {
         UpdateLocomotion();   // handles speed, pushing, animator parameters
         UpdateFootsteps();    // handles audio cadence
@@ -65,50 +70,56 @@ public class PlayerAnimator : MonoBehaviour
         isPushing = false;
     }
 
-    // ──────────────────────────────────────────────────────────────────────────────
+    // -----------------------------------------------------------------------------
     #region Locomotion
     private void UpdateLocomotion()
     {
-        // 1) вычисляем текущую скорость и нормализуем
-        float rawSpeed = (transform.position - lastPos).magnitude / Mathf.Max(Time.deltaTime, 0.0001f);
-        float targetNorm = Mathf.Clamp01(rawSpeed / maxSpeed);
+        float rawSpeed = GetPlanarSpeed();
+        float targetNorm = Mathf.Clamp01(rawSpeed / Mathf.Max(maxSpeed, 0.0001f));
         currentSpeedParam = Mathf.SmoothDamp(currentSpeedParam, targetNorm, ref speedRef, speedSmoothTime);
 
-        // 2) определяем состояние толкания
-        //bool isPushing = transform.parent != null
-        //                 && transform.parent.CompareTag(boxTag);
-
-        // 3) вычисляем параметр PushSpeed (0 или 1)
         float pushSpeedParam = isPushing
             ? (currentSpeedParam >= pushMoveThreshold ? 1f : 0f)
             : 0f;
 
-        // 4) отправляем параметры в аниматор
         animator.SetBool("IsPushing", isPushing);
         animator.SetFloat("PushSpeed", pushSpeedParam);
 
-        // 5) Останавливаем анимацию, если толкаем, но скорость нулевая
         if (isPushing && pushSpeedParam == 0f)
         {
             animator.speed = 0f;
+            return;
         }
-        else
-        {
-            // во всех остальных случаях включаем аниматор и, если не толкаем,
-            // обновляем параметр Speed для blend-tree передвижения
-            animator.speed = pushAnimationSpeed;
 
-            if (!isPushing)
-            {
-                animator.SetFloat("Speed", currentSpeedParam);
-                animator.SetBool("IsPushing", false);
-            }
+        animator.speed = isPushing ? pushAnimationSpeed : 1f;
+
+        if (!isPushing)
+        {
+            animator.SetFloat("Speed", currentSpeedParam);
+            animator.SetBool("IsPushing", false);
         }
+    }
+
+    private float GetPlanarSpeed()
+    {
+        if (moveController != null)
+            return moveController.CurrentPlanarSpeed;
+
+        if (characterController != null)
+        {
+            Vector3 velocity = characterController.velocity;
+            velocity.y = 0f;
+            return velocity.magnitude;
+        }
+
+        Vector3 delta = transform.position - lastPos;
+        delta.y = 0f;
+        return delta.magnitude / Mathf.Max(Time.deltaTime, 0.0001f);
     }
     #endregion
 
-    // ──────────────────────────────────────────────────────────────────────────────
-    #region Footstep Audio
+    // -----------------------------------------------------------------------------
+    #region Footstep Audio
     private void UpdateFootsteps()
     {
         if (footstepSource == null) return; // sound system is optional
@@ -120,7 +131,8 @@ public class PlayerAnimator : MonoBehaviour
 
             if (footstepTimer >= interval)
             {
-                PlayRandomFootstep(currentSpeedParam > 0.6f);
+                bool running = moveController != null ? moveController.IsRunning : currentSpeedParam > 0.6f;
+                PlayRandomFootstep(running);
                 footstepTimer = 0f;
             }
         }
@@ -140,8 +152,8 @@ public class PlayerAnimator : MonoBehaviour
     }
     #endregion
 
-    // ──────────────────────────────────────────────────────────────────────────────
-    #region Public Triggers
+    // -----------------------------------------------------------------------------
+    #region Public Triggers
     public void PlayPickupFloor() => animator.SetTrigger("PickupFloor");
     public void PlayPickupBody() => animator.SetTrigger("PickupBody");
     public void PlayOpenChest() => animator.SetTrigger("OpenChest");

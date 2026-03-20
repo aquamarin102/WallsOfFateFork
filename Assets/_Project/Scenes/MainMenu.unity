@@ -3993,6 +3993,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1254204676}
   - component: {fileID: 1254204675}
+  - component: {fileID: 1254204677}
   m_Layer: 0
   m_Name: Directional Light
   m_TagString: Untagged
@@ -4080,6 +4081,35 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
+--- !u!114 &1254204677
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1254204674}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!1 &1285647277
 GameObject:
   m_ObjectHideFlags: 0
@@ -7541,7 +7571,7 @@ MonoBehaviour:
   sfxSource: {fileID: 2135656547}
   uiSource: {fileID: 2135656546}
   defaultMusic: {fileID: 8300000, guid: 6dd1d83cb805399409e53f3a7523859b, type: 3}
-  loadingMusic: {fileID: 8300000, guid: 2238fe6186ed87c46baf1dbf82113925, type: 3}
+  loadingMusic: {fileID: 8300000, guid: 6dd1d83cb805399409e53f3a7523859b, type: 3}
   normalSnapshot: {fileID: -3068337976495354447, guid: c297e275c45b0db4fa8c6c95a825b156, type: 2}
   loadingSnapshot: {fileID: 3433543017531283161, guid: c297e275c45b0db4fa8c6c95a825b156, type: 2}
   snapshotTransitionTime: 0.5

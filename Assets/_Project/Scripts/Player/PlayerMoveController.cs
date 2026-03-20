@@ -47,6 +47,9 @@ namespace Game
         private Action _onArriveAction;
 
         [Header("Footstep Settings")]
+        [SerializeField] private float walkingStepInterval = 0.48f;
+        [SerializeField] private float runningStepInterval = 0.32f;
+        [SerializeField] private float footstepMinSpeed = 0.15f;
         private readonly Dictionary<string, List<AudioClip>> sceneFootstepSounds = new();
         private AudioClip leftClip, rightClip;
 
@@ -58,8 +61,10 @@ namespace Game
 
         private Vector3 moveDirection;
         private float verticalVelocity;
-        private Vector3 lastPosition;
         private bool isLeftFoot = true;
+        private float currentPlanarSpeed;
+        private bool isRunning;
+        private float footstepTimer;
 
         private PlayerAnimatinController interactManager;   // ссылка на менеджер взаимодействия
 
@@ -79,7 +84,6 @@ namespace Game
             agent = GetComponent<NavMeshAgent>();
             footstepSource = GetComponent<AudioSource>();
             navMeshPath = new NavMeshPath();
-            lastPosition = transform.position;
 
             agent.updatePosition = false;     // Agent используется только как path‑finder
             agent.updateRotation = false;
@@ -119,12 +123,14 @@ namespace Game
 
         private void OnDestroy() => SceneManager.sceneLoaded -= OnSceneLoaded;
 
-        private void FixedUpdate()
+        public float CurrentPlanarSpeed => currentPlanarSpeed;
+        public bool IsRunning => isRunning;
+
+        private void Update()
         {
             HandleMouseInput();
             HandleMovement();
             UpdateFootstep();
-            lastPosition = transform.position;
         }
 
         // ==================================================
@@ -191,11 +197,15 @@ namespace Game
         #region Movement Core
         private void HandleMovement()
         {
+            Vector3 positionBeforeMove = transform.position;
+
             if (_dialogueManager.IsInDialogue == true)
             {
                 moveDirection = new Vector3(0, moveDirection.y, 0);
                 characterController.Move(moveDirection * Time.deltaTime);
                 agent.isStopped = true;
+                currentPlanarSpeed = 0f;
+                isRunning = false;
                 return;
             }
 
@@ -290,7 +300,8 @@ namespace Game
                 if (!isBoxGrabMode) transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(desired), rotationSpeed * Time.deltaTime);
 
             // Скорость + гравитация
-            bool running = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift) || isClickRun;
+            bool hasPlanarInput = desired.sqrMagnitude > 0.0001f;
+            bool running = hasPlanarInput && (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift) || isClickRun);
             float speed = moveSpeed * (running ? runMultiplier : 1f);
             moveDirection = desired * speed;
 
@@ -299,6 +310,11 @@ namespace Game
 
             characterController.Move(moveDirection * Time.deltaTime);
             agent.nextPosition = transform.position;
+
+            Vector3 actualDelta = transform.position - positionBeforeMove;
+            actualDelta.y = 0f;
+            currentPlanarSpeed = actualDelta.magnitude / Mathf.Max(Time.deltaTime, 0.0001f);
+            isRunning = running && currentPlanarSpeed > 0.01f;
         }
         #endregion
 
@@ -321,6 +337,8 @@ namespace Game
         public void StopMovement()
         {
             agent.isStopped = true; agent.ResetPath(); isHoldMove = false; isClickRun = false; clickTarget = Vector3.zero; ClearDynamic();
+            currentPlanarSpeed = 0f;
+            isRunning = false;
         }
         #endregion
 
@@ -330,14 +348,31 @@ namespace Game
 
         private void UpdateFootstep()
         {
-            if (_dialogueManager.IsInDialogue == true) return;
-            if (Vector3.Distance(transform.position, lastPosition) > 0.001f && !footstepSource.isPlaying)
+            if (_dialogueManager.IsInDialogue == true || footstepSource == null)
+            {
+                footstepTimer = 0f;
+                return;
+            }
+
+            if (!characterController.isGrounded || currentPlanarSpeed < footstepMinSpeed || leftClip == null || rightClip == null)
+            {
+                footstepTimer = 0f;
+                return;
+            }
+
+            footstepTimer += Time.deltaTime;
+
+            float interval = isRunning ? runningStepInterval : walkingStepInterval;
+            if (footstepTimer >= interval)
+            {
                 PlayFootstep();
+                footstepTimer = 0f;
+            }
         }
 
         private void PlayFootstep()
         {
-            footstepSource.pitch = isClickRun ? runningPitch : walkingPitch;
+            footstepSource.pitch = isRunning ? runningPitch : walkingPitch;
             if (leftClip && rightClip)
             {
                 footstepSource.PlayOneShot(isLeftFoot ? leftClip : rightClip);
