@@ -1,4 +1,4 @@
-using Newtonsoft.Json;
+п»їusing Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -30,7 +30,7 @@ namespace Game
         public bool destroyAfterUse = true;
 
         [Header("Move-to settings")]
-        [Tooltip("На каком расстоянии от предмета игрок останавливается")]
+        [Tooltip("РќР° РєР°РєРѕРј СЂР°СЃСЃС‚РѕСЏРЅРёРё РѕС‚ РїСЂРµРґРјРµС‚Р° РёРіСЂРѕРє РѕСЃС‚Р°РЅР°РІР»РёРІР°РµС‚СЃСЏ")]
         [SerializeField] private float approachDistance = 1.2f;
 
         private Transform playerTransform;
@@ -78,20 +78,21 @@ namespace Game
                 }
             }
         }
+
         void OnMouseUpAsButton()
         {
             if (_hasBeenUsed) return;
+            if (GetComponent<InteractibleItemInfluenceArea>() != null) return;
 
             var playerGO = GameObject.FindGameObjectWithTag("Player");
             var mover = playerGO?.GetComponent<PlayerMoveController>();
             if (mover == null) return;
 
-            float approach = 1.2f;
             mover.MoveToAndCallback(
-                /* target  */ this.transform,
-                /* run     */ true,
-                /* arrive  */ () => Interact(),
-                /* stop    */ approach
+                this.transform,
+                true,
+                () => Interact(),
+                approachDistance
             );
         }
 
@@ -150,8 +151,5 @@ namespace Game
         }
 
         public void Triggered() => Interact();
-
     }
-
 }
-

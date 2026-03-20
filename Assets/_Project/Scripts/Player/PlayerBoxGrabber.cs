@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.EventSystems;
 
 public class PlayerBoxGrabber : MonoBehaviour
 {
@@ -43,7 +44,7 @@ public class PlayerBoxGrabber : MonoBehaviour
     {
         /*========== HOTKEYS ==========*/
         if (Input.GetKeyDown(grabKey)) ToggleGrabWithE();
-        if (Input.GetMouseButtonDown(0)) HandleMouseClick();
+        if (Input.GetMouseButtonDown(0) && !IsPointerOverUi()) HandleMouseClick();
 
         if (attachedBox == null) return; // no box grabbed ⇒ skip move logic
 
@@ -196,5 +197,10 @@ public class PlayerBoxGrabber : MonoBehaviour
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.yellow; Gizmos.DrawWireSphere(transform.position, grabRange);
+    }
+
+    private static bool IsPointerOverUi()
+    {
+        return EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
     }
 }

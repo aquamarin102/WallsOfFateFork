@@ -1,41 +1,22 @@
-using UnityEngine;
+п»їusing UnityEngine;
 
 public class CursorController : MonoBehaviour
 {
-    // Ссылки на панели интерфейса, для которых должен быть включён курсор
-    [SerializeField] private GameObject[] uiPanels;
-
     private void Start()
     {
-        // Изначально курсор выключен: скрыт и заблокирован
-        Cursor.visible = false;
-        Cursor.lockState = CursorLockMode.Locked;
+        ApplyCursorState();
     }
 
     private void Update()
     {
-        bool anyPanelActive = false;
-        foreach (GameObject panel in uiPanels)
-        {
-            // Если хотя бы одна панель активна, назначаем флаг
-            if (panel.activeSelf)
-            {
-                anyPanelActive = true;
-                break;
-            }
-        }
+        ApplyCursorState();
+    }
 
-        if (anyPanelActive)
-        {
-            // Если хотя бы одна из указанных панелей активна – делаем курсор видимым и разблокированным
-            Cursor.visible = true;
-            Cursor.lockState = CursorLockMode.None;
-        }
-        else
-        {
-            // Если ни одна из панелей не активна – скрываем курсор и блокируем его
-            Cursor.visible = false;
-            Cursor.lockState = CursorLockMode.Locked;
-        }
+    private static void ApplyCursorState()
+    {
+        // РРіСЂР° Р°РєС‚РёРІРЅРѕ РёСЃРїРѕР»СЊР·СѓРµС‚ РјС‹С€СЊ РґР»СЏ РґРІРёР¶РµРЅРёСЏ Рё РІР·Р°РёРјРѕРґРµР№СЃС‚РІРёР№,
+        // РїРѕСЌС‚РѕРјСѓ РєСѓСЂСЃРѕСЂ РґРѕР»Р¶РµРЅ РѕСЃС‚Р°РІР°С‚СЊСЃСЏ РІРёРґРёРјС‹Рј Рё СЃРІРѕР±РѕРґРЅС‹Рј.
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
     }
 }

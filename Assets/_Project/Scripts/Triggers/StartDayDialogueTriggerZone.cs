@@ -55,7 +55,15 @@ namespace Game
         private void InvokeEvent(Collider obj)
         {
             bool interacted = InputManager.GetInstance().TryConsumeInteractPress(ref lastProcessedInteractPressId);
-            TriggerEvent eventData = new TriggerEvent(AreaType, null, obj.gameObject, interacted, Parameters);
+            GameObject targetObject = triggerObject != null ? triggerObject : gameObject;
+            TriggerEvent eventData = new TriggerEvent(AreaType, obj.gameObject, targetObject, interacted, Parameters);
+            OnEventTriggered?.Invoke(eventData);
+        }
+
+        public void InvokeDirectInteraction(GameObject playerObj)
+        {
+            GameObject targetObject = triggerObject != null ? triggerObject : gameObject;
+            TriggerEvent eventData = new TriggerEvent(AreaType, playerObj, targetObject, true, Parameters);
             OnEventTriggered?.Invoke(eventData);
         }
     }

@@ -28684,19 +28684,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::dialogueManager
   DialogueUI: {fileID: 1232507332}
-  optionButtons:
-  - {fileID: 190713691}
-  - {fileID: 1910934306}
-  - {fileID: 1925680268}
   PlayerPanel: {fileID: 2947497137651062322, guid: f803e002af56cb648ab394bf3a2f1a75, type: 3}
   NPCPanel: {fileID: 3634988932631031838, guid: 406baa0e75dc2804d860f832c760b5f9, type: 3}
   NPCPortrait: {fileID: 2104919597}
   SpawnPoint: {fileID: 466956799}
-  panelSpacing: 100
   resourcesUI: {fileID: 861803240}
-  CurrentID: 0
+  OptionsList: {fileID: 0}
   IsInDialogue: 0
-  OptionIDs: 000000000100000002000000
 --- !u!1 &383307221
 GameObject:
   m_ObjectHideFlags: 0
@@ -55249,7 +55243,7 @@ AudioSource:
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: 2cb7a9df63b71c44aad335dc5a230aa1, type: 3}
   m_PlayOnAwake: 1
-  m_Volume: 0.5
+  m_Volume: 1
   m_Pitch: 1
   Loop: 1
   Mute: 0

@@ -1,4 +1,4 @@
-using Game.Core;
+﻿using Game.Core;
 using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -22,7 +22,6 @@ namespace Game
         {
             LoadItemState();
             if (triggerObject != null) triggerObject = this.gameObject;
-
         }
 
         public void MarkAsUsed()
@@ -63,24 +62,39 @@ namespace Game
         {
             if (!hasBeenUsed)
             {
-
                 bool interacted = ConsumeInteractPress();
                 TriggerEvent eventData = new TriggerEvent(
                     AreaType,
                     obj.gameObject,
                     triggerObject,
                     interacted,
-                    string.Empty 
+                    string.Empty
                 );
                 if (interacted)
                 {
-                    //Debug.Log("interact pressed" + interacted);
-                    //Debug.Log("eventData" + eventData.IsEnteracted);
                     MarkAsUsed();
                 }
 
                 await OnItemInteracted.InvokeAsync((eventData, itemParameters));
             }
+        }
+
+        public override async Task InvokeDirectInteractionAsync(GameObject playerObj)
+        {
+            if (hasBeenUsed)
+                return;
+
+            GameObject targetObject = triggerObject != null ? triggerObject : gameObject;
+            TriggerEvent eventData = new TriggerEvent(
+                AreaType,
+                playerObj,
+                targetObject,
+                true,
+                string.Empty
+            );
+
+            MarkAsUsed();
+            await OnItemInteracted.InvokeAsync((eventData, itemParameters));
         }
     }
 }

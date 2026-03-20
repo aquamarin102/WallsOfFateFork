@@ -45,6 +45,7 @@ public class AudioManager : MonoBehaviour
         LoadVolumeSettings();
         ActivateNormalSnapshot();
         ChangeMusicForScene(SceneManager.GetActiveScene().name);
+        ConfigureSceneAudioSources(SceneManager.GetActiveScene().name);
     }
 
     private void OnDestroy()
@@ -189,6 +190,32 @@ public class AudioManager : MonoBehaviour
         ReloadVolumeSettings();
         ActivateNormalSnapshot();
         ChangeMusicForScene(scene.name);
+        ConfigureSceneAudioSources(scene.name);
+    }
+
+    private void ConfigureSceneAudioSources(string sceneName)
+    {
+        if (sceneName == "Forge")
+        {
+            ConfigureNamedWorldAudioSource("Molot", 1f, 2f, 10f);
+        }
+    }
+
+    private void ConfigureNamedWorldAudioSource(string objectName, float spatialBlend, float minDistance, float maxDistance)
+    {
+        GameObject targetObject = GameObject.Find(objectName);
+        if (targetObject == null)
+            return;
+
+        AudioSource source = targetObject.GetComponent<AudioSource>();
+        if (source == null)
+            return;
+
+        source.spatialBlend = spatialBlend;
+        source.rolloffMode = AudioRolloffMode.Logarithmic;
+        source.minDistance = minDistance;
+        source.maxDistance = Mathf.Max(minDistance + 0.01f, maxDistance);
+        source.dopplerLevel = 0f;
     }
 
     private AudioClip GetMusicForScene(string sceneName)
@@ -213,6 +240,13 @@ public class AudioManager : MonoBehaviour
                 return LoadMusicClip("ForgeMusic", defaultMusic);
             case "Storage":
                 return LoadMusicClip("StorageMusic", defaultMusic);
+            case "MiniGameStrength":
+                return LoadMusicClip("StrengthMusic", defaultMusic);
+            case "MiniGameAgility":
+                return LoadMusicClip("AgilityMusic", defaultMusic);
+            case "MiniGameIntellect":
+                return LoadMusicClip("IntellectMusic", defaultMusic);
+
         }
 
         if (sceneName.IndexOf("minigame", System.StringComparison.OrdinalIgnoreCase) >= 0)

@@ -669,6 +669,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 1cba6d3a80061d14fb0b4306a06a85f0, type: 3}
       insertIndex: -1
       addedObject: {fileID: -2492845168276687725}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 1cba6d3a80061d14fb0b4306a06a85f0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3489786396672664401}
   m_SourcePrefab: {fileID: 100100000, guid: 1cba6d3a80061d14fb0b4306a06a85f0, type: 3}
 --- !u!4 &392258294931892313 stripped
 Transform:
@@ -728,6 +731,9 @@ MonoBehaviour:
   walkingPitch: 1.4
   runningPitch: 1.9
   _dialogueManager: {fileID: 0}
+  walkingStepInterval: 0.48
+  runningStepInterval: 0.32
+  footstepMinSpeed: 0.15
 --- !u!114 &3382583244008469319
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -942,3 +948,11 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
+--- !u!81 &3489786396672664401
+AudioListener:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1025207163794879203}
+  m_Enabled: 1

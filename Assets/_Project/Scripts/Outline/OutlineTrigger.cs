@@ -1,4 +1,4 @@
-using UnityEngine;
+п»їusing UnityEngine;
 
 namespace Game
 {
@@ -7,9 +7,9 @@ namespace Game
     {
         public enum OutlineMethod
         {
-            MaterialSwap,    // Замена материалов (простой способ)
-            RendererFeature, // Использование Renderer Feature (более продвинутый)
-            ChildOutlines    // Подсветка дочерних объектов
+            MaterialSwap,
+            RendererFeature,
+            ChildOutlines
         }
 
         [Header("Outline Settings")]
@@ -22,7 +22,7 @@ namespace Game
         [SerializeField] private LayerMask hoverLayerMask = ~0;
 
         [Header("References")]
-        [SerializeField] private GameObject targetObject; // Если пусто, используем этот GameObject
+        [SerializeField] private GameObject targetObject;
         [SerializeField] private bool highlightOnHover = true;
         [SerializeField] private bool highlightOnTrigger = true;
 
@@ -47,7 +47,6 @@ namespace Game
 
         private void InitializeOutlines()
         {
-            // В зависимости от выбранного метода инициализируем подсветку
             switch (outlineMethod)
             {
                 case OutlineMethod.MaterialSwap:
@@ -55,20 +54,19 @@ namespace Game
                     outlines = targetObject.GetComponentsInChildren<URPOutline>(true);
                     if (outlines.Length == 0)
                     {
-                        // Добавляем URPOutline на все рендереры
-                        var renderers = targetObject.GetComponentsInChildren<Renderer>();
+                        var renderers = targetObject.GetComponentsInChildren<Renderer>(true);
                         foreach (var renderer in renderers)
                         {
                             var outline = renderer.gameObject.AddComponent<URPOutline>();
                             outline.OutlineColor = outlineColor;
                             outline.OutlineWidth = outlineWidth;
                         }
+
                         outlines = targetObject.GetComponentsInChildren<URPOutline>(true);
                     }
                     break;
 
                 case OutlineMethod.ChildOutlines:
-                    // Для этого метода просто используем существующие компоненты
                     outlines = targetObject.GetComponentsInChildren<URPOutline>(true);
                     break;
             }
@@ -78,28 +76,22 @@ namespace Game
         {
             colliders = GetComponentsInChildren<Collider>(true);
 
-            // Убеждаемся, что хотя бы один коллайдер есть
             if (colliders.Length == 0)
-            {
                 Debug.LogError($"OutlineTrigger on {gameObject.name} has no colliders!");
-            }
         }
 
         private void Update()
         {
-            if (!highlightOnHover) return;
+            if (!highlightOnHover || Camera.main == null)
+                return;
 
-            // Проверка наведения мыши
             var ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             bool hitThis = false;
+            RaycastHit[] hits = Physics.RaycastAll(ray, hoverCheckDistance, hoverLayerMask, QueryTriggerInteraction.Collide);
 
-            foreach (var col in colliders)
+            foreach (var hit in hits)
             {
-                if (col == null) continue;
-
-                if (((1 << col.gameObject.layer) & hoverLayerMask) == 0) continue;
-
-                if (col.Raycast(ray, out _, hoverCheckDistance))
+                if (BelongsToThisTrigger(hit.collider))
                 {
                     hitThis = true;
                     break;
@@ -111,6 +103,23 @@ namespace Game
                 isMouseOver = hitThis;
                 UpdateHighlightState();
             }
+        }
+
+        private bool BelongsToThisTrigger(Collider hitCollider)
+        {
+            if (hitCollider == null || colliders == null)
+                return false;
+
+            foreach (var col in colliders)
+            {
+                if (col == null)
+                    continue;
+
+                if (col == hitCollider)
+                    return true;
+            }
+
+            return false;
         }
 
         private void UpdateHighlightState()
@@ -131,16 +140,18 @@ namespace Game
 
         private void SetHighlighted(bool enabled)
         {
-            if (outlines == null) return;
-
-            foreach (var outline in outlines)
+            if (outlines != null)
             {
-                if (outline != null)
+                foreach (var outline in outlines)
                 {
-                    outline.enabled = enabled;
-                    outline.SetHighlighted(enabled);
+                    if (outline != null)
+                    {
+                        outline.enabled = enabled;
+                        outline.SetHighlighted(enabled);
+                    }
                 }
             }
+
         }
 
         private void OnTriggerEnter(Collider other)
@@ -161,7 +172,6 @@ namespace Game
             }
         }
 
-        // Публичные методы для управления извне
         public void ForceHighlight(bool enabled)
         {
             SetHighlighted(enabled);

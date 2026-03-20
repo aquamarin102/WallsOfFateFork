@@ -135,5 +135,12 @@ namespace Game
 
             await OnEventTriggered.InvokeAsync(eventData);
         }
+
+        public virtual async System.Threading.Tasks.Task InvokeDirectInteractionAsync(GameObject playerObj)
+        {
+            GameObject targetObject = triggerObject != null ? triggerObject : gameObject;
+            TriggerEvent eventData = new TriggerEvent(AreaType, playerObj, targetObject, true, Parameters);
+            await OnEventTriggered.InvokeAsync(eventData);
+        }
     }
 }

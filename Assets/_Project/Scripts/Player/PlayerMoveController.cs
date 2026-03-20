@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using Zenject;
 
@@ -26,6 +27,10 @@ namespace Game
         [SerializeField] private float stopThreshold = 0.1f;     // статичные цели
         [SerializeField] private float clickRunThreshold = 0.3f; // двойной клик
         [SerializeField] private float holdThreshold = 0.2f;     // follow курсора
+        [SerializeField] private float interactionStopDistance = 1.2f;
+        [SerializeField] private float mouseRaycastDistance = 500f;
+        [SerializeField] private float navMeshSampleRadius = 2.5f;
+        [SerializeField] private float holdRetargetDistance = 0.35f;
 
         [Header("Pitch Settings")]
         [SerializeField] private float walkingPitch = 1f;
@@ -138,6 +143,12 @@ namespace Game
         private void HandleMouseInput()
         {
             if (_dialogueManager.IsInDialogue == true) return;
+            if (IsPointerOverUi())
+            {
+                if (Input.GetMouseButtonUp(0))
+                    isHoldMove = false;
+                return;
+            }
 
             if (Input.GetMouseButtonDown(0))
             {
@@ -155,42 +166,114 @@ namespace Game
                 float held = Time.time - mouseDownTime;
                 dynamicTarget = null;                     // сброс преследования
 
-                //if (held < holdThreshold) ProcessClick();
+                if (held < holdThreshold) ProcessClick();
                 isHoldMove = false;
             }
         }
 
-        //private void ProcessClick()
-        //{
-        //    Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        //    var hits = Physics.RaycastAll(ray, 100f);
-        //    Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+        private void ProcessClick()
+        {
+            Camera mainCamera = Camera.main;
+            if (mainCamera == null)
+                return;
 
-        //    foreach (var hit in hits)
-        //    {
-        //        // 1) Любой объект, реализующий ITriggerable
-        //        if (hit.collider.TryGetComponent<ITriggerable>(out var trigger) && interactManager)
-        //        {
-        //            // если уже активирован и не повторяется — пропускаем
-        //            if (interactManager.HasTriggerBeenActivated(trigger) && trigger is not Box)
-        //                continue;
+            Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
+            RaycastHit[] hits = Physics.RaycastAll(ray, mouseRaycastDistance, ~0, QueryTriggerInteraction.Ignore);
+            Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
 
-        //            float stopDist = 1.2f;
-        //            if (hit.collider.TryGetComponent<NavMeshAgent>(out _))
-        //                MoveToAndCallback(hit.collider.transform, isClickRun, () => interactManager.InteractWith(trigger), stopDist);
-        //            else
-        //                MoveToAndCallback(hit.point, isClickRun, () => interactManager.InteractWith(trigger), stopDist);
-        //            return;
-        //        }
-        //        // 2) Плоскость земли
-        //        if (((1 << hit.collider.gameObject.layer) & groundMask) != 0)
-        //        {
-        //            if (agent.CalculatePath(hit.point, navMeshPath) && navMeshPath.status == NavMeshPathStatus.PathComplete)
-        //                MoveToAndCallback(hit.point, isClickRun, null);
-        //            return;
-        //        }
-        //    }
-        //}
+            foreach (RaycastHit hit in hits)
+            {
+                Collider hitCollider = hit.collider;
+                if (hitCollider == null)
+                    continue;
+
+                if (TryProcessInteractionClick(hit))
+                    return;
+
+            }
+
+            if (TryResolveMovementDestination(ray, hits, out Vector3 destination))
+                MoveToAndCallback(destination, isClickRun, null);
+        }
+
+        private bool TryResolveMovementDestination(Ray ray, out Vector3 destination)
+        {
+            if (TryGetMovementPlanePoint(ray, out Vector3 planePoint) &&
+                TryGetPathableDestination(planePoint, out destination))
+            {
+                return true;
+            }
+
+            RaycastHit[] hits = Physics.RaycastAll(ray, mouseRaycastDistance, ~0, QueryTriggerInteraction.Ignore);
+            Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+            return TryResolveMovementDestination(hits, out destination);
+        }
+
+        private bool TryResolveMovementDestination(Ray ray, RaycastHit[] hits, out Vector3 destination)
+        {
+            if (TryGetMovementPlanePoint(ray, out Vector3 planePoint) &&
+                TryGetPathableDestination(planePoint, out destination))
+            {
+                return true;
+            }
+
+            return TryResolveMovementDestination(hits, out destination);
+        }
+
+        private bool TryResolveMovementDestination(RaycastHit[] hits, out Vector3 destination)
+        {
+            if (TryResolveMovementDestinationFromHits(hits, true, out destination))
+                return true;
+
+            return TryResolveMovementDestinationFromHits(hits, false, out destination);
+        }
+
+        private bool TryResolveMovementDestinationFromHits(RaycastHit[] hits, bool groundOnly, out Vector3 destination)
+        {
+            foreach (RaycastHit hit in hits)
+            {
+                Collider hitCollider = hit.collider;
+                if (hitCollider == null || hitCollider.transform.IsChildOf(transform))
+                    continue;
+
+                bool isGroundLayer = ((1 << hitCollider.gameObject.layer) & groundMask) != 0;
+                if (groundOnly != isGroundLayer)
+                    continue;
+
+                if (TryGetPathableDestination(hit.point, out destination))
+                    return true;
+            }
+
+            destination = default;
+            return false;
+        }
+
+        private bool TryGetMovementPlanePoint(Ray ray, out Vector3 point)
+        {
+            Plane movementPlane = new(Vector3.up, new Vector3(0f, transform.position.y, 0f));
+            if (movementPlane.Raycast(ray, out float distance))
+            {
+                point = ray.GetPoint(distance);
+                return true;
+            }
+
+            point = default;
+            return false;
+        }
+
+        private bool TryGetPathableDestination(Vector3 targetPoint, out Vector3 destination)
+        {
+            destination = default;
+
+            if (!NavMesh.SamplePosition(targetPoint, out NavMeshHit navHit, navMeshSampleRadius, NavMesh.AllAreas))
+                return false;
+
+            if (!agent.CalculatePath(navHit.position, navMeshPath) || navMeshPath.status != NavMeshPathStatus.PathComplete)
+                return false;
+
+            destination = navHit.position;
+            return true;
+        }
         #endregion
 
         // ==================================================
@@ -239,15 +322,25 @@ namespace Game
                 }
             }
             // B) Follow‑режим (удержание)
-            else if (isHoldMove)
+            else if (isHoldMove && !IsPointerOverUi())
             {
                 Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-                if (Physics.Raycast(ray, out var hit, 100f, groundMask) &&
-                    agent.CalculatePath(hit.point, navMeshPath) && navMeshPath.status == NavMeshPathStatus.PathComplete)
+                if (TryResolveMovementDestination(ray, out Vector3 destination))
                 {
-                    clickTarget = hit.point; agent.SetDestination(clickTarget); agent.isStopped = false;
-                    desired = agent.desiredVelocity.WithY(0).normalized;
+                    bool shouldRetarget = !agent.hasPath ||
+                        agent.isStopped ||
+                        (clickTarget - destination).sqrMagnitude > holdRetargetDistance * holdRetargetDistance;
+
+                    if (shouldRetarget)
+                    {
+                        clickTarget = destination;
+                        agent.SetDestination(clickTarget);
+                        agent.isStopped = false;
+                    }
                 }
+
+                if (agent.hasPath && !agent.isStopped)
+                    desired = agent.desiredVelocity.WithY(0).normalized;
             }
             // C) Click‑to‑point
             else if (agent.hasPath && !agent.isStopped)
@@ -345,6 +438,125 @@ namespace Game
         // ==================================================
         #region Helpers
         private void ClearDynamic() { dynamicTarget = null; _onArriveAction = null; }
+
+        private static bool IsPointerOverUi()
+        {
+            return EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+        }
+
+        private bool TryProcessInteractionClick(RaycastHit hit)
+        {
+            Collider hitCollider = hit.collider;
+            Vector3 hitPoint = hit.point;
+
+            if (TryFindClosestInteractionZone(hitCollider, hitPoint, out InteractibleItemInfluenceArea itemArea))
+            {
+                Transform target = itemArea.triggerObject != null ? itemArea.triggerObject.transform : itemArea.transform;
+                MoveToAndCallback(target, isClickRun, () => _ = itemArea.InvokeDirectInteractionAsync(gameObject), interactionStopDistance);
+                return true;
+            }
+
+            if (TryFindClosestInteractionZone(hitCollider, hitPoint, out DoorInfluenceArea doorArea))
+            {
+                Transform target = doorArea.triggerObject != null ? doorArea.triggerObject.transform : doorArea.transform;
+                MoveToAndCallback(target, isClickRun, () => _ = doorArea.InvokeDirectInteractionAsync(gameObject), interactionStopDistance);
+                return true;
+            }
+
+            if (TryFindClosestInteractionZone(hitCollider, hitPoint, out InfluenceArea influenceArea))
+            {
+                Transform target = influenceArea.triggerObject != null ? influenceArea.triggerObject.transform : influenceArea.transform;
+                MoveToAndCallback(target, isClickRun, () => _ = influenceArea.InvokeDirectInteractionAsync(gameObject), interactionStopDistance);
+                return true;
+            }
+
+            if (TryFindClosestInteractionZone(hitCollider, hitPoint, out StartDayDialogueTriggerZone startDayDialogueZone))
+            {
+                Transform target = startDayDialogueZone.triggerObject != null ? startDayDialogueZone.triggerObject.transform : startDayDialogueZone.transform;
+                MoveToAndCallback(target, isClickRun, () => startDayDialogueZone.InvokeDirectInteraction(gameObject), interactionStopDistance);
+                return true;
+            }
+
+            if (TryFindComponentOnClickedObject(hitCollider, out InteractableItem interactableItem))
+            {
+                MoveToAndCallback(interactableItem.transform, isClickRun, interactableItem.Interact, interactionStopDistance);
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool TryFindRelatedComponent<T>(Collider hitCollider, out T component) where T : Component
+        {
+            component = hitCollider.GetComponent<T>();
+            if (component != null)
+                return true;
+
+            component = hitCollider.GetComponentInParent<T>();
+            if (component != null)
+                return true;
+
+            component = hitCollider.GetComponentInChildren<T>(true);
+            return component != null;
+        }
+
+        private static bool TryFindComponentOnClickedObject<T>(Collider hitCollider, out T component) where T : Component
+        {
+            component = hitCollider.GetComponent<T>();
+            if (component != null)
+                return true;
+
+            component = hitCollider.GetComponentInParent<T>();
+            return component != null;
+        }
+
+        private static bool TryFindClosestInteractionZone<T>(Collider hitCollider, Vector3 hitPoint, out T component) where T : Component
+        {
+            component = null;
+            T bestCandidate = null;
+            float bestScore = float.PositiveInfinity;
+            HashSet<T> candidates = new();
+
+            for (Transform current = hitCollider.transform; current != null; current = current.parent)
+            {
+                foreach (T candidate in current.GetComponentsInChildren<T>(true))
+                    candidates.Add(candidate);
+            }
+
+            foreach (T candidate in candidates)
+            {
+                float score = GetInteractionCandidateScore(candidate, hitPoint);
+                if (float.IsPositiveInfinity(score) || score >= bestScore)
+                    continue;
+
+                bestScore = score;
+                bestCandidate = candidate;
+            }
+
+            component = bestCandidate;
+            return component != null;
+        }
+
+        private static float GetInteractionCandidateScore(Component candidate, Vector3 hitPoint)
+        {
+            Collider candidateCollider = candidate.GetComponent<Collider>();
+            float boundsDistance = candidateCollider != null
+                ? candidateCollider.bounds.SqrDistance(hitPoint)
+                : (candidate.transform.position - hitPoint).sqrMagnitude;
+
+            // Отсекаем слишком далёкие зоны, чтобы клик не улетал в соседние объекты.
+            if (boundsDistance > 2.25f)
+                return float.PositiveInfinity;
+
+            Transform targetTransform = candidate.transform;
+            if (candidate is InfluenceArea area && area.triggerObject != null)
+                targetTransform = area.triggerObject.transform;
+            else if (candidate is StartDayDialogueTriggerZone zone && zone.triggerObject != null)
+                targetTransform = zone.triggerObject.transform;
+
+            float targetDistance = (targetTransform.position - hitPoint).sqrMagnitude;
+            return boundsDistance * 10f + targetDistance;
+        }
 
         private void UpdateFootstep()
         {

@@ -30,5 +30,22 @@ namespace Game
 
             await OnDoorInteracted.InvokeAsync((eventData, doorParameters));
         }
+
+        public override async Task InvokeDirectInteractionAsync(GameObject playerObj)
+        {
+            GameObject targetObject = triggerObject != null ? triggerObject : gameObject;
+            string json = JsonUtility.ToJson(doorParameters);
+
+            TriggerEvent eventData = new TriggerEvent(
+                AreaType,
+                playerObj,
+                targetObject,
+                true,
+                json
+            );
+
+            await OnEventTriggered.InvokeAsync(eventData);
+            await OnDoorInteracted.InvokeAsync((eventData, doorParameters));
+        }
     }
 }

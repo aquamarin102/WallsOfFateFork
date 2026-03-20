@@ -215,6 +215,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _dependFromQuests: 0
   animationName: Armature_Chest|Chest_Open
+  openAudioSource: {fileID: 0}
+  openSounds:
+  - {fileID: 8300000, guid: 611e685cf29b2f84b9eee1ce5d77d5c2, type: 3}
+  - {fileID: 8300000, guid: fb0721c15d6ab3246b011848b4bf257f, type: 3}
+  - {fileID: 8300000, guid: 2d6ef7f24e54aa94abeb60bdd092c3cd, type: 3}
+  - {fileID: 8300000, guid: 5322e3b7e62f815478ddb496441c69d1, type: 3}
+  openVolume: 0.8
+  configureSourceAs3D: 1
 --- !u!114 &3193528699088873577
 MonoBehaviour:
   m_ObjectHideFlags: 0
