@@ -28686,13 +28686,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::dialogueManager
   DialogueUI: {fileID: 1232507332}
-  PlayerPanel: {fileID: 2947497137651062322, guid: f803e002af56cb648ab394bf3a2f1a75, type: 3}
-  NPCPanel: {fileID: 3634988932631031838, guid: 406baa0e75dc2804d860f832c760b5f9, type: 3}
+  PlayerPanel: {fileID: 1137950729103118988, guid: 0b2027924cee8dd419a6c4d9d948b077, type: 3}
+  NPCPanel: {fileID: 7748268193640722440, guid: 0eab7fd4a3e780b4ba933439d050a6cf, type: 3}
   NPCPortrait: {fileID: 2104919597}
   SpawnPoint: {fileID: 466956799}
   resourcesUI: {fileID: 861803240}
   OptionsList: {fileID: 0}
   IsInDialogue: 0
+  characterRevealDelay: 0.045
+  nextSentenceDelay: 0.18
+  firstSentenceDelay: 0.1
 --- !u!1 &383307221
 GameObject:
   m_ObjectHideFlags: 0
@@ -30117,7 +30120,11 @@ MonoBehaviour:
   viewport: {fileID: 2129536631}
   topPadding: 45
   bottomPadding: 45
+  fitContentVerticalBias: 0.72
+  firstMessageViewportBias: 0.9
+  latestMessageViewportBias: 0.84
   delayBeforeScroll: 0.05
+  smoothScrollTime: 0.12
 --- !u!114 &466956802
 MonoBehaviour:
   m_ObjectHideFlags: 0

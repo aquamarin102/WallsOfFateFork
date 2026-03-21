@@ -96,8 +96,7 @@ namespace Game.MiniGame
 
             if (!string.IsNullOrEmpty(sceneToLoad))
             {
-                //SceneManager.LoadScene(sceneToLoad);
-                loadingManager.LoadScene(sceneToLoad);
+                loadingManager.LoadSceneDirect(sceneToLoad);
             }
             else
             {
@@ -176,7 +175,7 @@ namespace Game.MiniGame
             PlayerSpawnData.SpawnPosition = previousPosition;
             PlayerSpawnData.SpawnRotation = previousRotation;
 
-            loadingManager.LoadScene(_previousScene);
+            loadingManager.LoadSceneDirect(_previousScene);
             Destroy(this.gameObject);
         }
 

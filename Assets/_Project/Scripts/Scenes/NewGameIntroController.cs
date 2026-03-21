@@ -6,7 +6,7 @@ using Zenject;
 namespace Game
 {
     public class NewGameIntroController : MonoBehaviour
-    {    
+    {
         private LoadingManager loadingManager;
 
         [Inject]

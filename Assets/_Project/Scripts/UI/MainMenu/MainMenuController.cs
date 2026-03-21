@@ -6,6 +6,9 @@ namespace Game.UI
 {
     public class MainMenuController : MonoBehaviour
     {
+        private const string CharacterCreationSceneName = "CreateCharacter";
+        private const string FallbackGameplaySceneName = "StartDay";
+
         [Header("Buttons")]
         public GameObject startGameButton;
         public GameObject continueGameButton;
@@ -59,7 +62,7 @@ namespace Game.UI
         {
             saveLoadManager.LoadGame();
 
-            loadingManager.LoadScene(firstScene);
+            loadingManager.LoadScene(ResolveEntryScene());
         }
 
         public void OnSettingsButtonClick()
@@ -78,7 +81,17 @@ namespace Game.UI
 
             NewGameStarted?.Invoke();
 
-            loadingManager.LoadScene(firstScene);
+            loadingManager.LoadScene(ResolveEntryScene());
+        }
+
+        private string ResolveEntryScene()
+        {
+            if (string.IsNullOrWhiteSpace(firstScene) || firstScene == CharacterCreationSceneName)
+            {
+                return FallbackGameplaySceneName;
+            }
+
+            return firstScene;
         }
     }
 }

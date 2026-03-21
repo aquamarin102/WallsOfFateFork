@@ -1,12 +1,19 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using System.Collections.Generic;
+using Zenject;
 
 namespace Game
 {
     public class LoadAnotherScene : MonoBehaviour
     {
         [SerializeField] private List<DoorForAnotherScene> doors;
+        private LoadingManager loadingManager;
+
+        [Inject]
+        public void Construct(LoadingManager loadingManager)
+        {
+            this.loadingManager = loadingManager;
+        }
 
         private void Start()
         {
@@ -21,13 +28,7 @@ namespace Game
 
         public void LoadScene(string sceneName)
         {
-            SceneManager.sceneLoaded += OnSceneLoaded;
-            SceneManager.LoadScene(sceneName);
-        }
-
-        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-        {
-            SceneManager.sceneLoaded -= OnSceneLoaded;
+            loadingManager.LoadScene(sceneName);
         }
 
         private void OnDestroy()

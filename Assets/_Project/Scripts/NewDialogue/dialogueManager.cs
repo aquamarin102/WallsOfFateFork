@@ -32,6 +32,7 @@ namespace Game
         [SerializeField] private float characterRevealDelay = 0.045f;
         [SerializeField] private float nextSentenceDelay = 0.18f;
         [SerializeField] private float firstSentenceDelay = 0.1f;
+        [SerializeField] private float optionTextScale = 0.8f;
 
         private List<GameObject> spawnedPanels = new();
 
@@ -487,7 +488,11 @@ namespace Game
                 optionButton.onClick.AddListener(() => SelectOption(capturedIndex));
 
                 TMP_Text optionTextComponent = optionObject.transform.GetComponent<TMP_Text>();
-                optionTextComponent.text = optionCounter + ". " + currentSentence.Text;
+                if (optionTextComponent != null)
+                {
+                    ApplyOptionTextSizing(optionTextComponent);
+                    optionTextComponent.text = optionCounter + ". " + currentSentence.Text;
+                }
 
                 optionCounter++;
 
@@ -500,6 +505,20 @@ namespace Game
             }
 
             RefreshDialogueLayout(scrollToLatest: true);
+        }
+
+        private void ApplyOptionTextSizing(TMP_Text optionTextComponent)
+        {
+            float clampedScale = Mathf.Clamp(optionTextScale, 0.5f, 1f);
+
+            if (optionTextComponent.enableAutoSizing)
+            {
+                optionTextComponent.fontSizeMin = Mathf.Max(1f, optionTextComponent.fontSizeMin * clampedScale);
+                optionTextComponent.fontSizeMax = Mathf.Max(optionTextComponent.fontSizeMin, optionTextComponent.fontSizeMax * clampedScale);
+                return;
+            }
+
+            optionTextComponent.fontSize = Mathf.Max(1f, optionTextComponent.fontSize * clampedScale);
         }
 
         private void CloseDialogue()

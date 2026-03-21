@@ -211,6 +211,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eaaecb713c350a94f8c30e5388fb9310, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.ExitConfirmationPanelController
+  panelRoot: {fileID: 0}
   confirmButton: {fileID: 600446117}
   declineButton: {fileID: 1496013622}
 --- !u!1 &111305429
@@ -2428,7 +2429,7 @@ MonoBehaviour:
   newGameConfirmationPanel: {fileID: 939273030}
   exitConfirmationPanel: {fileID: 59119506}
   settingsPanel: {fileID: 2001908982}
-  firstScene: CreateCharacter
+  firstScene: StartDay
 --- !u!114 &780228225
 MonoBehaviour:
   m_ObjectHideFlags: 0
