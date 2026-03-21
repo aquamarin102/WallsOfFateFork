@@ -37,7 +37,16 @@ namespace Game.MiniGame.PowerCheck
             _rb.useGravity = false;
 
             _characteristics = GetComponent<MiniGamePlayer>();
-            _runDefaultSpeed = _characteristics.Speed;
+            // Баффы и дебаффы должны считаться от фактической стартовой скорости движения,
+            // настроенной на контроллере, иначе множитель начинает работать как замедление.
+            float configuredSpeed = _runSpeed > 0f ? _runSpeed : _runDefaultSpeed;
+            if (configuredSpeed <= 0f && _characteristics != null)
+            {
+                configuredSpeed = _characteristics.Speed;
+            }
+
+            _runDefaultSpeed = configuredSpeed;
+            _runSpeed = configuredSpeed;
 
             FindDebuffEffect();
         }
@@ -79,17 +88,14 @@ namespace Game.MiniGame.PowerCheck
 
         public void ChangeSpeed(float speed, bool isDebuff)
         {
-            if (_underDebuff && isDebuff)
+            if (isDebuff)
             {
-                _underDebuff = false;
+                _underDebuff = !Mathf.Approximately(speed, 1f);
                 _runSpeed = _runDefaultSpeed * speed;
+                return;
             }
-            else if (!_underDebuff && isDebuff)
-            {
-                _underDebuff = true;
-                _runSpeed = _runDefaultSpeed * speed;
-            }
-            else if (!_underDebuff && !isDebuff)
+
+            if (!_underDebuff)
             {
                 _runSpeed = _runDefaultSpeed * speed;
             }

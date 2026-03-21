@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using Game.MiniGame;
+using Game.MiniGame.PowerCheck;
 using Game.UI;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
@@ -15,6 +16,7 @@ namespace Game
         [Header("Scene References")]
         [SerializeField] private GridManager grid;
         [SerializeField] private MiniGameInputHandler inputHandler;
+        [SerializeField] private EndDayScreenManager endGameScreenManager;
 
         [Header("Game Rules")]
         [SerializeField] private int maxAttempts = 3;
@@ -39,6 +41,7 @@ namespace Game
         private int _lastFailedCommandIndex = -1;
         private bool _hasBootstrappedScene;
         private bool _isTutorialPending;
+        private bool _useEndGameScreen;
 
         public void InitializeWithData(MiniGameData gameData)
         {
@@ -48,11 +51,12 @@ namespace Game
 
         public void OnMiniGameEnded(bool playerWin)
         {
+            UnbindEndGameScreen();
+
             if (MinigameManager.Instance != null)
             {
                 MinigameManager.Instance.EndMinigame(playerWin);
             }
-            OnEndGame?.Invoke(playerWin);
         }
 
         public bool TryStartRun()
@@ -150,6 +154,7 @@ namespace Game
         private void Awake()
         {
             EnsureReferences();
+            BindEndGameScreen();
         }
 
         private void Start()
@@ -188,6 +193,7 @@ namespace Game
             _hasBootstrappedScene = true;
 
             EnsureReferences();
+            BindEndGameScreen();
             ApplyGameData();
             InitializeSession();
         }
@@ -314,10 +320,7 @@ namespace Game
             SetStatus($"{message} Попытки закончились.", true);
             yield return new WaitForSeconds(postRunPause);
 
-            if (MinigameManager.Instance != null)
-            {
-                OnMiniGameEnded(false);
-            }
+            FinishMiniGame(false);
         }
 
         private void HandleVictory()
@@ -327,10 +330,7 @@ namespace Game
             ClearFailureMarkers(false);
             SetStatus("Все доводы собраны. Прогон успешен.", false);
 
-            if (MinigameManager.Instance != null)
-            {
-                OnMiniGameEnded(true);
-            }
+            FinishMiniGame(true);
         }
 
         private void InitializeSession()
@@ -389,6 +389,50 @@ namespace Game
             {
                 inputHandler = FindObjectOfType<MiniGameInputHandler>();
             }
+
+            if (endGameScreenManager == null)
+            {
+                endGameScreenManager = FindObjectOfType<EndDayScreenManager>();
+            }
+        }
+
+        private void BindEndGameScreen()
+        {
+            if (endGameScreenManager == null)
+            {
+                endGameScreenManager = FindObjectOfType<EndDayScreenManager>();
+            }
+
+            _useEndGameScreen = endGameScreenManager != null;
+            if (endGameScreenManager != null)
+            {
+                endGameScreenManager.OnEndGame -= OnMiniGameEnded;
+                endGameScreenManager.OnEndGame += OnMiniGameEnded;
+            }
+        }
+
+        private void UnbindEndGameScreen()
+        {
+            if (endGameScreenManager != null)
+            {
+                endGameScreenManager.OnEndGame -= OnMiniGameEnded;
+            }
+        }
+
+        private void FinishMiniGame(bool playerWin)
+        {
+            if (_useEndGameScreen)
+            {
+                OnEndGame?.Invoke(playerWin);
+                return;
+            }
+
+            OnMiniGameEnded(playerWin);
+        }
+
+        private void OnDestroy()
+        {
+            UnbindEndGameScreen();
         }
 
         private bool ValidateStartCell(out string reason)
