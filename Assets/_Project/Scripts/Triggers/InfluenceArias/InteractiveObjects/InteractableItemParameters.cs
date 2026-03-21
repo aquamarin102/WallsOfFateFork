@@ -20,5 +20,7 @@ namespace Game
         public bool DependFromQuests = false;
         public List<int> RequiredQuestIds = new List<int>();
         public string ItemName = "";
+        public int questId = -1; // от какого квеста зависит 
+        public int questTaskId = -1; // от какого таска зависит 
     }
 }

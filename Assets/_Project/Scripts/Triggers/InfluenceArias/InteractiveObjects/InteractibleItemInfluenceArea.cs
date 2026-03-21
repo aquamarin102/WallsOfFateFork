@@ -1,8 +1,9 @@
 ﻿using Game.Core;
+using Game.Data;
 using System;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using System.Threading.Tasks;
 using Zenject;
 
 namespace Game
@@ -17,6 +18,13 @@ namespace Game
 
         public AsyncEvent<(TriggerEvent, InteractableItemParameters)> OnItemInteracted { get; } = new();
         public bool HasBeenUsed => hasBeenUsed;
+        private QuestManager questManager;
+
+        [Inject]
+        public void Construct(QuestManager questManager)
+        {
+            this.questManager = questManager;
+        }
 
         private void Start()
         {
@@ -70,12 +78,35 @@ namespace Game
                     interacted,
                     string.Empty
                 );
-                if (interacted)
+
+                if (itemParameters.questId > -1 && itemParameters.questTaskId > -1)
                 {
-                    MarkAsUsed();
+                    Quest quest = questManager.GetQuest(itemParameters.questId);
+                    QuestStatus questStatus = questManager.GetQuestStatus(quest.Id);
+
+                    QuestTask task = questManager.GetQuestTask(quest.Id, itemParameters.questTaskId);
+                    questStatus.TasksStatusData.TryGetValue(task.Id, out Game.Data.TaskStatus taskStatus);
+
+                    if (taskStatus.State != QuestState.NotStarted)
+                    {
+                        if (interacted)
+                        {
+                            MarkAsUsed();
+                        }
+                        await OnItemInteracted.InvokeAsync((eventData, itemParameters));
+                    }
+                }
+                else
+                {
+
+                    if (interacted)
+                    {
+                        MarkAsUsed();
+                    }
+
+                    await OnItemInteracted.InvokeAsync((eventData, itemParameters));
                 }
 
-                await OnItemInteracted.InvokeAsync((eventData, itemParameters));
             }
         }
 
@@ -93,8 +124,26 @@ namespace Game
                 string.Empty
             );
 
-            MarkAsUsed();
-            await OnItemInteracted.InvokeAsync((eventData, itemParameters));
+            if (itemParameters.questId > -1 && itemParameters.questTaskId > -1)
+            {
+                Quest quest = questManager.GetQuest(itemParameters.questId);
+                QuestStatus questStatus = questManager.GetQuestStatus(quest.Id);
+
+                QuestTask task = questManager.GetQuestTask(quest.Id, itemParameters.questTaskId);
+                questStatus.TasksStatusData.TryGetValue(task.Id, out Game.Data.TaskStatus taskStatus);
+
+                if (taskStatus.State != QuestState.NotStarted)
+                {
+                    MarkAsUsed();
+                    await OnItemInteracted.InvokeAsync((eventData, itemParameters));
+                }
+            }
+            else
+            {
+                MarkAsUsed();
+                await OnItemInteracted.InvokeAsync((eventData, itemParameters));
+            }
+
         }
     }
 }
