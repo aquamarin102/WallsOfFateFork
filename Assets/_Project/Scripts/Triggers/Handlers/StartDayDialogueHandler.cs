@@ -27,7 +27,7 @@ namespace Game
             DialogueGraph dialogueGraph;
             DialogueManager _dialogueManager = DialogueManager.Instance;
 
-            GameObject npc = eventData.TriggerObj.transform.gameObject;
+            GameObject npc = eventData.PlayerObj.transform.gameObject;
             dialogueGraph = GetDialogueGraph(npc);
             if (dialogueGraph != null)
             {
