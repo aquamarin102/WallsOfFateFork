@@ -6,6 +6,12 @@ namespace Game.MiniGame.PowerCheck
 {
     public class HealthBarManager : MonoBehaviour
     {
+        private static readonly string[] PortraitResourceFolders =
+        {
+            "MiniGames/PowerCheck/old/PowerCheckPortraits",
+            "MiniGames/PowerCheck/PowerCheckPortraits"
+        };
+
         private Slider _healthBar;
         private MiniGamePlayer _player;
 
@@ -107,11 +113,12 @@ namespace Game.MiniGame.PowerCheck
                 return;
             }
 
-            // Загружаем спрайт из Resources/PowerCheckPortraits
-            Sprite portraitSprite = Resources.Load<Sprite>("MiniGames/PowerCheck/PowerCheckPortraits/" + _player.Portrait);
+            Sprite portraitSprite = LoadPortraitSprite(_player.Portrait);
             if (portraitSprite == null)
             {
-                Debug.LogWarning($"Не удалось загрузить спрайт по пути 'PowerCheckPortraits/{_player.Portrait}'!", this);
+                Debug.LogWarning(
+                    $"Не удалось загрузить портрет '{_player.Portrait}'. Проверены пути: {string.Join(", ", PortraitResourceFolders)}",
+                    this);
                 return;
             }
 
@@ -120,6 +127,49 @@ namespace Game.MiniGame.PowerCheck
             {
                 portraitImage.sprite = portraitSprite;
             }
+        }
+
+        private static Sprite LoadPortraitSprite(string portraitName)
+        {
+            string normalizedPortraitName = NormalizePortraitName(portraitName);
+            if (string.IsNullOrEmpty(normalizedPortraitName))
+            {
+                return null;
+            }
+
+            foreach (string resourceFolder in PortraitResourceFolders)
+            {
+                Sprite portraitSprite = Resources.Load<Sprite>($"{resourceFolder}/{normalizedPortraitName}");
+                if (portraitSprite != null)
+                {
+                    return portraitSprite;
+                }
+            }
+
+            return null;
+        }
+
+        private static string NormalizePortraitName(string portraitName)
+        {
+            if (string.IsNullOrWhiteSpace(portraitName))
+            {
+                return string.Empty;
+            }
+
+            string normalizedPortraitName = portraitName.Trim().Replace('\\', '/');
+            int lastSlashIndex = normalizedPortraitName.LastIndexOf('/');
+            if (lastSlashIndex >= 0 && lastSlashIndex < normalizedPortraitName.Length - 1)
+            {
+                normalizedPortraitName = normalizedPortraitName.Substring(lastSlashIndex + 1);
+            }
+
+            int extensionSeparatorIndex = normalizedPortraitName.LastIndexOf('.');
+            if (extensionSeparatorIndex > 0)
+            {
+                normalizedPortraitName = normalizedPortraitName.Substring(0, extensionSeparatorIndex);
+            }
+
+            return normalizedPortraitName;
         }
     }
 }

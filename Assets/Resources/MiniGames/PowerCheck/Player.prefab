@@ -107652,11 +107652,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Game.MiniGame.PowerCheck.MiniGamePlayer
   playerName: Player
   playerNameForGame: Player
-  maxHealth: 20
-  health: 20
-  minDamage: 5
-  damage: 5
-  speed: 3
+  maxHealth: 100
+  health: 100
+  minDamage: 7
+  damage: 9
+  speed: 5
   speedModifier: 1.5
   minHealingAmount: 5
   healingAmount: 5

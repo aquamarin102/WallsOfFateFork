@@ -30,6 +30,7 @@ namespace Game
         {
             LoadItemState();
             if (triggerObject != null) triggerObject = this.gameObject;
+            if (!hasBeenUsed) this.gameObject.SetActive(false);
         }
 
         public void MarkAsUsed()
