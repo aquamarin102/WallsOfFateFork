@@ -14,13 +14,18 @@ namespace Game
 
         public override async Task InvokeEventAsync(Collider obj)
         {
+            if (!TryGetPlayerObject(obj, out GameObject playerObject))
+            {
+                return;
+            }
+
             bool interacted = ConsumeInteractPress();
 
             string json = JsonUtility.ToJson(doorParameters);
 
             TriggerEvent eventData = new TriggerEvent(
                 AreaType,
-                obj.gameObject,
+                playerObject,
                 triggerObject ?? gameObject,
                 interacted,
                 json

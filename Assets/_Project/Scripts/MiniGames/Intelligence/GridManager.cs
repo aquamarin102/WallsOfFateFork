@@ -350,6 +350,11 @@ namespace Game
 
         private void OnValidate()
         {
+            if (!CanRefreshInValidation())
+            {
+                return;
+            }
+
             RefreshLayout();
         }
 
@@ -408,6 +413,35 @@ namespace Game
             }
 
             return resolvedSpacing;
+        }
+
+        private bool CanRefreshInValidation()
+        {
+            if (Application.isPlaying)
+            {
+                return true;
+            }
+
+            if (!gameObject.scene.IsValid() || !gameObject.scene.isLoaded)
+            {
+                return false;
+            }
+
+            if (!isActiveAndEnabled)
+            {
+                return false;
+            }
+
+#if UNITY_EDITOR
+            if (UnityEditor.BuildPipeline.isBuildingPlayer ||
+                UnityEditor.EditorApplication.isCompiling ||
+                UnityEditor.EditorApplication.isUpdating)
+            {
+                return false;
+            }
+#endif
+
+            return true;
         }
     }
 }

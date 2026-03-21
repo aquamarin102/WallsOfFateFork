@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -20,18 +20,28 @@ namespace Game
         private QuestManager questManager;
 
         [Inject]
-        private void Construct(QuestManager questmanager)
+        private void Construct([InjectOptional] QuestManager questmanager)
         {
             this.questManager = questmanager;
         }
 
         private void Update()
         {
+            if (!TryResolveQuestManager())
+            {
+                return;
+            }
+
             UpdateQuestUI();
         }
 
         private void UpdateQuestUI()
         {
+            if (_textMeshProLinks == null || _iconsLinks == null || _textMeshProLinks.Count == 0 || _iconsLinks.Count == 0)
+            {
+                return;
+            }
+
             var currentQuests = questManager.GetCurrentQuests();
 
             ResetUI();
@@ -42,7 +52,7 @@ namespace Game
                 return;
             }
 
-            bool hasMainQuest = currentQuests.Any(q => q.Main);
+            bool hasMainQuest = currentQuests.Any(q => q != null && q.Main);
 
             if (!hasMainQuest)
             {
@@ -50,12 +60,21 @@ namespace Game
                 //return;
             }
 
-            int displayCount = Mathf.Min(currentQuests.Count, _iconsLinks.Count);
+            int displayCount = Mathf.Min(currentQuests.Count, Mathf.Min(_iconsLinks.Count, _textMeshProLinks.Count));
 
             for (int i = 0; i < displayCount; i++)
             {
                 var quest = currentQuests[i];
+                if (quest == null)
+                {
+                    continue;
+                }
+
                 var questStatus = questManager.GetQuestStatus(quest.Id);
+                if (questStatus?.TasksStatusData == null)
+                {
+                    continue;
+                }
 
                 var activeTaskStatus = questStatus.TasksStatusData.Values
                     .FirstOrDefault(ts => ts.State == QuestState.InProgress);
@@ -76,7 +95,7 @@ namespace Game
 
         private void ShowDefaultMessage(string message)
         {
-            if (_textMeshProLinks.Count > 0)
+            if (_textMeshProLinks.Count > 0 && _iconsLinks.Count > 0)
             {
                 _iconsLinks[0].SetActive(true); 
                 _textMeshProLinks[0].gameObject.SetActive(true);
@@ -89,8 +108,18 @@ namespace Game
             for (int i = 0; i < _iconsLinks.Count; i++)
             {
                 if (_iconsLinks[i] != null) _iconsLinks[i].SetActive(false);
+            }
+
+            for (int i = 0; i < _textMeshProLinks.Count; i++)
+            {
                 if (_textMeshProLinks[i] != null) _textMeshProLinks[i].gameObject.SetActive(false);
             }
+        }
+
+        private bool TryResolveQuestManager()
+        {
+            questManager ??= QuestManager.Instance;
+            return questManager != null;
         }
     }
 }

@@ -42,6 +42,8 @@ namespace Game
             PlayerMoveController playerMoveController = Container
                 .InstantiatePrefabForComponent<PlayerMoveController>(Prefab, spawnPosition, spawnRotation, Parent);
 
+            PlayerObjectUtility.NormalizeSpawnedPlayer(playerMoveController);
+
             Container
                 .Bind<PlayerMoveController>()
                 .FromInstance(playerMoveController)

@@ -13,7 +13,10 @@ namespace Zenject
         {
             _container = container;
             _animator = GetComponent<Animator>();
-            Assert.IsNotNull(_animator);
+            if (_animator == null)
+            {
+                return;
+            }
         }
 
         // The unity docs (https://unity3d.com/learn/tutorials/modules/beginner/5-pre-order-beta/state-machine-behaviours)

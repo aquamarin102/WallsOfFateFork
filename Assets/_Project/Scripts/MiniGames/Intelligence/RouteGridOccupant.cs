@@ -185,6 +185,11 @@ namespace Game
 
         private void OnValidate()
         {
+            if (!CanRefreshInValidation())
+            {
+                return;
+            }
+
             SyncGridPosition();
             _timedBarrierIsPassable = CellType == RouteCellType.TimedBarrier && timedBarrierStartsPassable;
             RefreshVisual();
@@ -324,6 +329,35 @@ namespace Game
             }
 
             return furthestExtent * 2.2f;
+        }
+
+        private bool CanRefreshInValidation()
+        {
+            if (Application.isPlaying)
+            {
+                return true;
+            }
+
+            if (!gameObject.scene.IsValid() || !gameObject.scene.isLoaded)
+            {
+                return false;
+            }
+
+            if (!isActiveAndEnabled)
+            {
+                return false;
+            }
+
+#if UNITY_EDITOR
+            if (UnityEditor.BuildPipeline.isBuildingPlayer ||
+                UnityEditor.EditorApplication.isCompiling ||
+                UnityEditor.EditorApplication.isUpdating)
+            {
+                return false;
+            }
+#endif
+
+            return true;
         }
     }
 }

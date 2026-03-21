@@ -1,8 +1,6 @@
-﻿using Game.Data;
+using Game.Data;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Collections;
 using UnityEngine;
 using Zenject;
@@ -21,9 +19,14 @@ namespace Game
 
         private QuestManager questManager;
         private NPCPrefabFactory npcPrefabFactory;
+        private bool initialSceneStateApplied;
+        private bool subscribedToDialogueEvents;
+        private bool subscribedToItemEvents;
+        private bool subscribedToDialogueHandlerEvents;
+        private bool pendingDialogueChecked;
 
         [Inject]
-        private void Construct(QuestManager questManager, NPCPrefabFactory factory)
+        private void Construct([InjectOptional] QuestManager questManager, [InjectOptional] NPCPrefabFactory factory)
         {
             this.questManager = questManager;
             this.npcPrefabFactory = factory;
@@ -31,40 +34,50 @@ namespace Game
 
         private void Start()
         {
-            dialogueManager = DialogueManager.Instance;
-            if (dialogueManager != null)
+            TryResolveDependencies();
+            TrySubscribeToSceneEvents();
+            TryApplyInitialSceneState();
+            TryStartPendingMinigameDialogueIfNeeded();
+        }
+
+        private void Update()
+        {
+            if (initialSceneStateApplied &&
+                subscribedToDialogueEvents &&
+                (interactiveItemHandler == null || subscribedToItemEvents) &&
+                (dialogueHandler == null || subscribedToDialogueHandlerEvents) &&
+                pendingDialogueChecked)
             {
-                dialogueManager.OnFinished += OnDialogueFinished;
+                return;
             }
 
-            if (interactiveItemHandler != null)
+            TryResolveDependencies();
+            TrySubscribeToSceneEvents();
+            TryApplyInitialSceneState();
+            TryStartPendingMinigameDialogueIfNeeded();
+        }
+
+        private void OnDestroy()
+        {
+            if (subscribedToDialogueEvents && dialogueManager != null)
             {
-                interactiveItemHandler.OnItemHandled += OnQuestItemInteraction;
+                dialogueManager.OnFinished -= OnDialogueFinished;
             }
 
-            if (dialogueHandler != null)
+            if (subscribedToItemEvents && interactiveItemHandler != null)
             {
-                dialogueHandler.OnDialogHandled += OnDialogueInteraction;
+                interactiveItemHandler.OnItemHandled -= OnQuestItemInteraction;
             }
 
-            Quest thiefQuest = questManager.GetQuest(1);
-            if (thiefQuest != null && questManager.GetQuestState(thiefQuest.Id) == QuestState.InProgress)
+            if (subscribedToDialogueHandlerEvents && dialogueHandler != null)
             {
-                SetNpcActiveIfExists(ThiefPrefabName, true);
-                SetNpcActiveIfExists(ChiefGuardfPrefabName, true);
+                dialogueHandler.OnDialogHandled -= OnDialogueInteraction;
             }
-            else
-            {
-                SetNpcActiveIfExists(ThiefPrefabName, false);
-                SetNpcActiveIfExists(ChiefGuardfPrefabName, false);
-            }
-
-            TryStartPendingMinigameDialogue();
         }
 
         public void OnDialogueFinished(DialogueGraph dialogue)
         {
-            if (dialogue == null)
+            if (!TryResolveDependencies() || dialogue == null)
             {
                 return;
             }
@@ -133,90 +146,109 @@ namespace Game
                     questManager.UpdateQuest(herbalistQuest.Id, QuestState.Completed);
                     questManager.UpdateQuestTask(herbalistQuest.Id, task.Id, QuestState.Completed);
                 }
-
-            }            
+            }
         }
 
         public void OnDialogueInteraction(TriggerEvent eventData)
         {
-            if (eventData.TriggerObj.gameObject.name == "Blacksmith")
+            if (!TryResolveDependencies() || eventData?.TriggerObj == null)
             {
-                Quest blacksmithQuest = questManager.GetQuest(5);
-                if (blacksmithQuest == null)
-                {
-                    return;
-                }
+                return;
+            }
 
-                QuestStatus blacksmithQuestStatus = questManager.GetQuestStatus(blacksmithQuest.Id);
+            if (eventData.TriggerObj.gameObject.name != "Blacksmith")
+            {
+                return;
+            }
 
-                QuestTask task = questManager.GetQuestTask(blacksmithQuest.Id, 0);
-                QuestTask task1 = questManager.GetQuestTask(blacksmithQuest.Id, 1);
-                if (blacksmithQuestStatus == null || task == null || task1 == null)
-                {
-                    return;
-                }
+            Quest blacksmithQuest = questManager.GetQuest(5);
+            if (blacksmithQuest == null)
+            {
+                return;
+            }
 
-                blacksmithQuestStatus.TasksStatusData.TryGetValue(task.Id, out TaskStatus taskStatus);
-                blacksmithQuestStatus.TasksStatusData.TryGetValue(task1.Id, out TaskStatus taskStatus1);
-                if (taskStatus.State == QuestState.NotStarted && taskStatus1.State == QuestState.NotStarted)
-                {
-                    questManager.UpdateQuestTask(blacksmithQuest.Id, task.Id, QuestState.InProgress);
-                    questManager.UpdateQuest(blacksmithQuest.Id, QuestState.InProgress);
+            QuestStatus blacksmithQuestStatus = questManager.GetQuestStatus(blacksmithQuest.Id);
+            QuestTask task = questManager.GetQuestTask(blacksmithQuest.Id, 0);
+            QuestTask task1 = questManager.GetQuestTask(blacksmithQuest.Id, 1);
+            if (blacksmithQuestStatus == null || task == null || task1 == null)
+            {
+                return;
+            }
 
-                    var blacksmithDialogueJson = Resources.Load<TextAsset>("Dialogues/NPC/Blacksmith/First");
-                    var blacksmithDialogue = JsonConvert.DeserializeObject<DialogueGraph>(blacksmithDialogueJson.text);
-                    dialogueManager.StartDialogue(blacksmithDialogue);
-                }
+            blacksmithQuestStatus.TasksStatusData.TryGetValue(task.Id, out TaskStatus taskStatus);
+            blacksmithQuestStatus.TasksStatusData.TryGetValue(task1.Id, out TaskStatus taskStatus1);
 
-                if (taskStatus.State == QuestState.Completed && taskStatus1.State == QuestState.InProgress)
-                {
-                    questManager.UpdateQuestTask(blacksmithQuest.Id, task1.Id, QuestState.Completed);
-                    questManager.UpdateQuest(blacksmithQuest.Id, QuestState.Completed);
+            if (taskStatus.State == QuestState.NotStarted && taskStatus1.State == QuestState.NotStarted)
+            {
+                questManager.UpdateQuestTask(blacksmithQuest.Id, task.Id, QuestState.InProgress);
+                questManager.UpdateQuest(blacksmithQuest.Id, QuestState.InProgress);
 
-                    var blacksmithDialogueJson = Resources.Load<TextAsset>("Dialogues/NPC/Blacksmith/Second");
-                    var blacksmithDialogue = JsonConvert.DeserializeObject<DialogueGraph>(blacksmithDialogueJson.text);
-                    dialogueManager.StartDialogue(blacksmithDialogue);
-                }
+                var blacksmithDialogueJson = Resources.Load<TextAsset>("Dialogues/NPC/Blacksmith/First");
+                var blacksmithDialogue = JsonConvert.DeserializeObject<DialogueGraph>(blacksmithDialogueJson.text);
+                dialogueManager.StartDialogue(blacksmithDialogue);
+            }
+
+            if (taskStatus.State == QuestState.Completed && taskStatus1.State == QuestState.InProgress)
+            {
+                questManager.UpdateQuestTask(blacksmithQuest.Id, task1.Id, QuestState.Completed);
+                questManager.UpdateQuest(blacksmithQuest.Id, QuestState.Completed);
+
+                var blacksmithDialogueJson = Resources.Load<TextAsset>("Dialogues/NPC/Blacksmith/Second");
+                var blacksmithDialogue = JsonConvert.DeserializeObject<DialogueGraph>(blacksmithDialogueJson.text);
+                dialogueManager.StartDialogue(blacksmithDialogue);
             }
         }
 
         public void OnQuestItemInteraction(InteractableItemParameters itemParameters)
         {
-            if (itemParameters.ItemName == "BlacksmithChest")
-            {
-                Quest blacksmithQuest = questManager.GetQuest(5);
-                if (blacksmithQuest == null)
-                {
-                    return;
-                }
-
-                QuestStatus blacksmithQuestStatus = questManager.GetQuestStatus(blacksmithQuest.Id);
-
-                QuestTask task = questManager.GetQuestTask(blacksmithQuest.Id, 0);
-                QuestTask task1 = questManager.GetQuestTask(blacksmithQuest.Id, 1);
-                if (blacksmithQuestStatus == null || task == null || task1 == null)
-                {
-                    return;
-                }
-
-                blacksmithQuestStatus.TasksStatusData.TryGetValue(task.Id, out TaskStatus taskStatus);
-                blacksmithQuestStatus.TasksStatusData.TryGetValue(task1.Id, out TaskStatus taskStatus1);
-                if (taskStatus.State == QuestState.InProgress && taskStatus1.State == QuestState.NotStarted)
-                {
-                    questManager.UpdateQuestTask(blacksmithQuest.Id, task.Id, QuestState.Completed);
-                    questManager.UpdateQuestTask(blacksmithQuest.Id, task1.Id, QuestState.InProgress);
-                }
-            }
-        }
-
-        private void TryStartPendingMinigameDialogue()
-        {
-            string dialoguePath = ConsumePendingMinigameDialoguePath();
-            if (string.IsNullOrWhiteSpace(dialoguePath))
+            if (!TryResolveDependencies() || itemParameters == null)
             {
                 return;
             }
 
+            if (itemParameters.ItemName != "BlacksmithChest")
+            {
+                return;
+            }
+
+            Quest blacksmithQuest = questManager.GetQuest(5);
+            if (blacksmithQuest == null)
+            {
+                return;
+            }
+
+            QuestStatus blacksmithQuestStatus = questManager.GetQuestStatus(blacksmithQuest.Id);
+            QuestTask task = questManager.GetQuestTask(blacksmithQuest.Id, 0);
+            QuestTask task1 = questManager.GetQuestTask(blacksmithQuest.Id, 1);
+            if (blacksmithQuestStatus == null || task == null || task1 == null)
+            {
+                return;
+            }
+
+            blacksmithQuestStatus.TasksStatusData.TryGetValue(task.Id, out TaskStatus taskStatus);
+            blacksmithQuestStatus.TasksStatusData.TryGetValue(task1.Id, out TaskStatus taskStatus1);
+            if (taskStatus.State == QuestState.InProgress && taskStatus1.State == QuestState.NotStarted)
+            {
+                questManager.UpdateQuestTask(blacksmithQuest.Id, task.Id, QuestState.Completed);
+                questManager.UpdateQuestTask(blacksmithQuest.Id, task1.Id, QuestState.InProgress);
+            }
+        }
+
+        private void TryStartPendingMinigameDialogueIfNeeded()
+        {
+            if (pendingDialogueChecked || !TryResolveDependencies())
+            {
+                return;
+            }
+
+            string dialoguePath = ConsumePendingMinigameDialoguePath();
+            if (string.IsNullOrWhiteSpace(dialoguePath))
+            {
+                pendingDialogueChecked = true;
+                return;
+            }
+
+            pendingDialogueChecked = true;
             StartCoroutine(StartPendingDialogueNextFrame(dialoguePath));
         }
 
@@ -293,28 +325,124 @@ namespace Game
                    dialogue.Sentences.Exists(sentence => sentence != null && sentence.StartMinigame);
         }
 
-        private void SetNpcActiveIfExists(string npcName, bool isActive)
+        private bool TryResolveDependencies()
         {
-            GameObject npc = FindNpcInstance(npcName);
-            if (npc != null)
+            questManager ??= QuestManager.Instance;
+            dialogueManager ??= DialogueManager.Instance;
+            return questManager != null;
+        }
+
+        private void TrySubscribeToSceneEvents()
+        {
+            if (!subscribedToDialogueEvents && dialogueManager != null)
             {
-                npc.SetActive(isActive);
+                dialogueManager.OnFinished += OnDialogueFinished;
+                subscribedToDialogueEvents = true;
             }
+
+            if (!subscribedToItemEvents && interactiveItemHandler != null)
+            {
+                interactiveItemHandler.OnItemHandled += OnQuestItemInteraction;
+                subscribedToItemEvents = true;
+            }
+
+            if (!subscribedToDialogueHandlerEvents && dialogueHandler != null)
+            {
+                dialogueHandler.OnDialogHandled += OnDialogueInteraction;
+                subscribedToDialogueHandlerEvents = true;
+            }
+        }
+
+        private void TryApplyInitialSceneState()
+        {
+            if (initialSceneStateApplied || !TryResolveDependencies())
+            {
+                return;
+            }
+
+            Quest thiefQuest = questManager.GetQuest(1);
+            bool shouldShowThiefSide = thiefQuest != null && questManager.GetQuestState(thiefQuest.Id) == QuestState.InProgress;
+
+            bool thiefReady = SetNpcActiveIfExists(ThiefPrefabName, shouldShowThiefSide);
+            bool chiefGuardReady = SetNpcActiveIfExists(ChiefGuardfPrefabName, shouldShowThiefSide);
+
+            initialSceneStateApplied = thiefReady && chiefGuardReady;
+        }
+
+        private bool SetNpcActiveIfExists(string npcName, bool isActive)
+        {
+            if (string.IsNullOrWhiteSpace(npcName))
+            {
+                return true;
+            }
+
+            GameObject npc = FindNpcInstance(npcName);
+            if (npc == null)
+            {
+                return false;
+            }
+
+            npc.SetActive(isActive);
+            return true;
         }
 
         private GameObject FindNpcInstance(string npcName)
         {
-            if (npcPrefabFactory == null || string.IsNullOrWhiteSpace(npcName))
+            if (string.IsNullOrWhiteSpace(npcName))
             {
                 return null;
             }
 
-            if (npcPrefabFactory.HasInstance(npcName))
+            if (npcPrefabFactory != null && npcPrefabFactory.HasInstance(npcName))
             {
                 return npcPrefabFactory.GetInstance(npcName);
             }
 
+            string normalizedName = NormalizeNpcName(npcName);
+            if (npcPrefabFactory != null)
+            {
+                foreach (var entry in npcPrefabFactory.instances)
+                {
+                    if (entry.Value == null)
+                    {
+                        continue;
+                    }
+
+                    if (string.Equals(entry.Key, npcName, StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(NormalizeNpcName(entry.Key), normalizedName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return entry.Value;
+                    }
+                }
+            }
+
+            GameObject[] rootObjects = gameObject.scene.GetRootGameObjects();
+            for (int rootIndex = 0; rootIndex < rootObjects.Length; rootIndex++)
+            {
+                Transform[] children = rootObjects[rootIndex].GetComponentsInChildren<Transform>(true);
+                for (int childIndex = 0; childIndex < children.Length; childIndex++)
+                {
+                    Transform child = children[childIndex];
+                    if (child == null)
+                    {
+                        continue;
+                    }
+
+                    if (string.Equals(child.name, npcName, StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(NormalizeNpcName(child.name), normalizedName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return child.gameObject;
+                    }
+                }
+            }
+
             return null;
+        }
+
+        private static string NormalizeNpcName(string npcName)
+        {
+            int separatorIndex = npcName.IndexOf('_');
+            return separatorIndex >= 0 ? npcName.Substring(0, separatorIndex) : npcName;
         }
     }
 }

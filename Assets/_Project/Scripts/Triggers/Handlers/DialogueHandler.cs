@@ -1,6 +1,7 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
 using Zenject;
@@ -15,21 +16,35 @@ namespace Game
         public Action<TriggerEvent> OnDialogHandled;
 
         private NPCPrefabFactory npcFactory;
+        private readonly HashSet<InfluenceArea> subscribedAreas = new();
 
         [Inject]
-        private void Construct(NPCPrefabFactory npcFactory)
+        private void Construct([InjectOptional] NPCPrefabFactory npcFactory)
         {
             this.npcFactory = npcFactory;
         }
 
         private void OnEnable()
         {
-            SubscribeToDialogueAreas();
+            SyncDialogueAreaSubscriptions();
+        }
+
+        private void Update()
+        {
+            SyncDialogueAreaSubscriptions();
         }
 
         private void OnDisable()
         {
-            UnsubscribeFromDialogueAreas();
+            foreach (var area in subscribedAreas.ToArray())
+            {
+                if (area != null)
+                {
+                    area.OnEventTriggered.Unsubscribe(HandleAsync);
+                }
+            }
+
+            subscribedAreas.Clear();
         }
 
         public async Task HandleAsync(TriggerEvent eventData)
@@ -56,19 +71,33 @@ namespace Game
             await Task.CompletedTask;
         }
 
-        private void SubscribeToDialogueAreas()
+        private void SyncDialogueAreaSubscriptions()
         {
-            foreach (var area in CollectDialogueAreas())
-            {
-                area.OnEventTriggered.Subscribe(HandleAsync);
-            }
-        }
+            List<InfluenceArea> currentAreas = CollectDialogueAreas()
+                .Where(area => area != null)
+                .Distinct()
+                .ToList();
 
-        private void UnsubscribeFromDialogueAreas()
-        {
-            foreach (var area in CollectDialogueAreas())
+            for (int index = 0; index < currentAreas.Count; index++)
             {
-                area.OnEventTriggered.Unsubscribe(HandleAsync);
+                InfluenceArea area = currentAreas[index];
+                if (subscribedAreas.Add(area))
+                {
+                    area.OnEventTriggered.Subscribe(HandleAsync);
+                }
+            }
+
+            foreach (var subscribedArea in subscribedAreas.ToArray())
+            {
+                if (subscribedArea == null || !currentAreas.Contains(subscribedArea))
+                {
+                    if (subscribedArea != null)
+                    {
+                        subscribedArea.OnEventTriggered.Unsubscribe(HandleAsync);
+                    }
+
+                    subscribedAreas.Remove(subscribedArea);
+                }
             }
         }
 
@@ -86,10 +115,27 @@ namespace Game
             {
                 foreach (var npc in npcFactory.instances.Values)
                 {
-                    if (npc == null) continue;
+                    if (npc == null)
+                    {
+                        continue;
+                    }
 
                     var area = npc.GetComponentInChildren<InfluenceArea>();
                     if (area != null)
+                    {
+                        yield return area;
+                    }
+                }
+            }
+
+            GameObject[] rootObjects = gameObject.scene.GetRootGameObjects();
+            for (int rootIndex = 0; rootIndex < rootObjects.Length; rootIndex++)
+            {
+                InfluenceArea[] areasInScene = rootObjects[rootIndex].GetComponentsInChildren<InfluenceArea>(true);
+                for (int areaIndex = 0; areaIndex < areasInScene.Length; areaIndex++)
+                {
+                    InfluenceArea area = areasInScene[areaIndex];
+                    if (area != null && area.AreaType == InfluenceType.Dialog)
                     {
                         yield return area;
                     }

@@ -97,9 +97,8 @@ namespace Game
 
         private void OnTriggerEnter(Collider other)
         {
-            if (other.CompareTag("Player"))
+            if (IsPlayerCollider(other))
             {
-
                 if (InteractionType == InfluenceInteractionType.Enter)
                 {
                     _ = InvokeEventAsync(other);
@@ -109,7 +108,7 @@ namespace Game
 
         private void OnTriggerStay(Collider other)
         {
-            if (other.CompareTag("Player"))
+            if (IsPlayerCollider(other))
             {
                 if (InteractionType == InfluenceInteractionType.Stay)
                 {
@@ -120,7 +119,7 @@ namespace Game
 
         private void OnTriggerExit(Collider other)
         {
-            if (other.CompareTag("Player"))
+            if (IsPlayerCollider(other))
             {
                 if (InteractionType == InfluenceInteractionType.Exit)
                 {
@@ -137,8 +136,18 @@ namespace Game
 
         public virtual async System.Threading.Tasks.Task InvokeEventAsync(Collider obj)
         {
+            if (!TryGetPlayerObject(obj, out GameObject playerObject))
+            {
+                return;
+            }
+
             bool interacted = ConsumeInteractPress();
-            TriggerEvent eventData = new TriggerEvent(AreaType, obj.gameObject, triggerObject, interacted, Parameters);
+            TriggerEvent eventData = new TriggerEvent(
+                AreaType,
+                playerObject,
+                triggerObject ?? gameObject,
+                interacted,
+                Parameters);
 
             if (interacted)
             {
@@ -160,7 +169,13 @@ namespace Game
                 return true;
             }
 
-            Quest quest = questManager?.GetQuest(questId);
+            questManager ??= QuestManager.Instance;
+            if (questManager == null)
+            {
+                return false;
+            }
+
+            Quest quest = questManager.GetQuest(questId);
             if (quest == null)
             {
                 Debug.LogWarning($"Quest with ID {questId} not found");
@@ -197,6 +212,16 @@ namespace Game
             GameObject targetObject = triggerObject != null ? triggerObject : gameObject;
             TriggerEvent eventData = new TriggerEvent(AreaType, playerObj, targetObject, true, Parameters);
             await OnEventTriggered.InvokeAsync(eventData);
+        }
+
+        protected static bool TryGetPlayerObject(Collider collider, out GameObject playerObject)
+        {
+            return PlayerObjectUtility.TryGetPlayerObject(collider, out playerObject);
+        }
+
+        private static bool IsPlayerCollider(Collider collider)
+        {
+            return PlayerObjectUtility.TryGetPlayerObject(collider, out _);
         }
     }
 }

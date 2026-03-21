@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+using System.Linq;
+using UnityEngine;
 
 namespace Game
 {
@@ -14,7 +15,6 @@ namespace Game
         private Material outlineMaterial;
         private bool isHighlighted;
 
-        // Свойства
         public Color OutlineColor
         {
             get => outlineColor;
@@ -22,7 +22,9 @@ namespace Game
             {
                 outlineColor = value;
                 if (outlineMaterial != null)
+                {
                     outlineMaterial.SetColor("_OutlineColor", value);
+                }
             }
         }
 
@@ -33,7 +35,9 @@ namespace Game
             {
                 outlineWidth = value;
                 if (outlineMaterial != null)
+                {
                     outlineMaterial.SetFloat("_OutlineWidth", value);
+                }
             }
         }
 
@@ -47,8 +51,13 @@ namespace Game
             objectRenderer = GetComponent<Renderer>();
             originalMaterials = objectRenderer.materials;
 
-            // Создаем материал для outline
             Shader outlineShader = Shader.Find("URP/Outline");
+            if (outlineShader == null)
+            {
+                outlineShader = Resources.FindObjectsOfTypeAll<Shader>()
+                    .FirstOrDefault(shader => shader != null && shader.name == "URP/Outline");
+            }
+
             if (outlineShader == null)
             {
                 Debug.LogError("Outline shader not found! Make sure URP/Outline shader exists.");
@@ -62,20 +71,26 @@ namespace Game
 
         public void SetHighlighted(bool enabled)
         {
-            if (objectRenderer == null || outlineMaterial == null) return;
+            if (objectRenderer == null || outlineMaterial == null)
+            {
+                return;
+            }
 
-            if (isHighlighted == enabled) return;
+            if (isHighlighted == enabled)
+            {
+                return;
+            }
 
             isHighlighted = enabled;
 
             if (enabled)
             {
-                // Добавляем outline материал к существующим
                 Material[] newMaterials = new Material[originalMaterials.Length + 1];
                 for (int i = 0; i < originalMaterials.Length; i++)
                 {
                     newMaterials[i] = originalMaterials[i];
                 }
+
                 newMaterials[newMaterials.Length - 1] = outlineMaterial;
                 objectRenderer.materials = newMaterials;
             }
@@ -93,7 +108,9 @@ namespace Game
         private void OnDestroy()
         {
             if (outlineMaterial != null)
+            {
                 Destroy(outlineMaterial);
+            }
         }
     }
 }

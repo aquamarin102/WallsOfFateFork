@@ -29,8 +29,10 @@ namespace Game
         private void Start()
         {
             LoadItemState();
-            if (triggerObject != null) triggerObject = this.gameObject;
-            if (!hasBeenUsed) this.gameObject.SetActive(false);
+            if (triggerObject == null)
+            {
+                triggerObject = gameObject;
+            }
         }
 
         public void MarkAsUsed()
@@ -69,23 +71,47 @@ namespace Game
 
         public override async Task InvokeEventAsync(Collider obj)
         {
+            if (!TryGetPlayerObject(obj, out GameObject playerObject))
+            {
+                return;
+            }
+
             if (!hasBeenUsed)
             {
                 bool interacted = ConsumeInteractPress();
                 TriggerEvent eventData = new TriggerEvent(
                     AreaType,
-                    obj.gameObject,
-                    triggerObject,
+                    playerObject,
+                    triggerObject ?? gameObject,
                     interacted,
                     string.Empty
                 );
 
                 if (itemParameters.questId > -1 && itemParameters.questTaskId > -1)
                 {
+                    if (!TryResolveQuestManager())
+                    {
+                        return;
+                    }
+
                     Quest quest = questManager.GetQuest(itemParameters.questId);
+                    if (quest == null)
+                    {
+                        return;
+                    }
+
                     QuestStatus questStatus = questManager.GetQuestStatus(quest.Id);
+                    if (questStatus == null)
+                    {
+                        return;
+                    }
 
                     QuestTask task = questManager.GetQuestTask(quest.Id, itemParameters.questTaskId);
+                    if (task == null)
+                    {
+                        return;
+                    }
+
                     questStatus.TasksStatusData.TryGetValue(task.Id, out Game.Data.TaskStatus taskStatus);
 
                     if (taskStatus.State != QuestState.NotStarted)
@@ -127,10 +153,29 @@ namespace Game
 
             if (itemParameters.questId > -1 && itemParameters.questTaskId > -1)
             {
+                if (!TryResolveQuestManager())
+                {
+                    return;
+                }
+
                 Quest quest = questManager.GetQuest(itemParameters.questId);
+                if (quest == null)
+                {
+                    return;
+                }
+
                 QuestStatus questStatus = questManager.GetQuestStatus(quest.Id);
+                if (questStatus == null)
+                {
+                    return;
+                }
 
                 QuestTask task = questManager.GetQuestTask(quest.Id, itemParameters.questTaskId);
+                if (task == null)
+                {
+                    return;
+                }
+
                 questStatus.TasksStatusData.TryGetValue(task.Id, out Game.Data.TaskStatus taskStatus);
 
                 if (taskStatus.State != QuestState.NotStarted)
@@ -145,6 +190,12 @@ namespace Game
                 await OnItemInteracted.InvokeAsync((eventData, itemParameters));
             }
 
+        }
+
+        private bool TryResolveQuestManager()
+        {
+            questManager ??= QuestManager.Instance;
+            return questManager != null;
         }
     }
 }

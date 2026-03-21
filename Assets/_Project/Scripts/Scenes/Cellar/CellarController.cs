@@ -1,4 +1,4 @@
-﻿using Game.Data;
+using Game.Data;
 using UnityEngine;
 using Zenject;
 
@@ -12,9 +12,12 @@ namespace Game
 
         private QuestManager questManager;
         private NPCPrefabFactory npcPrefabFactory;
+        private bool initialSceneStateApplied;
+        private bool subscribedToDialogueEvents;
+        private bool subscribedToItemEvents;
 
         [Inject]
-        private void Construct(QuestManager questManager, NPCPrefabFactory factory)
+        private void Construct([InjectOptional] QuestManager questManager, [InjectOptional] NPCPrefabFactory factory)
         {
             this.questManager = questManager;
             this.npcPrefabFactory = factory;
@@ -22,30 +25,65 @@ namespace Game
 
         private void Start()
         {
-            dialogueManager = DialogueManager.Instance;
-            if (dialogueManager != null)
+            TryResolveDependencies();
+            TrySubscribeToSceneEvents();
+            TryApplyInitialSceneState();
+        }
+
+        private void Update()
+        {
+            if (initialSceneStateApplied &&
+                subscribedToDialogueEvents &&
+                (interactiveItemHandler == null || subscribedToItemEvents))
             {
-                dialogueManager.OnFinished += OnDialogueFinished;
+                return;
             }
 
-            if (interactiveItemHandler != null)
+            TryResolveDependencies();
+            TrySubscribeToSceneEvents();
+            TryApplyInitialSceneState();
+        }
+
+        private void OnDestroy()
+        {
+            if (subscribedToDialogueEvents && dialogueManager != null)
             {
-                interactiveItemHandler.OnItemHandled += OnQuestItemInteraction;
+                dialogueManager.OnFinished -= OnDialogueFinished;
+            }
+
+            if (subscribedToItemEvents && interactiveItemHandler != null)
+            {
+                interactiveItemHandler.OnItemHandled -= OnQuestItemInteraction;
+            }
+        }
+
+        private void TryApplyInitialSceneState()
+        {
+            if (initialSceneStateApplied || questManager == null)
+            {
+                return;
             }
 
             Quest thiefQuest = questManager.GetQuest(1);
             if (thiefQuest != null && questManager.GetQuestState(thiefQuest.Id) == QuestState.InProgress)
             {
-                GameObject thiefNpc = npcPrefabFactory != null ? npcPrefabFactory.GetInstance(ThiefPrefabName) : null;
+                GameObject thiefNpc = FindNpcInstance(ThiefPrefabName);
                 if (thiefNpc != null)
                 {
                     thiefNpc.SetActive(false);
                 }
             }
+
+            initialSceneStateApplied = true;
         }
 
         public void OnDialogueFinished(DialogueGraph dialogue)
         {
+            if (!TryResolveDependencies())
+            {
+                return;
+            }
+
             if (dialogue == null)
             {
                 return;
@@ -70,6 +108,11 @@ namespace Game
 
         public void OnQuestItemInteraction(InteractableItemParameters itemParameters)
         {
+            if (!TryResolveDependencies() || itemParameters == null)
+            {
+                return;
+            }
+
             if (itemParameters.ItemName == "Pouch")
             {
                 Quest herbalistQuest = questManager.GetQuest(2);
@@ -118,6 +161,57 @@ namespace Game
                     questManager.UpdateQuestTask(messengerQuest.Id, task.Id, QuestState.InProgress);
                 }
             }
+        }
+
+        private bool TryResolveDependencies()
+        {
+            questManager ??= QuestManager.Instance;
+            dialogueManager ??= DialogueManager.Instance;
+            return questManager != null;
+        }
+
+        private void TrySubscribeToSceneEvents()
+        {
+            if (!subscribedToDialogueEvents && dialogueManager != null)
+            {
+                dialogueManager.OnFinished += OnDialogueFinished;
+                subscribedToDialogueEvents = true;
+            }
+
+            if (!subscribedToItemEvents && interactiveItemHandler != null)
+            {
+                interactiveItemHandler.OnItemHandled += OnQuestItemInteraction;
+                subscribedToItemEvents = true;
+            }
+        }
+
+        private GameObject FindNpcInstance(string npcName)
+        {
+            if (string.IsNullOrWhiteSpace(npcName))
+            {
+                return null;
+            }
+
+            if (npcPrefabFactory != null && npcPrefabFactory.HasInstance(npcName))
+            {
+                return npcPrefabFactory.GetInstance(npcName);
+            }
+
+            GameObject[] rootObjects = gameObject.scene.GetRootGameObjects();
+            for (int index = 0; index < rootObjects.Length; index++)
+            {
+                Transform[] children = rootObjects[index].GetComponentsInChildren<Transform>(true);
+                for (int childIndex = 0; childIndex < children.Length; childIndex++)
+                {
+                    Transform child = children[childIndex];
+                    if (child != null && child.name == npcName)
+                    {
+                        return child.gameObject;
+                    }
+                }
+            }
+
+            return null;
         }
     }
 }

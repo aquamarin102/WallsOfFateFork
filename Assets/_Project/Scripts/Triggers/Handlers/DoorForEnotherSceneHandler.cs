@@ -24,7 +24,7 @@ namespace Game
         private GameflowManager gameflowManager;
 
         [Inject]
-        public void Construct(LoadingManager loadingManager, GameflowManager gameflowManager)
+        public void Construct([InjectOptional] LoadingManager loadingManager, [InjectOptional] GameflowManager gameflowManager)
         {
             this.loadingManager = loadingManager;
             this.gameflowManager = gameflowManager;
@@ -51,6 +51,12 @@ namespace Game
             var (eventData, doorParameters) = data;
 
             if (!eventData.IsEnteracted) return;
+            loadingManager ??= LoadingManager.Instance;
+            if (loadingManager == null)
+            {
+                return;
+            }
+
             if (ShouldTrigger(doorParameters.DayNumber))
             {
                 PlayerSpawnData.SpawnPosition = doorParameters.SpawnPosition;
@@ -65,6 +71,7 @@ namespace Game
         private bool ShouldTrigger(int targetDayNumber)
         {
             if (targetDayNumber == -1) return true;
+            if (gameflowManager == null) return false;
             return targetDayNumber == this.gameflowManager.CurrentDay.Id;
         }
     }

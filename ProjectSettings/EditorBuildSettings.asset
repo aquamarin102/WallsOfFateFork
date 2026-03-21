@@ -9,23 +9,29 @@ EditorBuildSettings:
     path: Assets/_Project/Scenes/MainMenu.unity
     guid: 046318693fceace49840e762719ff7c9
   - enabled: 1
+    path: Assets/_Project/Scenes/StartDay.unity
+    guid: e0884c780697ff54b8717e7fe262a035
+  - enabled: 1
+    path: Assets/_Project/Scenes/Storage.unity
+    guid: 4a27259f1069ad442b578d381efe6100
+  - enabled: 1
     path: Assets/_Project/Scenes/MainRoom.unity
     guid: 0cfd04daddf73dd4ca5633b0a7a5157d
   - enabled: 1
-    path: Assets/_Project/Scenes/Storage.unity
-    guid: 71e63ff5d571dad4d80254a0a7e30136
-  - enabled: 1
     path: Assets/_Project/Scenes/Forge.unity
-    guid: c3f5cef089365554680305d8086e1524
-  - enabled: 1
-    path: Assets/_Project/Scenes/StartDay.unity
-    guid: 5e634a26be410634cbd427afbd8623fa
+    guid: 57210db34250c1b41b8efe1096b776a2
   - enabled: 1
     path: Assets/_Project/Scenes/CreateCharacter.unity
     guid: 1431d3981bf62ce47b1475a31a602b41
   - enabled: 1
     path: Assets/_Project/Scenes/MiniGames/MiniGameStrength.unity
     guid: da8627cce5e787a42b562f112709c443
+  - enabled: 1
+    path: Assets/_Project/Scenes/MiniGames/MiniGameAgility.unity
+    guid: f7e76babbdfb4af4c836d35d9e998f40
+  - enabled: 1
+    path: Assets/_Project/Scenes/MiniGames/MiniGameIntellect.unity
+    guid: 9e2f98c83e5973e46b31b8ce00571aa3
   - enabled: 1
     path: Assets/_Project/Scenes/StartDayScreen.unity
     guid: 30d82111c35e22b47b650c631d03280a
@@ -41,12 +47,5 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/_Project/Scenes/NewGameIntro.unity
     guid: 89a77634120ff354f8c167b31968f52d
-  - enabled: 1
-    path: Assets/_Project/Scenes/MiniGames/MiniGameAgility.unity
-    guid: f7e76babbdfb4af4c836d35d9e998f40
-  - enabled: 1
-    path: Assets/_Project/Scenes/MiniGames/MiniGameIntellect.unity
-    guid: 9e2f98c83e5973e46b31b8ce00571aa3
   m_configObjects:
     com.unity.input.settings: {fileID: 11400000, guid: 816a726db77b14b479f83b905ee881e8, type: 2}
-  m_UseUCBPForAssetBundles: 0

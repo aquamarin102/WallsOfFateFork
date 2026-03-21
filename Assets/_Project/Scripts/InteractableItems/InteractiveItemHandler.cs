@@ -23,7 +23,7 @@ namespace Game
         private QuestManager questManager;
 
         [Inject]
-        private void Construct(PlayerManager playerManager, QuestManager questManager)
+        private void Construct([InjectOptional] PlayerManager playerManager, [InjectOptional] QuestManager questManager)
         {
             this.playerManager = playerManager;
             this.questManager = questManager;
@@ -48,6 +48,10 @@ namespace Game
 
         public async Task HandleAsync((TriggerEvent eventData, InteractableItemParameters itemParameters) data)
         {
+            if (!TryResolveDependencies())
+            {
+                return;
+            }
 
             var (eventData, itemParameters) = data;
 
@@ -56,9 +60,23 @@ namespace Game
             if (itemParameters.questId > -1 && itemParameters.questTaskId > -1)
             {
                 Quest quest = questManager.GetQuest(itemParameters.questId);
+                if (quest == null)
+                {
+                    return;
+                }
+
                 QuestStatus questStatus = questManager.GetQuestStatus(quest.Id);
+                if (questStatus == null)
+                {
+                    return;
+                }
 
                 QuestTask task = questManager.GetQuestTask(quest.Id, itemParameters.questTaskId);
+                if (task == null)
+                {
+                    return;
+                }
+
                 questStatus.TasksStatusData.TryGetValue(task.Id, out Game.Data.TaskStatus taskStatus);
 
                 if (taskStatus.State == QuestState.NotStarted) return;
@@ -106,7 +124,14 @@ namespace Game
             //{
             //    var collider = itemObj.GetComponent<Collider>();
             //    if (collider != null) collider.enabled = false;
-            //}        
+            //}
+        }
+
+        private bool TryResolveDependencies()
+        {
+            playerManager ??= PlayerManager.Instance;
+            questManager ??= QuestManager.Instance;
+            return playerManager?.PlayerData != null && questManager != null;
         }
     }
 }

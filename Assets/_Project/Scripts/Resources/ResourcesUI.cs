@@ -1,4 +1,4 @@
-﻿using Game.Data;
+using Game.Data;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -47,14 +47,55 @@ namespace Game
         #endregion
 
         private PlayerManager playerManager;
+        private bool subscribedToPlayerChanges;
 
         [Inject]
-        private void Construct(PlayerManager playerManager) {
+        private void Construct([InjectOptional] PlayerManager playerManager) {
             this.playerManager = playerManager;
         }
 
         private void Awake() {
-            playerManager.PlayerData.ResourceChanged += OnResourceChanged;
+            EnsureTextFieldsInitialized();
+            TrySubscribeToPlayerChanges();
+        }
+
+        private void OnEnable()
+        {
+            EnsureTextFieldsInitialized();
+            if (TrySubscribeToPlayerChanges())
+            {
+                UpdateAllResources(forceUpdate: true);
+            }
+        }
+
+        private void Update()
+        {
+            if (subscribedToPlayerChanges)
+            {
+                return;
+            }
+
+            EnsureTextFieldsInitialized();
+            if (TrySubscribeToPlayerChanges())
+            {
+                UpdateAllResources(forceUpdate: true);
+            }
+        }
+
+        private void OnDisable() {
+            UnsubscribeFromPlayerChanges();
+        }
+
+        private void OnDestroy() {
+            UnsubscribeFromPlayerChanges();
+        }
+
+        private void EnsureTextFieldsInitialized()
+        {
+            if (resourceTextFields != null)
+            {
+                return;
+            }
 
             resourceTextFields = new Dictionary<ResourceType, TMP_Text> {
                 { ResourceType.Gold, goldText },
@@ -64,14 +105,13 @@ namespace Game
             };
         }
 
-        private void OnDestroy() {
-            playerManager.PlayerData.ResourceChanged -= OnResourceChanged;
-        }
-
         #region Unity life-cycle
         private void Start()
         {
-            UpdateAllResources(forceUpdate: true);
+            if (TrySubscribeToPlayerChanges())
+            {
+                UpdateAllResources(forceUpdate: true);
+            }
         }
         #endregion
 
@@ -84,6 +124,11 @@ namespace Game
         #region Updating helpers
         private void UpdateAllResources(bool forceUpdate = false)
         {
+            if (!TryResolvePlayerManager() || resourceTextFields == null)
+            {
+                return;
+            }
+
             var resourceTypes = Enum.GetValues(typeof(ResourceType)).Cast<ResourceType>();
 
             foreach (var type in resourceTypes)
@@ -94,7 +139,11 @@ namespace Game
 
         private void UpdateResource(ResourceType resource, int currentValue, bool forceUpdate)
         {
-            var textField = resourceTextFields[resource];
+            if (resourceTextFields == null || !resourceTextFields.TryGetValue(resource, out TMP_Text textField))
+            {
+                return;
+            }
+
             var lastValue = lastResourceValue[resource];
 
             if (textField == null) return;
@@ -154,6 +203,40 @@ namespace Game
             runningCoroutines[textField] = null;
         }
         #endregion
+
+        private bool TryResolvePlayerManager()
+        {
+            playerManager ??= PlayerManager.Instance;
+            return playerManager?.PlayerData != null;
+        }
+
+        private bool TrySubscribeToPlayerChanges()
+        {
+            if (subscribedToPlayerChanges)
+            {
+                return true;
+            }
+
+            if (!TryResolvePlayerManager())
+            {
+                return false;
+            }
+
+            playerManager.PlayerData.ResourceChanged += OnResourceChanged;
+            subscribedToPlayerChanges = true;
+            return true;
+        }
+
+        private void UnsubscribeFromPlayerChanges()
+        {
+            if (!subscribedToPlayerChanges || playerManager?.PlayerData == null)
+            {
+                return;
+            }
+
+            playerManager.PlayerData.ResourceChanged -= OnResourceChanged;
+            subscribedToPlayerChanges = false;
+        }
 
         #region Editor‑only validation
 #if UNITY_EDITOR

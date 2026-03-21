@@ -10,7 +10,7 @@ namespace Game
     public class InputController : MonoBehaviour
     {
         public GameObject firstButton;
-        // Интервал, в течение которого повторные нажатия Enter/Space/E игнорируются
+        // РРЅС‚РµСЂРІР°Р», РІ С‚РµС‡РµРЅРёРµ РєРѕС‚РѕСЂРѕРіРѕ РїРѕРІС‚РѕСЂРЅС‹Рµ РЅР°Р¶Р°С‚РёСЏ Enter/Space/E РёРіРЅРѕСЂРёСЂСѓСЋС‚СЃСЏ
         public float submitCooldown = 1f;
 
         private float lastSubmitTime = -Mathf.Infinity;
@@ -18,23 +18,22 @@ namespace Game
         private float blockInputUntil = 0f;
 
         private LoadingManager loadingManager;
+        private bool subscribedToLoadingEvents;
 
         [Inject]
-        private void Construct(LoadingManager loadingManager)
+        private void Construct([InjectOptional] LoadingManager loadingManager)
         {
             this.loadingManager = loadingManager;
         }
 
         private void OnEnable()
         {
-            loadingManager.LoadingStarted += OnLoadingStarted;
-            loadingManager.LoadingFinished += OnLoadingFinished;            
+            TrySubscribeToLoadingEvents();
         }
 
         private void OnDisable()
         {
-            loadingManager.LoadingStarted -= OnLoadingStarted;
-            loadingManager.LoadingFinished -= OnLoadingFinished;
+            UnsubscribeFromLoadingEvents();
         }
 
         private void OnLoadingStarted()
@@ -60,25 +59,32 @@ namespace Game
 
         private void Update()
         {
-            // Блокируем ввод, пока идёт загрузка или не истёк начальный delay
+            TrySubscribeToLoadingEvents();
+
+            // Р‘Р»РѕРєРёСЂСѓРµРј РІРІРѕРґ, РїРѕРєР° РёРґС‘С‚ Р·Р°РіСЂСѓР·РєР° РёР»Рё РЅРµ РёСЃС‚С‘Рє РЅР°С‡Р°Р»СЊРЅС‹Р№ delay
             if (!canAcceptInput ||
-                (loadingManager.IsLoading))
+                (loadingManager != null && loadingManager.IsLoading))
                 return;
 
             if (Time.unscaledTime < blockInputUntil)
                 return;
 
-            // Обнаружение мыши
+            EventSystem currentEventSystem = EventSystem.current;
+
+            // РћР±РЅР°СЂСѓР¶РµРЅРёРµ РјС‹С€Рё
             if (Input.GetAxis("Mouse X") != 0 || Input.GetAxis("Mouse Y") != 0)
             {
                 if (InputModeTracker.UsingKeyboard)
                 {
                     InputModeTracker.NotifyMouseInput();
-                    EventSystem.current.SetSelectedGameObject(null);
+                    if (currentEventSystem != null)
+                    {
+                        currentEventSystem.SetSelectedGameObject(null);
+                    }
                 }
             }
 
-            // Обнаружение клавиатуры (стрелки или W/S)
+            // РћР±РЅР°СЂСѓР¶РµРЅРёРµ РєР»Р°РІРёР°С‚СѓСЂС‹ (СЃС‚СЂРµР»РєРё РёР»Рё W/S)
             if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.DownArrow)
                 || Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.S))
             {
@@ -87,11 +93,11 @@ namespace Game
 
                 ClearMouseHoverEffect();
 
-                if (EventSystem.current.currentSelectedGameObject == null)
+                if (currentEventSystem != null && currentEventSystem.currentSelectedGameObject == null)
                     SetSelected(firstButton);
             }
 
-            // Enter, Space или E — с задержкой 1 секунда между нажатиями
+            // Enter, Space РёР»Рё E вЂ” СЃ Р·Р°РґРµСЂР¶РєРѕР№ 1 СЃРµРєСѓРЅРґР° РјРµР¶РґСѓ РЅР°Р¶Р°С‚РёСЏРјРё
             if (Input.GetKeyUp(KeyCode.Return)
                 || Input.GetKeyUp(KeyCode.E))
             {
@@ -100,7 +106,7 @@ namespace Game
 
                 lastSubmitTime = Time.unscaledTime;
 
-                var selected = EventSystem.current.currentSelectedGameObject;
+                var selected = currentEventSystem != null ? currentEventSystem.currentSelectedGameObject : null;
                 if (selected != null)
                 {
                     var btn = selected.GetComponent<Button>();
@@ -112,13 +118,19 @@ namespace Game
 
         private void ClearMouseHoverEffect()
         {
-            var pointerData = new PointerEventData(EventSystem.current)
+            EventSystem currentEventSystem = EventSystem.current;
+            if (currentEventSystem == null)
+            {
+                return;
+            }
+
+            var pointerData = new PointerEventData(currentEventSystem)
             {
                 position = Input.mousePosition
             };
 
             var results = new List<RaycastResult>();
-            EventSystem.current.RaycastAll(pointerData, results);
+            currentEventSystem.RaycastAll(pointerData, results);
 
             foreach (var res in results)
             {
@@ -130,8 +142,45 @@ namespace Game
 
         private void SetSelected(GameObject go)
         {
-            EventSystem.current.SetSelectedGameObject(null);
-            EventSystem.current.SetSelectedGameObject(go);
+            EventSystem currentEventSystem = EventSystem.current;
+            if (currentEventSystem == null)
+            {
+                return;
+            }
+
+            currentEventSystem.SetSelectedGameObject(null);
+            currentEventSystem.SetSelectedGameObject(go);
+        }
+
+        private bool TrySubscribeToLoadingEvents()
+        {
+            if (subscribedToLoadingEvents)
+            {
+                return true;
+            }
+
+            loadingManager ??= LoadingManager.Instance;
+            if (loadingManager == null)
+            {
+                return false;
+            }
+
+            loadingManager.LoadingStarted += OnLoadingStarted;
+            loadingManager.LoadingFinished += OnLoadingFinished;
+            subscribedToLoadingEvents = true;
+            return true;
+        }
+
+        private void UnsubscribeFromLoadingEvents()
+        {
+            if (!subscribedToLoadingEvents || loadingManager == null)
+            {
+                return;
+            }
+
+            loadingManager.LoadingStarted -= OnLoadingStarted;
+            loadingManager.LoadingFinished -= OnLoadingFinished;
+            subscribedToLoadingEvents = false;
         }
     }
 

@@ -1,10 +1,8 @@
-﻿using Game.Data;
+using Game.Data;
 using Game.UI;
 using Newtonsoft.Json;
 using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Text;
 using UnityEngine;
 using Zenject;
 
@@ -19,9 +17,13 @@ namespace Game
 
         private QuestManager questManager;
         private NPCPrefabFactory npcPrefabFactory;
+        private bool initialSceneStateApplied;
+        private bool subscribedToDialogueEvents;
+        private bool subscribedToItemEvents;
+        private bool pendingDialogueChecked;
 
         [Inject]
-        private void Construct(QuestManager questManager, NPCPrefabFactory factory)
+        private void Construct([InjectOptional] QuestManager questManager, [InjectOptional] NPCPrefabFactory factory)
         {
             this.questManager = questManager;
             this.npcPrefabFactory = factory;
@@ -35,53 +37,44 @@ namespace Game
                 TutorialSheetDefinitions.MainRoomEditorAssetPath,
                 null);
 
-            dialogueManager = DialogueManager.Instance;
-            if (dialogueManager != null)
+            TryResolveDependencies();
+            TrySubscribeToSceneEvents();
+            TryApplyInitialSceneState();
+            TryStartPendingMinigameDialogueIfNeeded();
+        }
+
+        private void Update()
+        {
+            if (initialSceneStateApplied &&
+                subscribedToDialogueEvents &&
+                (interactiveItemHandler == null || subscribedToItemEvents) &&
+                pendingDialogueChecked)
             {
-                dialogueManager.OnFinished += OnDialogueFinished;
+                return;
             }
 
-            if (interactiveItemHandler != null)
+            TryResolveDependencies();
+            TrySubscribeToSceneEvents();
+            TryApplyInitialSceneState();
+            TryStartPendingMinigameDialogueIfNeeded();
+        }
+
+        private void OnDestroy()
+        {
+            if (subscribedToDialogueEvents && dialogueManager != null)
             {
-                interactiveItemHandler.OnItemHandled += OnQuestItemInteraction;
+                dialogueManager.OnFinished -= OnDialogueFinished;
             }
 
-            Quest keyMasterQuest = questManager.GetQuest(3);
-            if (keyMasterQuest != null)
+            if (subscribedToItemEvents && interactiveItemHandler != null)
             {
-                QuestStatus keyMasterQuestStatus = questManager.GetQuestStatus(keyMasterQuest.Id);
-                QuestTask task = questManager.GetQuestTask(keyMasterQuest.Id, 1);
-
-                bool shouldShowKeyMaster =
-                    keyMasterQuestStatus != null &&
-                    task != null &&
-                    keyMasterQuestStatus.TasksStatusData.TryGetValue(task.Id, out TaskStatus taskStatus) &&
-                    taskStatus.State == QuestState.InProgress;
-
-                SetNpcActiveIfExists(keyMasterName, shouldShowKeyMaster);
+                interactiveItemHandler.OnItemHandled -= OnQuestItemInteraction;
             }
-
-            Quest messengerQuest = questManager.GetQuest(4);
-            if (messengerQuest != null)
-            {
-                QuestStatus messengerQuestStatus = questManager.GetQuestStatus(messengerQuest.Id);
-                QuestTask task = questManager.GetQuestTask(messengerQuest.Id, 0);
-
-                bool shouldShowMessenger =
-                    messengerQuestStatus != null &&
-                    task != null &&
-                    messengerQuestStatus.TasksStatusData.TryGetValue(task.Id, out TaskStatus messengerTaskStatus) &&
-                    messengerTaskStatus.State == QuestState.InProgress;
-
-                SetNpcActiveIfExists(messengerName, shouldShowMessenger);
-            }
-
-            TryStartPendingMinigameDialogue();
         }
 
         public void OnDialogueFinished(DialogueGraph dialogue)
         {
-            if (dialogue == null)
+            if (!TryResolveDependencies() || dialogue == null)
             {
                 return;
             }
@@ -100,7 +93,6 @@ namespace Game
                 }
 
                 QuestStatus messengerQuestStatus = questManager.GetQuestStatus(messengerQuest.Id);
-
                 QuestTask task = questManager.GetQuestTask(messengerQuest.Id, 0);
                 if (messengerQuestStatus == null || task == null)
                 {
@@ -118,6 +110,7 @@ namespace Game
                     questManager.UpdateQuest(messengerQuest.Id, QuestState.Completed);
                 }
             }
+
             if (dialogue.Name == "KeyMaster")
             {
                 Quest keyMasterQuest = questManager.GetQuest(3);
@@ -146,19 +139,31 @@ namespace Game
             }
         }
 
-        private void TryStartPendingMinigameDialogue()
+        public void OnQuestItemInteraction(InteractableItemParameters itemParameters)
         {
+        }
+
+        private void TryStartPendingMinigameDialogueIfNeeded()
+        {
+            if (pendingDialogueChecked || !TryResolveDependencies())
+            {
+                return;
+            }
+
             Quest messengerQuest = questManager.GetQuest(4);
             if (messengerQuest == null)
             {
+                pendingDialogueChecked = true;
                 return;
             }
 
             if (!questManager.TryConsumePendingMinigameDialogue(messengerQuest.Id, out string dialoguePath, out _))
             {
+                pendingDialogueChecked = true;
                 return;
             }
 
+            pendingDialogueChecked = true;
             StartCoroutine(StartPendingDialogueNextFrame(dialoguePath));
         }
 
@@ -216,39 +221,134 @@ namespace Game
                    dialogue.Sentences.Exists(sentence => sentence != null && sentence.StartMinigame);
         }
 
-        private void SetNpcActiveIfExists(string npcName, bool isActive)
+        private bool TryResolveDependencies()
         {
-            GameObject npc = FindNpcInstance(npcName);
-            if (npc != null)
+            questManager ??= QuestManager.Instance;
+            dialogueManager ??= DialogueManager.Instance;
+            return questManager != null;
+        }
+
+        private void TrySubscribeToSceneEvents()
+        {
+            if (!subscribedToDialogueEvents && dialogueManager != null)
             {
-                npc.SetActive(isActive);
+                dialogueManager.OnFinished += OnDialogueFinished;
+                subscribedToDialogueEvents = true;
             }
+
+            if (!subscribedToItemEvents && interactiveItemHandler != null)
+            {
+                interactiveItemHandler.OnItemHandled += OnQuestItemInteraction;
+                subscribedToItemEvents = true;
+            }
+        }
+
+        private void TryApplyInitialSceneState()
+        {
+            if (initialSceneStateApplied || !TryResolveDependencies())
+            {
+                return;
+            }
+
+            bool keyMasterReady = true;
+            Quest keyMasterQuest = questManager.GetQuest(3);
+            if (keyMasterQuest != null)
+            {
+                QuestStatus keyMasterQuestStatus = questManager.GetQuestStatus(keyMasterQuest.Id);
+                QuestTask task = questManager.GetQuestTask(keyMasterQuest.Id, 1);
+
+                bool shouldShowKeyMaster =
+                    keyMasterQuestStatus != null &&
+                    task != null &&
+                    keyMasterQuestStatus.TasksStatusData.TryGetValue(task.Id, out TaskStatus taskStatus) &&
+                    taskStatus.State == QuestState.InProgress;
+
+                keyMasterReady = SetNpcActiveIfExists(keyMasterName, shouldShowKeyMaster);
+            }
+
+            bool messengerReady = true;
+            Quest messengerQuest = questManager.GetQuest(4);
+            if (messengerQuest != null)
+            {
+                QuestStatus messengerQuestStatus = questManager.GetQuestStatus(messengerQuest.Id);
+                QuestTask task = questManager.GetQuestTask(messengerQuest.Id, 0);
+
+                bool shouldShowMessenger =
+                    messengerQuestStatus != null &&
+                    task != null &&
+                    messengerQuestStatus.TasksStatusData.TryGetValue(task.Id, out TaskStatus messengerTaskStatus) &&
+                    messengerTaskStatus.State == QuestState.InProgress;
+
+                messengerReady = SetNpcActiveIfExists(messengerName, shouldShowMessenger);
+            }
+
+            initialSceneStateApplied = keyMasterReady && messengerReady;
+        }
+
+        private bool SetNpcActiveIfExists(string npcName, bool isActive)
+        {
+            if (string.IsNullOrWhiteSpace(npcName))
+            {
+                return true;
+            }
+
+            GameObject npc = FindNpcInstance(npcName);
+            if (npc == null)
+            {
+                return false;
+            }
+
+            npc.SetActive(isActive);
+            return true;
         }
 
         private GameObject FindNpcInstance(string npcName)
         {
-            if (npcPrefabFactory == null || string.IsNullOrWhiteSpace(npcName))
+            if (string.IsNullOrWhiteSpace(npcName))
             {
                 return null;
             }
 
-            if (npcPrefabFactory.HasInstance(npcName))
+            if (npcPrefabFactory != null && npcPrefabFactory.HasInstance(npcName))
             {
                 return npcPrefabFactory.GetInstance(npcName);
             }
 
             string normalizedName = NormalizeNpcName(npcName);
-            foreach (var entry in npcPrefabFactory.instances)
+            if (npcPrefabFactory != null)
             {
-                if (entry.Value == null)
+                foreach (var entry in npcPrefabFactory.instances)
                 {
-                    continue;
-                }
+                    if (entry.Value == null)
+                    {
+                        continue;
+                    }
 
-                if (string.Equals(entry.Key, npcName, StringComparison.OrdinalIgnoreCase) ||
-                    string.Equals(NormalizeNpcName(entry.Key), normalizedName, StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals(entry.Key, npcName, StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(NormalizeNpcName(entry.Key), normalizedName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return entry.Value;
+                    }
+                }
+            }
+
+            GameObject[] rootObjects = gameObject.scene.GetRootGameObjects();
+            for (int rootIndex = 0; rootIndex < rootObjects.Length; rootIndex++)
+            {
+                Transform[] children = rootObjects[rootIndex].GetComponentsInChildren<Transform>(true);
+                for (int childIndex = 0; childIndex < children.Length; childIndex++)
                 {
-                    return entry.Value;
+                    Transform child = children[childIndex];
+                    if (child == null)
+                    {
+                        continue;
+                    }
+
+                    if (string.Equals(child.name, npcName, StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(NormalizeNpcName(child.name), normalizedName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return child.gameObject;
+                    }
                 }
             }
 
@@ -259,10 +359,6 @@ namespace Game
         {
             int separatorIndex = npcName.IndexOf('_');
             return separatorIndex >= 0 ? npcName.Substring(0, separatorIndex) : npcName;
-        }
-
-        public void OnQuestItemInteraction(InteractableItemParameters itemParameters)
-        {
         }
     }
 }

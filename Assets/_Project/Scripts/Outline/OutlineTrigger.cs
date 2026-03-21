@@ -156,7 +156,7 @@ namespace Game
 
         private void OnTriggerEnter(Collider other)
         {
-            if (other.CompareTag("Player"))
+            if (PlayerObjectUtility.TryGetPlayerObject(other, out _))
             {
                 isPlayerInTrigger = true;
                 UpdateHighlightState();
@@ -165,7 +165,7 @@ namespace Game
 
         private void OnTriggerExit(Collider other)
         {
-            if (other.CompareTag("Player"))
+            if (PlayerObjectUtility.TryGetPlayerObject(other, out _))
             {
                 isPlayerInTrigger = false;
                 UpdateHighlightState();
