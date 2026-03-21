@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using Zenject;
 
 namespace Game.MiniGame
 {
@@ -40,27 +39,27 @@ namespace Game.MiniGame
         private Quaternion previousRotation;
         private DialogueGraph dialogueGraph;
 
-        [Inject]
-        public void Construct(PlayerManager playerManager, LoadingManager loadingManager, QuestManager questManager, PlayerMoveController playerController)
-        {
-            this.playerTransform = playerController.transform;
-            this.playerManager = playerManager;
-            this.loadingManager = loadingManager;
-            this.questManager = questManager;
-        }
-
         void Awake()
         {
             if (Instance == null)
             {
                 Instance = this;
                 DontDestroyOnLoad(gameObject);
+                ResolveDependencies();
             }
             else
             {
                 Destroy(gameObject);
-            }          
+            }
 
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance == this)
+            {
+                Instance = null;
+            }
         }
 
         void OnEnable()
@@ -81,6 +80,8 @@ namespace Game.MiniGame
                 return;
             }
 
+            ResolveDependencies();
+            Time.timeScale = 1f;
             this.dialogueGraph = dialogueGraph;
             _currentGameData = gameData;
             _previousScene = SceneManager.GetActiveScene().name;
@@ -96,7 +97,14 @@ namespace Game.MiniGame
 
             if (!string.IsNullOrEmpty(sceneToLoad))
             {
-                loadingManager.LoadSceneDirect(sceneToLoad);
+                if (loadingManager != null)
+                {
+                    loadingManager.LoadSceneDirect(sceneToLoad);
+                }
+                else
+                {
+                    SceneManager.LoadScene(sceneToLoad);
+                }
             }
             else
             {
@@ -140,6 +148,8 @@ namespace Game.MiniGame
 
         public void EndMinigame(bool playerWon)
         {
+            ResolveDependencies();
+            Time.timeScale = 1f;
             string outcomeKey = playerWon ? "Win" : "Lose";
 
             try
@@ -175,16 +185,45 @@ namespace Game.MiniGame
             PlayerSpawnData.SpawnPosition = previousPosition;
             PlayerSpawnData.SpawnRotation = previousRotation;
 
-            loadingManager.LoadSceneDirect(_previousScene);
+            if (loadingManager != null)
+            {
+                loadingManager.LoadSceneDirect(_previousScene);
+            }
+            else
+            {
+                SceneManager.LoadScene(_previousScene);
+            }
+
             Destroy(this.gameObject);
         }
 
         private void ProcessResources(Dictionary<string, string> resourcesDict)
         {
+            if (playerManager?.PlayerData == null)
+            {
+                return;
+            }
+
             foreach (var resource in resourcesDict)
             {
                 if (!string.IsNullOrEmpty(resource.Key))
-                    playerManager.PlayerData.AddResource(Enum.Parse<ResourceType>(resource.Key), Convert.ToInt32(resource.Key));
+                    playerManager.PlayerData.AddResource(Enum.Parse<ResourceType>(resource.Key), Convert.ToInt32(resource.Value));
+            }
+        }
+
+        private void ResolveDependencies()
+        {
+            playerManager ??= PlayerManager.Instance;
+            loadingManager ??= LoadingManager.Instance;
+            questManager ??= QuestManager.Instance;
+
+            if (playerTransform == null)
+            {
+                PlayerMoveController playerController = FindObjectOfType<PlayerMoveController>();
+                if (playerController != null)
+                {
+                    playerTransform = playerController.transform;
+                }
             }
         }
     }

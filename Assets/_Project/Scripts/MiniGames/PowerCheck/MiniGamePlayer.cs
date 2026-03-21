@@ -93,8 +93,14 @@ namespace Game.MiniGame.PowerCheck
             this.playerManager = playerManager;
         }
 
+        private void Awake()
+        {
+            ResolveDependencies();
+        }
+
         private void OnEnable()
         {
+            ResolveDependencies();
             ResetHealth();
             if (playerManager != null)
             {
@@ -102,6 +108,11 @@ namespace Game.MiniGame.PowerCheck
                 damage += Convert.ToUInt32(playerManager.PlayerData.GetStat(StatType.Strength));
                 minDamage += Convert.ToUInt32(playerManager.PlayerData.GetStat(StatType.Strength));
             }
+        }
+
+        private void ResolveDependencies()
+        {
+            playerManager ??= PlayerManager.Instance;
         }
 
         public string GetName()

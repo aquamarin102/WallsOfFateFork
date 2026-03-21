@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using Zenject;
 using Game.MiniGame;
 
 namespace Game
@@ -45,7 +44,6 @@ namespace Game
 
     public class EntryPoint : MonoBehaviour
     {
-        [Inject] private DiContainer container;
         private DialogueManager subscribedDialogueManager;
 
         #region Singleton
@@ -67,6 +65,12 @@ namespace Game
 
                 return _instance;
             }
+        }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void EnsureInstanceOnLoad()
+        {
+            _ = Instance;
         }
 
         private void Awake()
@@ -127,12 +131,6 @@ namespace Game
 
         public bool IsMinigameActive => MinigameManager.Instance != null && MinigameManager.Instance.transform.gameObject.activeSelf;
 
-        [Inject]
-        private void Construct(DiContainer container)
-        {
-            this.container = container;
-        }
-
         public void LaunchMinigame(MiniGameData launchData, DialogueGraph dialogueGraph)
         {
             if (launchData == null)
@@ -147,7 +145,8 @@ namespace Game
                 return;
             }
 
-            MinigameManager minigameManager = container.InstantiateComponentOnNewGameObject<MinigameManager>("MinigameManager");
+            GameObject minigameManagerObject = new GameObject("MinigameManager");
+            MinigameManager minigameManager = minigameManagerObject.AddComponent<MinigameManager>();
             DontDestroyOnLoad(minigameManager.gameObject);
 
             Debug.Log("Created new MinigameManager");

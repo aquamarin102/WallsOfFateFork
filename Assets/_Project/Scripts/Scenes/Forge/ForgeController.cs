@@ -11,6 +11,8 @@ namespace Game
 {
     internal class ForgeController : MonoBehaviour
     {
+        private static readonly int[] PendingMinigameQuestIds = { 1, 2, 5 };
+
         [SerializeField] private DialogueManager dialogueManager;
         [SerializeField] private InteractiveItemHandler interactiveItemHandler;
         [SerializeField] private DialogueHandler dialogueHandler;
@@ -40,19 +42,21 @@ namespace Game
                 interactiveItemHandler.OnItemHandled += OnQuestItemInteraction;
             }
 
-            dialogueHandler.OnDialogHandled += OnDialogueInteraction;
+            if (dialogueHandler != null)
+            {
+                dialogueHandler.OnDialogHandled += OnDialogueInteraction;
+            }
 
             Quest thiefQuest = questManager.GetQuest(1);
-            QuestState thiefQuestState = questManager.GetQuestState(thiefQuest.Id);
-            if (thiefQuestState == QuestState.InProgress)
+            if (thiefQuest != null && questManager.GetQuestState(thiefQuest.Id) == QuestState.InProgress)
             {
-                npcPrefabFactory.GetInstance(ThiefPrefabName).gameObject.SetActive(true);
-                npcPrefabFactory.GetInstance(ChiefGuardfPrefabName).gameObject.SetActive(true);
+                SetNpcActiveIfExists(ThiefPrefabName, true);
+                SetNpcActiveIfExists(ChiefGuardfPrefabName, true);
             }
             else
             {
-                npcPrefabFactory.GetInstance(ThiefPrefabName).gameObject.SetActive(false);
-                npcPrefabFactory.GetInstance(ChiefGuardfPrefabName).gameObject.SetActive(false);
+                SetNpcActiveIfExists(ThiefPrefabName, false);
+                SetNpcActiveIfExists(ChiefGuardfPrefabName, false);
             }
 
             TryStartPendingMinigameDialogue();
@@ -60,36 +64,69 @@ namespace Game
 
         public void OnDialogueFinished(DialogueGraph dialogue)
         {
-            DialogueManager dialogueManager = DialogueManager.Instance;
             if (dialogue == null)
             {
                 return;
             }
 
-            if (dialogue.Name == "ChiefGuard")
+            bool hasMinigameTransition = DialogueContainsMinigameTransition(dialogue);
+
+            if (dialogue.Name == "ChiefGuard" || dialogue.Name == "CaptainGuard")
             {
-                Quest thiefQuest = questManager.GetQuest(1);
-                if (questManager.GetQuestState(thiefQuest.Id) == QuestState.InProgress)
+                if (hasMinigameTransition)
                 {
-                    QuestStatus thiefQuestStatus = questManager.GetQuestStatus(thiefQuest.Id);
+                    return;
+                }
 
-                    QuestTask task = questManager.GetQuestTask(thiefQuest.Id, 0);
-                    thiefQuestStatus.TasksStatusData.TryGetValue(task.Id, out TaskStatus taskStatus);
+                Quest thiefQuest = questManager.GetQuest(1);
+                if (thiefQuest == null || questManager.GetQuestState(thiefQuest.Id) != QuestState.InProgress)
+                {
+                    return;
+                }
 
-                    if (taskStatus.State == QuestState.Completed)
-                    {
-                        questManager.UpdateQuestTask(thiefQuest.Id, task.Id, QuestState.Completed);
-                        questManager.UpdateQuest(thiefQuest.Id, QuestState.Completed);
-                    }
+                QuestStatus thiefQuestStatus = questManager.GetQuestStatus(thiefQuest.Id);
+                QuestTask task = questManager.GetQuestTask(thiefQuest.Id, 0);
+                if (thiefQuestStatus == null || task == null)
+                {
+                    return;
+                }
+
+                if (!thiefQuestStatus.TasksStatusData.TryGetValue(task.Id, out TaskStatus taskStatus))
+                {
+                    return;
+                }
+
+                if (taskStatus.State == QuestState.InProgress || taskStatus.State == QuestState.Completed)
+                {
+                    questManager.UpdateQuestTask(thiefQuest.Id, task.Id, QuestState.Completed);
+                    questManager.UpdateQuest(thiefQuest.Id, QuestState.Completed);
                 }
             }
-            if(dialogue.Name == "Sofa")
-            {
-                Quest herbalistQuest = questManager.GetQuest(2);
-                QuestStatus herbalistQuestStatus = questManager.GetQuestStatus(herbalistQuest.Id);
 
+            if (dialogue.Name == "Sofa")
+            {
+                if (hasMinigameTransition)
+                {
+                    return;
+                }
+
+                Quest herbalistQuest = questManager.GetQuest(2);
+                if (herbalistQuest == null)
+                {
+                    return;
+                }
+
+                QuestStatus herbalistQuestStatus = questManager.GetQuestStatus(herbalistQuest.Id);
                 QuestTask task = questManager.GetQuestTask(herbalistQuest.Id, 0);
-                herbalistQuestStatus.TasksStatusData.TryGetValue(task.Id, out TaskStatus taskStatus);
+                if (herbalistQuestStatus == null || task == null)
+                {
+                    return;
+                }
+
+                if (!herbalistQuestStatus.TasksStatusData.TryGetValue(task.Id, out TaskStatus taskStatus))
+                {
+                    return;
+                }
 
                 if (taskStatus.State == QuestState.InProgress)
                 {
@@ -105,10 +142,19 @@ namespace Game
             if (eventData.TriggerObj.gameObject.name == "Blacksmith")
             {
                 Quest blacksmithQuest = questManager.GetQuest(5);
+                if (blacksmithQuest == null)
+                {
+                    return;
+                }
+
                 QuestStatus blacksmithQuestStatus = questManager.GetQuestStatus(blacksmithQuest.Id);
 
                 QuestTask task = questManager.GetQuestTask(blacksmithQuest.Id, 0);
                 QuestTask task1 = questManager.GetQuestTask(blacksmithQuest.Id, 1);
+                if (blacksmithQuestStatus == null || task == null || task1 == null)
+                {
+                    return;
+                }
 
                 blacksmithQuestStatus.TasksStatusData.TryGetValue(task.Id, out TaskStatus taskStatus);
                 blacksmithQuestStatus.TasksStatusData.TryGetValue(task1.Id, out TaskStatus taskStatus1);
@@ -139,10 +185,19 @@ namespace Game
             if (itemParameters.ItemName == "BlacksmithChest")
             {
                 Quest blacksmithQuest = questManager.GetQuest(5);
+                if (blacksmithQuest == null)
+                {
+                    return;
+                }
+
                 QuestStatus blacksmithQuestStatus = questManager.GetQuestStatus(blacksmithQuest.Id);
 
                 QuestTask task = questManager.GetQuestTask(blacksmithQuest.Id, 0);
                 QuestTask task1 = questManager.GetQuestTask(blacksmithQuest.Id, 1);
+                if (blacksmithQuestStatus == null || task == null || task1 == null)
+                {
+                    return;
+                }
 
                 blacksmithQuestStatus.TasksStatusData.TryGetValue(task.Id, out TaskStatus taskStatus);
                 blacksmithQuestStatus.TasksStatusData.TryGetValue(task1.Id, out TaskStatus taskStatus1);
@@ -156,18 +211,32 @@ namespace Game
 
         private void TryStartPendingMinigameDialogue()
         {
-            Quest blacksmithQuest = questManager.GetQuest(5);
-            if (blacksmithQuest == null)
-            {
-                return;
-            }
-
-            if (!questManager.TryConsumePendingMinigameDialogue(blacksmithQuest.Id, out string dialoguePath, out _))
+            string dialoguePath = ConsumePendingMinigameDialoguePath();
+            if (string.IsNullOrWhiteSpace(dialoguePath))
             {
                 return;
             }
 
             StartCoroutine(StartPendingDialogueNextFrame(dialoguePath));
+        }
+
+        private string ConsumePendingMinigameDialoguePath()
+        {
+            foreach (int questId in PendingMinigameQuestIds)
+            {
+                Quest quest = questManager.GetQuest(questId);
+                if (quest == null)
+                {
+                    continue;
+                }
+
+                if (questManager.TryConsumePendingMinigameDialogue(quest.Id, out string dialoguePath, out _))
+                {
+                    return dialoguePath;
+                }
+            }
+
+            return null;
         }
 
         private IEnumerator StartPendingDialogueNextFrame(string dialoguePath)
@@ -216,6 +285,36 @@ namespace Game
                 Debug.LogError($"ForgeController: failed to deserialize dialogue graph at path: {dialoguePath}. Error: {ex.Message}");
                 return null;
             }
+        }
+
+        private static bool DialogueContainsMinigameTransition(DialogueGraph dialogue)
+        {
+            return dialogue?.Sentences != null &&
+                   dialogue.Sentences.Exists(sentence => sentence != null && sentence.StartMinigame);
+        }
+
+        private void SetNpcActiveIfExists(string npcName, bool isActive)
+        {
+            GameObject npc = FindNpcInstance(npcName);
+            if (npc != null)
+            {
+                npc.SetActive(isActive);
+            }
+        }
+
+        private GameObject FindNpcInstance(string npcName)
+        {
+            if (npcPrefabFactory == null || string.IsNullOrWhiteSpace(npcName))
+            {
+                return null;
+            }
+
+            if (npcPrefabFactory.HasInstance(npcName))
+            {
+                return npcPrefabFactory.GetInstance(npcName);
+            }
+
+            return null;
         }
     }
 }

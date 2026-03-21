@@ -15,9 +15,12 @@ namespace Game.Data
 
     public class PlayerManager
     {
+        public static PlayerManager Instance { get; private set; }
+
         public Player PlayerData { get; private set; } = new Player();
 
         public PlayerManager() { 
+            Instance = this;
             PlayerData.FreePoints = 5; // Начальное количество очков для распределения
 
             LoadDefaultPlayerData();

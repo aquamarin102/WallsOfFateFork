@@ -10,6 +10,8 @@ namespace Game.Data
 {
     public class QuestManager
     {
+        public static QuestManager Instance { get; private set; }
+
         private sealed class MinigameContext
         {
             public int QuestId;
@@ -32,6 +34,7 @@ namespace Game.Data
 
         public QuestManager()
         {
+            Instance = this;
             LoadResourcesData();
             InitializeQuestsStatus();
         }

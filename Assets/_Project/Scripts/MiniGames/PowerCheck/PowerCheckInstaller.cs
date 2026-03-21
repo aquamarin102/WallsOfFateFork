@@ -1,5 +1,6 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Game.UI;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -45,7 +46,7 @@ namespace Game.MiniGame.PowerCheck
         public void InitializeWithData(MiniGameData gameData)
         {
             _gameData = gameData;
-            Debug.Log($"Инициализация мини-игры: {gameData.miniGameType}");
+            Debug.Log($"Инициализация мини-игры: {gameData?.miniGameType ?? MiniGameType.None}");
             BeginInitialization();
         }
 
@@ -80,19 +81,16 @@ namespace Game.MiniGame.PowerCheck
 
             _isInitialized = true;
 
-            // Если данных нет, пробуем получить их из MinigameManager
             if (_gameData == null && MinigameManager.Instance != null)
             {
                 _gameData = MinigameManager.Instance.CurrentGameData;
             }
 
-            // Применяем настройки сложности
-            if (_gameData != null && _gameData.customParameters.ContainsKey("difficulty"))
+            if (TryGetIntParameter("difficulty", out int difficulty))
             {
-                ApplyDifficulty((int)_gameData.customParameters["difficulty"]);
+                ApplyDifficulty(difficulty);
             }
 
-            // Инициализируем игру
             InitializeCameraTransform();
             BindMineSpawner();
             BindGameProcess();
@@ -104,11 +102,11 @@ namespace Game.MiniGame.PowerCheck
             {
                 MineSpawnerObject.Initialize();
             }
-            if (FXPlayerObject != null)
+            if (FXPlayerObject != null && player != null)
             {
                 FXPlayerObject.Initialize(player.GetComponent<MiniGamePlayer>());
             }
-            if (FXEnemyObject != null)
+            if (FXEnemyObject != null && enemy != null)
             {
                 FXEnemyObject.Initialize(enemy.GetComponent<MiniGamePlayer>());
             }
@@ -117,7 +115,10 @@ namespace Game.MiniGame.PowerCheck
                 GameProcessObject.Initialize(FXPlayerObject, FXEnemyObject);
             }
             if (EndGameScreenObject != null)
+            {
+                EndGameScreenObject.OnEndGame -= OnMiniGameEnded;
                 EndGameScreenObject.OnEndGame += OnMiniGameEnded;
+            }
         }
 
         private void ApplyDifficulty(int difficulty)
@@ -145,17 +146,17 @@ namespace Game.MiniGame.PowerCheck
         {
             GameObject playerObj = null;
 
-            if (PlayerPrefab == null || StartPoint == null) return playerObj;
+            if (PlayerPrefab == null || StartPoint == null)
+            {
+                return playerObj;
+            }
 
-            playerObj = Instantiate(PlayerPrefab, StartPoint.position,
-                PlayerPrefab.transform.rotation, Parent);
+            playerObj = Instantiate(PlayerPrefab, StartPoint.position, PlayerPrefab.transform.rotation, Parent);
 
             PlayerInstance = playerObj.GetComponent<PlayerMove>();
 
-            // Создаем HP бар для игрока
             if (PlayerHPBarPrefab != null && CanvasTransform != null)
             {
-                //Slider playerHealthBar = Instantiate(PlayerHPBarPrefab, CanvasTransform);
                 HealthBarManager healthBarManager = playerObj.GetComponent<HealthBarManager>();
                 if (healthBarManager != null)
                 {
@@ -169,24 +170,28 @@ namespace Game.MiniGame.PowerCheck
         private GameObject CreateEnemy()
         {
             GameObject enemyObj = null;
-            if (EnemyPrefab == null || SpawnPoint == null) return enemyObj;
-
-            if (_gameData != null)
+            if (EnemyPrefab == null || SpawnPoint == null)
             {
-                string pathToEnemyPrefab = (string)_gameData.customParameters["EnemyPrefab"];
-                if (!string.IsNullOrEmpty(pathToEnemyPrefab))
-                    EnemyPrefab = Resources.Load<GameObject>(pathToEnemyPrefab);
+                return enemyObj;
+            }
+
+            if (TryGetStringParameter("EnemyPrefab", out string pathToEnemyPrefab))
+            {
+                EnemyPrefab = Resources.Load<GameObject>(pathToEnemyPrefab) ?? EnemyPrefab;
             }
 
             enemyObj = Instantiate(EnemyPrefab, SpawnPoint.position, EnemyPrefab.transform.rotation, Parent);
 
-            enemyObj.name = enemyObj.GetComponent<MiniGamePlayer>().GetName();
+            MiniGamePlayer enemyPlayer = enemyObj.GetComponent<MiniGamePlayer>();
+            if (enemyPlayer != null)
+            {
+                enemyObj.name = enemyPlayer.GetName();
+            }
+
             EnemyInstance = enemyObj.GetComponent<AIController>();
 
-            // Создаем HP бар для врага
             if (EnemyHPBarPrefab != null && CanvasTransform != null)
             {
-                //Slider enemyHealthBar = Instantiate(EnemyHPBarPrefab, CanvasTransform);
                 HealthBarManager healthBarManager = enemyObj.GetComponent<HealthBarManager>();
                 if (healthBarManager != null)
                 {
@@ -214,10 +219,10 @@ namespace Game.MiniGame.PowerCheck
             if (MineSpawnerObject != null && PlayerInstance != null && EnemyInstance != null)
             {
                 var forbiddenPoints = new List<Transform>
-            {
-                PlayerInstance.transform,
-                EnemyInstance.transform
-            };
+                {
+                    PlayerInstance.transform,
+                    EnemyInstance.transform
+                };
 
                 MineSpawnerObject.SetForbiddenSpawnPoints(forbiddenPoints);
             }
@@ -226,7 +231,10 @@ namespace Game.MiniGame.PowerCheck
         public void OnMiniGameEnded(bool playerWin)
         {
             Debug.Log($"Мини-игра завершена! Победил ли игрок? {playerWin}");
-            if (MinigameManager.Instance != null) MinigameManager.Instance.EndMinigame(playerWin);
+            if (MinigameManager.Instance != null)
+            {
+                MinigameManager.Instance.EndMinigame(playerWin);
+            }
         }
 
         void OnDestroy()
@@ -237,5 +245,63 @@ namespace Game.MiniGame.PowerCheck
             }
         }
 
+        private bool TryGetIntParameter(string key, out int value)
+        {
+            value = default;
+
+            if (_gameData?.customParameters == null ||
+                !_gameData.customParameters.TryGetValue(key, out object rawValue) ||
+                rawValue == null)
+            {
+                return false;
+            }
+
+            switch (rawValue)
+            {
+                case int intValue:
+                    value = intValue;
+                    return true;
+                case long longValue when longValue >= int.MinValue && longValue <= int.MaxValue:
+                    value = (int)longValue;
+                    return true;
+                case float floatValue:
+                    value = Mathf.RoundToInt(floatValue);
+                    return true;
+                case double doubleValue:
+                    value = Mathf.RoundToInt((float)doubleValue);
+                    return true;
+                case string stringValue:
+                    return int.TryParse(stringValue, out value);
+                case JValue jValue:
+                    return int.TryParse(jValue.ToString(), out value);
+                default:
+                    return false;
+            }
+        }
+
+        private bool TryGetStringParameter(string key, out string value)
+        {
+            value = null;
+
+            if (_gameData?.customParameters == null ||
+                !_gameData.customParameters.TryGetValue(key, out object rawValue) ||
+                rawValue == null)
+            {
+                return false;
+            }
+
+            switch (rawValue)
+            {
+                case string stringValue:
+                    value = stringValue;
+                    return !string.IsNullOrWhiteSpace(value);
+                case JValue jValue:
+                    value = jValue.ToObject<string>();
+                    return !string.IsNullOrWhiteSpace(value);
+                default:
+                    value = rawValue.ToString();
+                    return !string.IsNullOrWhiteSpace(value);
+            }
+        }
     }
 }

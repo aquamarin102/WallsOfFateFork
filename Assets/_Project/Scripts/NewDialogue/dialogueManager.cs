@@ -104,6 +104,9 @@ namespace Game
             {
                 scrollController = SpawnPoint.GetComponent<LimitY>();
             }
+
+            playerManager ??= PlayerManager.Instance;
+            _ = EntryPoint.Instance;
         }
 
         #region PannelsUI
@@ -256,6 +259,7 @@ namespace Game
         #region MainLogic
         private void Start()
         {
+            playerManager ??= PlayerManager.Instance;
             optionPrefab = Resources.Load<GameObject>("UI/Dialogues/Option");
 
             if (DialogueUI != null)
@@ -427,6 +431,12 @@ namespace Game
             if (currentSentence == null)
                 return;
 
+            playerManager ??= PlayerManager.Instance;
+            if (playerManager?.PlayerData == null)
+            {
+                return;
+            }
+
             playerManager.PlayerData.AddResource(ResourceType.Gold, currentSentence.Gold);
             playerManager.PlayerData.AddResource(ResourceType.Food, currentSentence.Food);
             playerManager.PlayerData.AddResource(ResourceType.PeopleSatisfaction, currentSentence.PeopleSatisfaction);
@@ -538,11 +548,12 @@ namespace Game
 
         private IEnumerator CloseDialogueWithDelay(float delay)
         {
-            yield return new WaitForSeconds(delay);
+            yield return new WaitForSecondsRealtime(delay);
 
             var finishedDialogue = currentDialogue;
             bool shouldStartMinigame = startMinigame && miniGameData != null;
             MiniGameData launchData = miniGameData;
+            EntryPoint entryPoint = shouldStartMinigame ? EntryPoint.Instance : null;
 
             if (resourcesUI != null)
             {
@@ -567,7 +578,14 @@ namespace Game
             OnFinished?.Invoke(finishedDialogue);
             if (shouldStartMinigame)
             {
-                OnMiniGameStartRequested?.Invoke(launchData, finishedDialogue);
+                if (OnMiniGameStartRequested != null)
+                {
+                    OnMiniGameStartRequested.Invoke(launchData, finishedDialogue);
+                }
+                else
+                {
+                    entryPoint?.LaunchMinigame(launchData, finishedDialogue);
+                }
             }
         }
 

@@ -168,7 +168,14 @@
     {
       "Id": 29, //мини-игра
       "Text": "Мини-игра",
-      "MiniGameId": "HerbalistMiniGame"
+      "StartMinigame": true,
+      "MiniGameType": "Intelligence",
+      "MiniGameSceneName": "MiniGameIntellect",
+      "MinigameParams": {
+        "QuestId": 2,
+        "WinDialogue": "Dialogues/NPC/Sofa/SofaMiniGame_Success",
+        "LoseDialogue": "Dialogues/NPC/Sofa/SofaMiniGame_Fail"
+      }
     }
   ]
 }

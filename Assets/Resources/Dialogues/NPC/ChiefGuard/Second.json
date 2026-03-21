@@ -129,7 +129,15 @@
 		{
 			"Id": 22, //мини-игра
 			"Text": "Мини-игра",
-			"MiniGameId": "FightCaptain"
+			"StartMinigame": true,
+			"MiniGameType": "PowerCheck",
+			"MiniGameSceneName": "MiniGameStrength",
+			"MinigameParams": {
+				"QuestId": 1,
+				"EnemyPrefab": "MiniGames/PowerCheck/old/Enemies/GuardEnemy 1",
+				"WinDialogue": "Dialogues/NPC/ChiefGuard/FightCaptain_Success",
+				"LoseDialogue": "Dialogues/NPC/ChiefGuard/FightCaptain_Fail"
+			}
 		},
 		{
 			"Id": 23,
@@ -150,7 +158,15 @@
 		{
 			"Id": 26, //мини-игра
 			"Text": "Мини-игра",
-			"MiniGameId": "FightThief"
+			"StartMinigame": true,
+			"MiniGameType": "PowerCheck",
+			"MiniGameSceneName": "MiniGameStrength",
+			"MinigameParams": {
+				"QuestId": 1,
+				"EnemyPrefab": "MiniGames/PowerCheck/old/Enemies/NPCEnemy",
+				"WinDialogue": "Dialogues/NPC/ChiefGuard/FightThief_Success",
+				"LoseDialogue": "Dialogues/NPC/ChiefGuard/FightThief_Fail"
+			}
 		}
 	]
 }
