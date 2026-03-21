@@ -14,18 +14,12 @@ namespace Game
 
         public Action<TriggerEvent> OnDialogHandled;
 
-        private readonly HashSet<InfluenceArea> subscribedAreas = new();
         private NPCPrefabFactory npcFactory;
 
         [Inject]
         private void Construct(NPCPrefabFactory npcFactory)
         {
             this.npcFactory = npcFactory;
-        }
-
-        private void Start()
-        {
-            SubscribeToDialogueAreas();
         }
 
         private void OnEnable()
@@ -35,15 +29,7 @@ namespace Game
 
         private void OnDisable()
         {
-            foreach (var area in subscribedAreas)
-            {
-                if (area != null)
-                {
-                    area.OnEventTriggered.Unsubscribe(HandleAsync);
-                }
-            }
-
-            subscribedAreas.Clear();
+            UnsubscribeFromDialogueAreas();
         }
 
         public async Task HandleAsync(TriggerEvent eventData)
@@ -63,10 +49,6 @@ namespace Game
             DialogueGraph dialogueGraph = GetDialogueGraph(eventData.TriggerObj, eventData.Parameters);
             if (dialogueGraph == null)
             {
-                Debug.LogWarning(
-                    $"DialogueHandler: no DialogueGraph found for trigger '{eventData.TriggerObj?.name}'. " +
-                    "Check the scene or prefab setup and the triggerObject reference.",
-                    eventData.TriggerObj);
                 return;
             }
 
@@ -78,17 +60,15 @@ namespace Game
         {
             foreach (var area in CollectDialogueAreas())
             {
-                if (area == null || !subscribedAreas.Add(area))
-                {
-                    continue;
-                }
-
                 area.OnEventTriggered.Subscribe(HandleAsync);
             }
+        }
 
-            if (subscribedAreas.Count == 0)
+        private void UnsubscribeFromDialogueAreas()
+        {
+            foreach (var area in CollectDialogueAreas())
             {
-                Debug.LogWarning("DialogueHandler: no dialogue influence areas found.", this);
+                area.OnEventTriggered.Unsubscribe(HandleAsync);
             }
         }
 
@@ -96,7 +76,7 @@ namespace Game
         {
             foreach (var area in influenceArias)
             {
-                if (IsDialogueArea(area))
+                if (area != null)
                 {
                     yield return area;
                 }
@@ -106,35 +86,15 @@ namespace Game
             {
                 foreach (var npc in npcFactory.instances.Values)
                 {
-                    if (npc == null)
-                    {
-                        continue;
-                    }
+                    if (npc == null) continue;
 
-                    foreach (var area in npc.GetComponentsInChildren<InfluenceArea>(true))
+                    var area = npc.GetComponentInChildren<InfluenceArea>();
+                    if (area != null)
                     {
-                        if (IsDialogueArea(area))
-                        {
-                            yield return area;
-                        }
+                        yield return area;
                     }
                 }
             }
-
-            foreach (var area in FindObjectsOfType<InfluenceArea>(true))
-            {
-                if (IsDialogueArea(area))
-                {
-                    yield return area;
-                }
-            }
-        }
-
-        private static bool IsDialogueArea(InfluenceArea area)
-        {
-            return area != null
-                   && area.AreaType == InfluenceType.Dialog
-                   && area.GetType() == typeof(InfluenceArea);
         }
 
         private DialogueGraph GetDialogueGraph(GameObject obj, string dialogueName)
@@ -144,18 +104,15 @@ namespace Game
             TextAsset textAsset = Resources.Load<TextAsset>(dialoguePath);
             if (textAsset == null)
             {
-                Debug.LogError($"StartDayDialogueHandler: Failed to load dialogue graph at path: {dialoguePath}");
                 return null;
             }
 
             try
             {
-                var dialogueGraph = JsonConvert.DeserializeObject<DialogueGraph>(textAsset.text);
-                return dialogueGraph;
+                return JsonConvert.DeserializeObject<DialogueGraph>(textAsset.text);
             }
-            catch (JsonException ex)
+            catch
             {
-                Debug.LogError($"StartDayDialogueHandler: Failed to load dialogue graph at path: {dialoguePath}");
                 return null;
             }
         }

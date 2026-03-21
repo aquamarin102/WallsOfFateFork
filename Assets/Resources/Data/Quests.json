@@ -28,7 +28,7 @@
       {
         "Id": 0,
         "Name": "Пихнуть травнице траву",
-        "Description": "Пихнуть травнице траву",
+        "Description": "Отдать травнице мешочек",
         "Dependencies": [],
         "ResourcesReward": {
           "CastleStrength": 10
@@ -77,7 +77,7 @@
       {
         "Id": 0,
         "Name": "Бумажка...))",
-        "Description": "Отнести гонцу подтереться",
+        "Description": "Отнести гонцу письмо",
         "Dependencies": [],
         "ResourcesReward": {
           "CastleStrength": 10
@@ -97,7 +97,7 @@
       {
         "Id": 0,
         "Name": "Забрать чудо ларец",
-        "Description": "Забрать чудо ларец",
+        "Description": "Найти молот",
         "Dependencies": [],
         "ResourcesReward": {
           "CastleStrength": 10
@@ -106,7 +106,7 @@
       {
         "Id": 1,
         "Name": "Поговорить с персонажем",
-        "Description": "Поговорить с персонажем",
+        "Description": "Вернуть молот кузнецу",
         "Dependencies": [],
         "ResourcesReward": {
           "CastleStrength": 10

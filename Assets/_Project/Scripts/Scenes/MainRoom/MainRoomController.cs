@@ -12,7 +12,8 @@ namespace Game
     {
         [SerializeField] private DialogueManager dialogueManager;
         [SerializeField] private InteractiveItemHandler interactiveItemHandler;
-        [SerializeField] private string KeyMasterName;
+        [SerializeField] private string keyMasterName;
+        [SerializeField] private string messengerName;
 
         private QuestManager questManager;
         private NPCPrefabFactory npcPrefabFactory;
@@ -26,6 +27,12 @@ namespace Game
 
         private void Start()
         {
+            TutorialSheetService.TryShowOnce(
+                TutorialSheetDefinitions.MainRoomKey,
+                TutorialSheetDefinitions.MainRoomResourcePath,
+                TutorialSheetDefinitions.MainRoomEditorAssetPath,
+                null);
+
             dialogueManager = DialogueManager.Instance;
             dialogueManager.OnFinished += OnDialogueFinished;
 
@@ -37,22 +44,29 @@ namespace Game
             QuestTask task = questManager.GetQuestTask(keyMasterQuest.Id, 1);
             keyMasterQuestStatus.TasksStatusData.TryGetValue(task.Id, out TaskStatus taskStatus);
 
+            Quest messengerQuest = questManager.GetQuest(3);
+            QuestStatus messengerQuestStatus = questManager.GetQuestStatus(messengerQuest.Id);
+
+            QuestTask messengerTask = questManager.GetQuestTask(messengerQuest.Id, 0);
+            keyMasterQuestStatus.TasksStatusData.TryGetValue(task.Id, out TaskStatus messengerTaskStatus);
+
             if (taskStatus.State == QuestState.InProgress)
             {
-                npcPrefabFactory.GetInstance(KeyMasterName).gameObject.SetActive(true);
+                npcPrefabFactory.GetInstance(keyMasterName).gameObject.SetActive(true);
             }
             else
             {
-                npcPrefabFactory.GetInstance(KeyMasterName).gameObject.SetActive(false);
+                npcPrefabFactory.GetInstance(keyMasterName).gameObject.SetActive(false);
 
             }
-
-            TutorialSheetService.TryShowOnce(
-                TutorialSheetDefinitions.MainRoomKey,
-                TutorialSheetDefinitions.MainRoomResourcePath,
-                TutorialSheetDefinitions.MainRoomEditorAssetPath,
-                null);
-
+            if (messengerTaskStatus.State == QuestState.InProgress)
+            {
+                npcPrefabFactory.GetInstance(messengerName).gameObject.SetActive(true);
+            }
+            else
+            {
+                npcPrefabFactory.GetInstance(messengerName).gameObject.SetActive(false);
+            }
         }
 
         public void OnDialogueFinished(DialogueGraph dialogue)

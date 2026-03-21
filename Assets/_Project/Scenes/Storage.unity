@@ -987,6 +987,51 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 75503cbb698365b4c89ca6a9459d9967, type: 3}
   m_PrefabInstance: {fileID: 27520873}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &29757288
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 29757289}
+  - component: {fileID: 29757290}
+  m_Layer: 0
+  m_Name: DialogHandler
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &29757289
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 29757288}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1343182839}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &29757290
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 29757288}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 69b114e53296fbd49b7f1ac4fc3ab40c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Game.DialogueHandler
+  influenceArias: []
 --- !u!1 &30767868
 GameObject:
   m_ObjectHideFlags: 0
@@ -9953,6 +9998,10 @@ PrefabInstance:
     - target: {fileID: 3104020260150449729, guid: b9d240b95176f6a409b47c098b0f37f4, type: 3}
       propertyPath: itemParameters.questId
       value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3104020260150449729, guid: b9d240b95176f6a409b47c098b0f37f4, type: 3}
+      propertyPath: itemParameters.ItemName
+      value: Key
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -36608,6 +36657,10 @@ PrefabInstance:
       propertyPath: itemParameters.questId
       value: -1
       objectReference: {fileID: 0}
+    - target: {fileID: -227789806920464916, guid: 5b0f1feb5de8eef4c9f4763f55baf3dc, type: 3}
+      propertyPath: itemParameters.ItemName
+      value: Scroll
+      objectReference: {fileID: 0}
     - target: {fileID: 869600013806441278, guid: 5b0f1feb5de8eef4c9f4763f55baf3dc, type: 3}
       propertyPath: m_Name
       value: scroll2_low Variant
@@ -58777,6 +58830,7 @@ Transform:
   - {fileID: 228919007}
   - {fileID: 2063000014}
   - {fileID: 327432778}
+  - {fileID: 29757289}
   m_Father: {fileID: 891882940}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1343528743
@@ -61703,8 +61757,13 @@ PrefabInstance:
       propertyPath: itemParameters.questId
       value: -1
       objectReference: {fileID: 0}
+    - target: {fileID: 8044531980425378989, guid: b0a9076a91ac51d42ba409ab98e09f78, type: 3}
+      propertyPath: itemParameters.ItemName
+      value: Pouch
+      objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 948213291999674421, guid: b0a9076a91ac51d42ba409ab98e09f78, type: 3}
+    - {fileID: 5292132061262029626, guid: b0a9076a91ac51d42ba409ab98e09f78, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -78627,7 +78686,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Game.CellarController
   dialogueManager: {fileID: 1804792146}
   interactiveItemHandler: {fileID: 327432779}
-  ThiefPrefabName: StorageBomj
+  ThiefPrefabName: Thief
 --- !u!1001 &1840284423
 PrefabInstance:
   m_ObjectHideFlags: 0

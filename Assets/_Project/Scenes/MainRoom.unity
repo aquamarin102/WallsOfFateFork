@@ -57866,7 +57866,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Game.MainRoomController
   dialogueManager: {fileID: 381800558}
   interactiveItemHandler: {fileID: 1870349702}
-  KeyMasterName: 
+  keyMasterName: keymaster_MainRoom
+  messengerName: Messenger
 --- !u!1 &1401491938
 GameObject:
   m_ObjectHideFlags: 0
