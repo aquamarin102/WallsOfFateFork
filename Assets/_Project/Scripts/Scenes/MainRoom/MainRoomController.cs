@@ -44,12 +44,6 @@ namespace Game
             QuestTask task = questManager.GetQuestTask(keyMasterQuest.Id, 1);
             keyMasterQuestStatus.TasksStatusData.TryGetValue(task.Id, out TaskStatus taskStatus);
 
-            Quest messengerQuest = questManager.GetQuest(3);
-            QuestStatus messengerQuestStatus = questManager.GetQuestStatus(messengerQuest.Id);
-
-            QuestTask messengerTask = questManager.GetQuestTask(messengerQuest.Id, 0);
-            keyMasterQuestStatus.TasksStatusData.TryGetValue(task.Id, out TaskStatus messengerTaskStatus);
-
             if (taskStatus.State == QuestState.InProgress)
             {
                 npcPrefabFactory.GetInstance(keyMasterName).gameObject.SetActive(true);
@@ -59,6 +53,13 @@ namespace Game
                 npcPrefabFactory.GetInstance(keyMasterName).gameObject.SetActive(false);
 
             }
+
+
+            keyMasterQuest = questManager.GetQuest(4);
+            keyMasterQuestStatus = questManager.GetQuestStatus(keyMasterQuest.Id);
+
+            task = questManager.GetQuestTask(keyMasterQuest.Id, 0);
+            keyMasterQuestStatus.TasksStatusData.TryGetValue(task.Id, out TaskStatus messengerTaskStatus);
             if (messengerTaskStatus.State == QuestState.InProgress)
             {
                 npcPrefabFactory.GetInstance(messengerName).gameObject.SetActive(true);

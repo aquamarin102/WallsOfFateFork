@@ -18,7 +18,6 @@ namespace Game
         private QuestManager questManager;
         private NPCPrefabFactory npcPrefabFactory;
 
-
         [Inject]
         private void Construct(QuestManager questManager, NPCPrefabFactory factory)
         {
