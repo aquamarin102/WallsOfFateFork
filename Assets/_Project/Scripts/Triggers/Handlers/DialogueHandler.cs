@@ -42,13 +42,13 @@ namespace Game
             DialogueManager dialogueManager = DialogueManager.Instance;
             if (dialogueManager == null || dialogueManager.IsInDialogue)
             {
-                OnDialogHandled?.Invoke(eventData);
                 return;
             }
 
             DialogueGraph dialogueGraph = GetDialogueGraph(eventData.TriggerObj, eventData.Parameters);
             if (dialogueGraph == null)
             {
+                OnDialogHandled?.Invoke(eventData);
                 return;
             }
 

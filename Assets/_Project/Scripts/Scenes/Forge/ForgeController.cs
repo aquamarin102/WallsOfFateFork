@@ -115,7 +115,9 @@ namespace Game
                 if (taskStatus.State == QuestState.NotStarted && taskStatus1.State == QuestState.NotStarted)
                 {
                     questManager.UpdateQuestTask(blacksmithQuest.Id, task.Id, QuestState.InProgress);
-                    var blacksmithDialogueJson = Resources.Load<TextAsset>("Dialogues/NPC/Dialogues/Blacksmith/First");
+                    questManager.UpdateQuest(blacksmithQuest.Id, QuestState.InProgress);
+
+                    var blacksmithDialogueJson = Resources.Load<TextAsset>("Dialogues/NPC/Blacksmith/First");
                     var blacksmithDialogue = JsonConvert.DeserializeObject<DialogueGraph>(blacksmithDialogueJson.text);
                     dialogueManager.StartDialogue(blacksmithDialogue);
                 }
@@ -124,7 +126,8 @@ namespace Game
                 {
                     questManager.UpdateQuestTask(blacksmithQuest.Id, task1.Id, QuestState.Completed);
                     questManager.UpdateQuest(blacksmithQuest.Id, QuestState.Completed);
-                    var blacksmithDialogueJson = Resources.Load<TextAsset>("Dialogues/NPC/Dialogues/Blacksmith/Second");
+
+                    var blacksmithDialogueJson = Resources.Load<TextAsset>("Dialogues/NPC/Dialogues/Second");
                     var blacksmithDialogue = JsonConvert.DeserializeObject<DialogueGraph>(blacksmithDialogueJson.text);
                     dialogueManager.StartDialogue(blacksmithDialogue);
                 }

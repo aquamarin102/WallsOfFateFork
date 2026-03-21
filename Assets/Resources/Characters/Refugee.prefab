@@ -1503,7 +1503,7 @@ GameObject:
   - component: {fileID: 4794944128403119402}
   - component: {fileID: 2882183410780504087}
   m_Layer: 0
-  m_Name: RefugeeStand
+  m_Name: Refugee
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

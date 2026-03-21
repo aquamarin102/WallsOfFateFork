@@ -160,7 +160,7 @@ MonoBehaviour:
   AreaType: 1
   InteractionType: 0
   triggerObject: {fileID: 5130903298930597553}
-  Parameters: 
+  Parameters: First
 --- !u!114 &491375020046469582
 MonoBehaviour:
   m_ObjectHideFlags: 0
