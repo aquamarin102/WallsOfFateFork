@@ -29,7 +29,9 @@ namespace Game
 
         #region Utility
         public bool IsInDialogue = false;
-        private readonly WaitForSeconds typingDelay = new(0.03f);
+        [SerializeField] private float characterRevealDelay = 0.045f;
+        [SerializeField] private float nextSentenceDelay = 0.18f;
+        [SerializeField] private float firstSentenceDelay = 0.1f;
 
         private List<GameObject> spawnedPanels = new();
 
@@ -37,6 +39,10 @@ namespace Game
         private PlayerManager playerManager;
 
         private GameObject optionPrefab;
+        private LimitY scrollController;
+        private Coroutine queuedSentenceRoutine;
+        private Coroutine activeTypingRoutine;
+        private TMP_Text activeTextComponent;
 
         public static DialogueManager Instance
         {
@@ -92,6 +98,11 @@ namespace Game
             {
                 Debug.LogError("DialogueUI is not assigned in DialogueManager!", this);
             }
+
+            if (SpawnPoint != null)
+            {
+                scrollController = SpawnPoint.GetComponent<LimitY>();
+            }
         }
 
         #region PannelsUI
@@ -106,6 +117,117 @@ namespace Game
                 }
             }
             spawnedPanels.Clear();
+        }
+
+        private void StopActiveTyping()
+        {
+            if (activeTypingRoutine != null)
+            {
+                StopCoroutine(activeTypingRoutine);
+                activeTypingRoutine = null;
+            }
+
+            activeTextComponent = null;
+        }
+
+        private void ClearOptionsList()
+        {
+            if (OptionsList == null)
+            {
+                return;
+            }
+
+            foreach (Transform child in OptionsList.transform)
+            {
+                Destroy(child.gameObject);
+            }
+        }
+
+        private void RefreshDialogueLayout(bool scrollToLatest = false, bool immediate = false)
+        {
+            if (SpawnPoint == null)
+            {
+                return;
+            }
+
+            scrollController ??= SpawnPoint.GetComponent<LimitY>();
+
+            if (scrollController != null)
+            {
+                if (scrollToLatest)
+                {
+                    scrollController.ScrollToLatest(immediate);
+                }
+                else
+                {
+                    scrollController.RefreshLayoutAndClamp();
+                }
+
+                return;
+            }
+
+            Canvas.ForceUpdateCanvases();
+            LayoutRebuilder.ForceRebuildLayoutImmediate(SpawnPoint);
+        }
+
+        private void ResetDialogueScroll()
+        {
+            scrollController ??= SpawnPoint != null ? SpawnPoint.GetComponent<LimitY>() : null;
+
+            if (scrollController != null)
+            {
+                scrollController.ResetScrollPosition();
+                return;
+            }
+
+            RefreshDialogueLayout();
+        }
+
+        private void QueueCurrentSentenceDisplay(float delay)
+        {
+            if (queuedSentenceRoutine != null)
+            {
+                StopCoroutine(queuedSentenceRoutine);
+            }
+
+            queuedSentenceRoutine = StartCoroutine(DisplayCurrentSentenceAfterDelay(delay));
+        }
+
+        private IEnumerator DisplayCurrentSentenceAfterDelay(float delay)
+        {
+            if (delay > 0f)
+            {
+                yield return new WaitForSecondsRealtime(delay);
+            }
+
+            queuedSentenceRoutine = null;
+
+            if (!IsInDialogue || currentSentence == null)
+            {
+                yield break;
+            }
+
+            DisplayCurrentSentence();
+        }
+
+        private void FocusSentencePanel(GameObject sentencePanel, bool immediate = false)
+        {
+            if (sentencePanel == null || SpawnPoint == null)
+            {
+                RefreshDialogueLayout(scrollToLatest: true, immediate: immediate);
+                return;
+            }
+
+            scrollController ??= SpawnPoint.GetComponent<LimitY>();
+
+            if (scrollController != null)
+            {
+                RectTransform sentenceRect = sentencePanel.GetComponent<RectTransform>();
+                scrollController.FocusOnChild(sentenceRect, immediate);
+                return;
+            }
+
+            RefreshDialogueLayout(scrollToLatest: true, immediate: immediate);
         }
         #endregion
 
@@ -153,6 +275,11 @@ namespace Game
                     }
                 }
             }
+
+            if (IsInDialogue && currentOptions.Count == 0 && IsFastForwardInputPressed())
+            {
+                FastForwardDialogue();
+            }
         }
 
         public void StartDialogue(DialogueGraph currentDialogue)
@@ -166,8 +293,11 @@ namespace Game
             IsInDialogue = true;
             startMinigame = false;
             miniGameData = null;
+            currentOptions.Clear();
 
+            StopActiveTyping();
             ClearSpawnedPanels();
+            ClearOptionsList();
 
             if (resourcesUI != null) {
                 resourcesUI.SetActive(false);
@@ -181,8 +311,9 @@ namespace Game
                 DialogueUI.SetActive(true);
             }
 
+            ResetDialogueScroll();
             currentSentence = currentDialogue.Sentences[0];
-            DisplayCurrentSentence();
+            QueueCurrentSentenceDisplay(firstSentenceDelay);
         }
 
         private bool TryInstantiatePannel(out GameObject sentencePanel)
@@ -205,10 +336,8 @@ namespace Game
 
             if (panelPrefab != null && SpawnPoint != null)
             {
-                sentencePanel = Instantiate(panelPrefab, SpawnPoint);
-
-                sentencePanel.transform.localPosition = Vector3.zero;
-
+                sentencePanel = Instantiate(panelPrefab, SpawnPoint, false);
+                sentencePanel.transform.SetAsLastSibling();
                 spawnedPanels.Add(sentencePanel);
 
                 return true;
@@ -217,17 +346,58 @@ namespace Game
             return false;
         }
 
+        private bool IsFastForwardInputPressed()
+        {
+            return Input.GetMouseButtonDown(0) ||
+                   Input.GetMouseButtonDown(1) ||
+                   Input.GetMouseButtonDown(2) ||
+                   Input.GetKeyDown(KeyCode.Space) ||
+                   Input.GetKeyDown(KeyCode.Return) ||
+                   Input.GetKeyDown(KeyCode.KeypadEnter);
+        }
+
+        private void FastForwardDialogue()
+        {
+            if (activeTypingRoutine != null)
+            {
+                CompleteCurrentSentenceImmediately();
+                return;
+            }
+
+            if (queuedSentenceRoutine != null)
+            {
+                StopCoroutine(queuedSentenceRoutine);
+                queuedSentenceRoutine = null;
+                DisplayCurrentSentence();
+            }
+        }
+
+        private void CompleteCurrentSentenceImmediately()
+        {
+            if (activeTypingRoutine != null)
+            {
+                StopCoroutine(activeTypingRoutine);
+                activeTypingRoutine = null;
+            }
+
+            if (activeTextComponent != null)
+            {
+                activeTextComponent.maxVisibleCharacters = activeTextComponent.textInfo.characterCount;
+            }
+
+            activeTextComponent = null;
+            AdvanceToNextSentence(immediate: true);
+        }
+
         public void SelectOption(int optionIndex)
         {           
             var optionSentence = currentOptions[optionIndex];
 
-            foreach (Transform child in OptionsList.transform)
-            {
-                Destroy(child.gameObject);
-            }
+            ClearOptionsList();
+            currentOptions.Clear();
 
             currentSentence = optionSentence;
-            DisplayCurrentSentence(); 
+            QueueCurrentSentenceDisplay(nextSentenceDelay * 0.5f);
         }
 
         public void DisplayCurrentSentence()
@@ -245,7 +415,8 @@ namespace Game
 
                 if (sentenceText != null)
                 {
-                    StartCoroutine(TypeSentence(currentSentence.Text, sentenceText));
+                    FocusSentencePanel(sentencePanel, immediate: true);
+                    activeTypingRoutine = StartCoroutine(TypeSentence(currentSentence.Text, sentenceText));
                 }
             }
         }
@@ -263,6 +434,11 @@ namespace Game
 
         private void ProcessNextSentence()
         {
+            AdvanceToNextSentence();
+        }
+
+        private void AdvanceToNextSentence(bool immediate = false)
+        {
             var nextSentence = currentDialogue.Sentences.Find(s => s.Id == currentSentence.NextSentenceId);
             if (nextSentence == null)
             {
@@ -277,19 +453,27 @@ namespace Game
                 return;
             }
 
-            DisplayCurrentSentence();
+            if (immediate)
+            {
+                DisplayCurrentSentence();
+                return;
+            }
+
+            QueueCurrentSentenceDisplay(nextSentenceDelay);
         }
 
         private void LoadAllOptions()
         {
+            currentOptions.Clear();
+
             if (currentDialogue == null) return;
 
-            foreach (Transform child in OptionsList.transform)
+            if (OptionsList == null || optionPrefab == null)
             {
-                Destroy(child.gameObject);
+                return;
             }
 
-            currentOptions.Clear();
+            ClearOptionsList();
             var optionCounter = 1;
 
             while (currentSentence.IsOption)
@@ -314,13 +498,20 @@ namespace Game
 
                 currentSentence = currentDialogue.Sentences[currentDialogue.Sentences.IndexOf(currentSentence) + 1];
             }
+
+            RefreshDialogueLayout(scrollToLatest: true);
         }
 
         private void CloseDialogue()
         {
-            foreach (Transform child in OptionsList.transform)
+            StopActiveTyping();
+            ClearOptionsList();
+            currentOptions.Clear();
+
+            if (queuedSentenceRoutine != null)
             {
-                Destroy(child.gameObject);
+                StopCoroutine(queuedSentenceRoutine);
+                queuedSentenceRoutine = null;
             }
 
             StartCoroutine(CloseDialogueWithDelay(1f));
@@ -344,7 +535,9 @@ namespace Game
                 DialogueUI.SetActive(false);
             }
 
+            StopActiveTyping();
             ClearSpawnedPanels();
+            queuedSentenceRoutine = null;
 
             IsInDialogue = false;
             currentDialogue = null;
@@ -363,18 +556,45 @@ namespace Game
         {
             if (textComponent == null) yield break;
 
-            textComponent.text = "";
-            foreach (var c in textToType)
+            activeTextComponent = textComponent;
+            textComponent.text = textToType;
+            textComponent.maxVisibleCharacters = 0;
+            textComponent.ForceMeshUpdate();
+
+            FocusSentencePanel(textComponent.transform.parent.gameObject, immediate: true);
+
+            int totalVisibleCharacters = textComponent.textInfo.characterCount;
+
+            if (totalVisibleCharacters == 0)
             {
-                yield return typingDelay;
-                textComponent.text += c;
+                activeTextComponent = null;
+                activeTypingRoutine = null;
+                ProcessNextSentence();
+                yield break;
             }
+
+            for (int visibleCharacters = 1; visibleCharacters <= totalVisibleCharacters; visibleCharacters++)
+            {
+                textComponent.maxVisibleCharacters = visibleCharacters;
+                yield return new WaitForSecondsRealtime(characterRevealDelay);
+            }
+
+            textComponent.maxVisibleCharacters = totalVisibleCharacters;
+            activeTextComponent = null;
+            activeTypingRoutine = null;
 
             ProcessNextSentence();
         }
 
         private void OnDestroy()
         {
+            StopActiveTyping();
+
+            if (queuedSentenceRoutine != null)
+            {
+                StopCoroutine(queuedSentenceRoutine);
+            }
+
             OnFinished = null;
             OnMiniGameStartRequested = null;
             ClearSpawnedPanels();

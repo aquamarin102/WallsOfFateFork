@@ -30,7 +30,6 @@
 		{
 			"id": 4,		
 			"IsPlayer": true,
-			"IsOption": true,
 			"Text": "Ладно, уговорил.",
 			"NextSentenceId": 5
 		},
@@ -42,7 +41,6 @@
 		{
 			"id": 6,
 			"IsPlayer": true,			
-			"IsOption": true,
 			"Text": "Ну посмотрим что у них за проблемы."
 		}
 	]

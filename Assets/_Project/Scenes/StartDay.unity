@@ -4653,6 +4653,9 @@ MonoBehaviour:
   resourcesUI: {fileID: 0}
   OptionsList: {fileID: 1616231745}
   IsInDialogue: 0
+  characterRevealDelay: 0.045
+  nextSentenceDelay: 0.18
+  firstSentenceDelay: 0.1
 --- !u!114 &1143990645
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6462,7 +6465,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 816199787}
   m_HandleRect: {fileID: 816199786}
   m_Direction: 2
-  m_Value: 1
+  m_Value: 0
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -7946,6 +7949,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eaaecb713c350a94f8c30e5388fb9310, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  panelRoot: {fileID: 0}
   confirmButton: {fileID: 1685302477}
   declineButton: {fileID: 1229351962}
 --- !u!1 &1718405384
@@ -8709,7 +8713,11 @@ MonoBehaviour:
   viewport: {fileID: 2037596632}
   topPadding: 45
   bottomPadding: 45
+  fitContentVerticalBias: 0.5
+  firstMessageViewportBias: 0.9
+  latestMessageViewportBias: 0.78
   delayBeforeScroll: 0.05
+  smoothScrollTime: 0.12
 --- !u!114 &1859731459
 MonoBehaviour:
   m_ObjectHideFlags: 0
