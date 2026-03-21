@@ -15,20 +15,20 @@
 		},
 		{
 			"id": 2,
-			"IsPlayer": true,			
+			"IsPlayer": true,
 			"IsOption": true,
 			"Text": "Тяжко тебе, гляжу. Не вовремя такая беда.",
 			"NextSentenceId": 5
 		},
 		{
-			"id": 3,			
+			"id": 3,
 			"IsPlayer": true,
 			"IsOption": true,
 			"Text": " А что же это у тебя, кузнеца, молот один?",
 			"NextSentenceId": 4
 		},
 		{
-			"id": 4,	
+			"id": 4,
 			"Text": "Справедливо сказано, сударь. Да только и у хорошего кузнеца железо иной раз ломается не ко времени.",
 			"NextSentenceId": 6
 		},
@@ -39,21 +39,21 @@
 		},
 		{
 			"id": 6,
-			"IsPlayer": true,			
+			"IsPlayer": true,
 			"IsOption": true,
 			"Text": "Похоже у меня нет выбора...",
 			"NextSentenceId": 8
 		},
 		{
 			"id": 7,
-			"IsPlayer": true,			
+			"IsPlayer": true,
 			"IsOption": true,
 			"Text": "Чего ж уже. Давай помогу! Железо холода не любит.",
 			"NextSentenceId": 9
 		},
 		{
 			"id": 8,
-			"Text": "Ничего, друже... Вское бывает.",
+			"Text": "Ничего, друже... Вское бывает."
 		},
 		{
 			"id": 9,

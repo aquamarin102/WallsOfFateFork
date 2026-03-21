@@ -11,6 +11,7 @@ namespace Game.Data
     public class QuestManager
     {
         public static QuestManager Instance { get; private set; }
+        public event Action<bool> AllQuestsCompletedStateChanged;
 
         private sealed class MinigameContext
         {
@@ -31,12 +32,14 @@ namespace Game.Data
         private static readonly Dictionary<int, bool> questsMinigameResults = new();
         private static MinigameContext pendingMinigameContext;
         private static PendingMinigameDialogue pendingMinigameDialogue;
+        private bool areAllQuestsCompleted;
 
         public QuestManager()
         {
             Instance = this;
             LoadResourcesData();
             InitializeQuestsStatus();
+            RefreshAllQuestsCompletedState();
         }
 
         private void LoadResourcesData()
@@ -98,6 +101,8 @@ namespace Game.Data
 
                 Debug.Log("Loaded quests status data");
             }
+
+            RefreshAllQuestsCompletedState();
         }
 
         public void SaveQuestsStatus()
@@ -123,12 +128,21 @@ namespace Game.Data
             if (questsStatusData.TryGetValue(questId, out QuestStatus status))
             {
                 status.State = state;
+                RefreshAllQuestsCompletedState();
             }
         }
 
         public Quest GetQuest(int questId)
         {
             return questsData.TryGetValue(questId, out Quest quest) ? quest : null;
+        }
+
+        public bool AreAllQuestsCompleted()
+        {
+            return questsData != null &&
+                   questsData.Count > 0 &&
+                   questsStatusData.Count == questsData.Count &&
+                   questsStatusData.Values.All(status => status.State == QuestState.Completed);
         }
 
         public List<Quest> GetCurrentQuests()
@@ -233,6 +247,18 @@ namespace Game.Data
             questsMinigameResults.Clear();
             pendingMinigameContext = null;
             pendingMinigameDialogue = null;
+        }
+
+        private void RefreshAllQuestsCompletedState()
+        {
+            bool newValue = AreAllQuestsCompleted();
+            if (newValue == areAllQuestsCompleted)
+            {
+                return;
+            }
+
+            areAllQuestsCompleted = newValue;
+            AllQuestsCompletedStateChanged?.Invoke(areAllQuestsCompleted);
         }
 
         private static bool TryGetIntParameter(Dictionary<string, object> parameters, string key, out int value)
