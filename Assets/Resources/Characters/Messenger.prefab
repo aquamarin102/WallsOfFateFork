@@ -3034,6 +3034,8 @@ MonoBehaviour:
   InteractionType: 0
   triggerObject: {fileID: 7280076937197616263}
   Parameters: First
+  questId: 4
+  questTaskId: 0
 --- !u!1 &4044241201480333291
 GameObject:
   m_ObjectHideFlags: 0

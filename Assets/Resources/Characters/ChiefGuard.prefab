@@ -1474,10 +1474,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 132812897c9b4934c99bfc712833e60f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.InfluenceArea
-  AreaType: 0
+  AreaType: 1
   InteractionType: 0
   triggerObject: {fileID: 2731423153538596674}
   Parameters: Second
+  questId: 1
+  questTaskId: 0
 --- !u!1 &3233203318747099615
 GameObject:
   m_ObjectHideFlags: 0

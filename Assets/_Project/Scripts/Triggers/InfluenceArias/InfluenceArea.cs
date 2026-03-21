@@ -1,4 +1,5 @@
 using Game.Core;
+using Game.Data;
 using Ink.Parsed;
 using System;
 using UnityEngine;
@@ -49,6 +50,9 @@ namespace Game
         [TextArea(3, 40)]
         public string Parameters;
         public ITriggerHandler Handler;
+
+        public int questId = -1; // от какого квеста зависит 
+        public int questTaskId = -1; // от какого таска зависит 
         //[SerializeField] private OutlineTrigger outlineTrigger;
 
         private BoxCollider boxCollider;
@@ -67,6 +71,14 @@ namespace Game
         //{
         //    Handler = FindObjectOfType<BoxGrabberHandler>();
         //}
+
+        private QuestManager questManager;
+
+        [Inject]
+        public void Construct(QuestManager questManager)
+        {
+            this.questManager = questManager;
+        }
 
         private void Start()
         {
@@ -133,7 +145,51 @@ namespace Game
                 Debug.Log("player interacted");
             }
 
-            await OnEventTriggered.InvokeAsync(eventData);
+            bool shouldInvoke = ShouldInvokeEvent();
+
+            if (shouldInvoke)
+            {
+                await OnEventTriggered.InvokeAsync(eventData);
+            }
+        }
+
+        private bool ShouldInvokeEvent()
+        {
+            if (questId <= -1 || questTaskId <= -1)
+            {
+                return true;
+            }
+
+            Quest quest = questManager?.GetQuest(questId);
+            if (quest == null)
+            {
+                Debug.LogWarning($"Quest with ID {questId} not found");
+                return false;
+            }
+
+            QuestStatus questStatus = questManager.GetQuestStatus(quest.Id);
+            if (questStatus == null)
+            {
+                Debug.LogWarning($"Quest status for quest {questId} not found");
+                return false;
+            }
+
+            QuestTask task = questManager.GetQuestTask(quest.Id, questTaskId);
+            if (task == null)
+            {
+                Debug.LogWarning($"Task {questTaskId} in quest {questId} not found");
+                return false;
+            }
+
+            // Безопасное получение статуса задачи
+            if (!questStatus.TasksStatusData.TryGetValue(task.Id, out TaskStatus taskStatus))
+            {
+                Debug.LogWarning($"Task status for task {task.Id} not found");
+                return false;
+            }
+
+            // Вызываем событие только если задача не начата
+            return taskStatus.State == QuestState.InProgress;
         }
 
         public virtual async System.Threading.Tasks.Task InvokeDirectInteractionAsync(GameObject playerObj)

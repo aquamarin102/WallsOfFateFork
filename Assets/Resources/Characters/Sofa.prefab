@@ -117,7 +117,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -161,6 +161,8 @@ MonoBehaviour:
   InteractionType: 0
   triggerObject: {fileID: 5130903298930597553}
   Parameters: First
+  questId: 2
+  questTaskId: 0
 --- !u!114 &491375020046469582
 MonoBehaviour:
   m_ObjectHideFlags: 0
