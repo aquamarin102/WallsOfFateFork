@@ -385,8 +385,8 @@ MonoBehaviour:
   buttonImage: {fileID: 30562516}
   normalSprite: {fileID: 21300000, guid: 96ac3f70c4966834bb39dcc10b7fdb43, type: 3}
   hoverSprite: {fileID: 21300000, guid: d8b773e6644102f41aee574d334cab7c, type: 3}
-  hoverSound: {fileID: 8300000, guid: d8f42014edbccc0439ea92b410ad4557, type: 3}
-  clickSound: {fileID: 8300000, guid: deff2fb538f3b7a44aa556210c060408, type: 3}
+  hoverSound: {fileID: 8300000, guid: 0ab197f381148a8448d2924ddf07fcd4, type: 3}
+  clickSound: {fileID: 8300000, guid: 6c993cb4bdaa0804db796c4465a191e4, type: 3}
 --- !u!114 &30562515
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1768,21 +1768,21 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 258273781}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 2.4, y: 2.4, z: 2.4}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1386568028}
   - {fileID: 741292565}
   - {fileID: 1678844598}
   - {fileID: 1195444006}
-  m_Father: {fileID: 1177765950}
+  m_Father: {fileID: 1170963701}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: -1120, y: -630}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &258273783
 MonoBehaviour:
@@ -2065,8 +2065,8 @@ MonoBehaviour:
   buttonImage: {fileID: 350933718}
   normalSprite: {fileID: 21300000, guid: 96ac3f70c4966834bb39dcc10b7fdb43, type: 3}
   hoverSprite: {fileID: 21300000, guid: d8b773e6644102f41aee574d334cab7c, type: 3}
-  hoverSound: {fileID: 8300000, guid: d8f42014edbccc0439ea92b410ad4557, type: 3}
-  clickSound: {fileID: 8300000, guid: deff2fb538f3b7a44aa556210c060408, type: 3}
+  hoverSound: {fileID: 8300000, guid: 0ab197f381148a8448d2924ddf07fcd4, type: 3}
+  clickSound: {fileID: 8300000, guid: 6c993cb4bdaa0804db796c4465a191e4, type: 3}
 --- !u!114 &350933717
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2480,8 +2480,8 @@ MonoBehaviour:
   buttonImage: {fileID: 0}
   normalSprite: {fileID: 0}
   hoverSprite: {fileID: 0}
-  hoverSound: {fileID: 0}
-  clickSound: {fileID: 8300000, guid: deff2fb538f3b7a44aa556210c060408, type: 3}
+  hoverSound: {fileID: 8300000, guid: 0ab197f381148a8448d2924ddf07fcd4, type: 3}
+  clickSound: {fileID: 8300000, guid: 6c993cb4bdaa0804db796c4465a191e4, type: 3}
 --- !u!114 &431077658
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4830,8 +4830,8 @@ MonoBehaviour:
   buttonImage: {fileID: 1045286571}
   normalSprite: {fileID: 21300000, guid: 474a0dc2046997648b50bc0c83e75388, type: 3}
   hoverSprite: {fileID: 21300000, guid: b89908aa4cbb07d45ba05173d2a5b460, type: 3}
-  hoverSound: {fileID: 8300000, guid: d8f42014edbccc0439ea92b410ad4557, type: 3}
-  clickSound: {fileID: 8300000, guid: deff2fb538f3b7a44aa556210c060408, type: 3}
+  hoverSound: {fileID: 8300000, guid: 0ab197f381148a8448d2924ddf07fcd4, type: 3}
+  clickSound: {fileID: 8300000, guid: 6c993cb4bdaa0804db796c4465a191e4, type: 3}
 --- !u!222 &1045286573
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -5615,6 +5615,7 @@ RectTransform:
   - {fileID: 1660354550}
   - {fileID: 55115698}
   - {fileID: 974070864}
+  - {fileID: 258273782}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -5653,108 +5654,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1177765946
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1177765950}
-  - component: {fileID: 1177765949}
-  - component: {fileID: 1177765948}
-  - component: {fileID: 1177765947}
-  m_Layer: 5
-  m_Name: Canvas (1)
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1177765947
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1177765946}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_IgnoreReversedGraphics: 1
-  m_BlockingObjects: 0
-  m_BlockingMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
---- !u!114 &1177765948
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1177765946}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_UiScaleMode: 1
-  m_ReferencePixelsPerUnit: 100
-  m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 800, y: 600}
-  m_ScreenMatchMode: 0
-  m_MatchWidthOrHeight: 0
-  m_PhysicalUnit: 3
-  m_FallbackScreenDPI: 96
-  m_DefaultSpriteDPI: 96
-  m_DynamicPixelsPerUnit: 1
-  m_PresetInfoIsWorld: 0
---- !u!223 &1177765949
-Canvas:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1177765946}
-  m_Enabled: 1
-  serializedVersion: 3
-  m_RenderMode: 0
-  m_Camera: {fileID: 0}
-  m_PlaneDistance: 100
-  m_PixelPerfect: 0
-  m_ReceivesEvents: 1
-  m_OverrideSorting: 0
-  m_OverridePixelPerfect: 0
-  m_SortingBucketNormalizedSize: 0
-  m_VertexColorAlwaysGammaSpace: 0
-  m_AdditionalShaderChannelsFlag: 25
-  m_UpdateRectTransformForStandalone: 0
-  m_SortingLayerID: 0
-  m_SortingOrder: 0
-  m_TargetDisplay: 0
---- !u!224 &1177765950
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1177765946}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0, y: 0, z: 0}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 258273782}
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0, y: 0}
 --- !u!1 &1195444005
 GameObject:
   m_ObjectHideFlags: 0
@@ -6193,8 +6092,8 @@ MonoBehaviour:
   buttonImage: {fileID: 1281774172}
   normalSprite: {fileID: 21300000, guid: 96ac3f70c4966834bb39dcc10b7fdb43, type: 3}
   hoverSprite: {fileID: 21300000, guid: d8b773e6644102f41aee574d334cab7c, type: 3}
-  hoverSound: {fileID: 8300000, guid: d8f42014edbccc0439ea92b410ad4557, type: 3}
-  clickSound: {fileID: 8300000, guid: deff2fb538f3b7a44aa556210c060408, type: 3}
+  hoverSound: {fileID: 8300000, guid: 0ab197f381148a8448d2924ddf07fcd4, type: 3}
+  clickSound: {fileID: 8300000, guid: 6c993cb4bdaa0804db796c4465a191e4, type: 3}
 --- !u!114 &1281774171
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7213,8 +7112,8 @@ MonoBehaviour:
   buttonImage: {fileID: 1589605746}
   normalSprite: {fileID: 21300000, guid: 474a0dc2046997648b50bc0c83e75388, type: 3}
   hoverSprite: {fileID: 21300000, guid: b89908aa4cbb07d45ba05173d2a5b460, type: 3}
-  hoverSound: {fileID: 8300000, guid: d8f42014edbccc0439ea92b410ad4557, type: 3}
-  clickSound: {fileID: 8300000, guid: deff2fb538f3b7a44aa556210c060408, type: 3}
+  hoverSound: {fileID: 8300000, guid: 0ab197f381148a8448d2924ddf07fcd4, type: 3}
+  clickSound: {fileID: 8300000, guid: 6c993cb4bdaa0804db796c4465a191e4, type: 3}
 --- !u!114 &1589605745
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8252,8 +8151,8 @@ MonoBehaviour:
   buttonImage: {fileID: 1832121197}
   normalSprite: {fileID: 21300000, guid: 96ac3f70c4966834bb39dcc10b7fdb43, type: 3}
   hoverSprite: {fileID: 21300000, guid: d8b773e6644102f41aee574d334cab7c, type: 3}
-  hoverSound: {fileID: 8300000, guid: d8f42014edbccc0439ea92b410ad4557, type: 3}
-  clickSound: {fileID: 8300000, guid: deff2fb538f3b7a44aa556210c060408, type: 3}
+  hoverSound: {fileID: 8300000, guid: 0ab197f381148a8448d2924ddf07fcd4, type: 3}
+  clickSound: {fileID: 8300000, guid: 6c993cb4bdaa0804db796c4465a191e4, type: 3}
 --- !u!114 &1832121196
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9609,8 +9508,8 @@ MonoBehaviour:
   buttonImage: {fileID: 2133855423}
   normalSprite: {fileID: 21300000, guid: 96ac3f70c4966834bb39dcc10b7fdb43, type: 3}
   hoverSprite: {fileID: 21300000, guid: d8b773e6644102f41aee574d334cab7c, type: 3}
-  hoverSound: {fileID: 8300000, guid: d8f42014edbccc0439ea92b410ad4557, type: 3}
-  clickSound: {fileID: 8300000, guid: deff2fb538f3b7a44aa556210c060408, type: 3}
+  hoverSound: {fileID: 8300000, guid: 0ab197f381148a8448d2924ddf07fcd4, type: 3}
+  clickSound: {fileID: 8300000, guid: 6c993cb4bdaa0804db796c4465a191e4, type: 3}
 --- !u!114 &2133855422
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9801,4 +9700,3 @@ SceneRoots:
   - {fileID: 630228239}
   - {fileID: 635706099}
   - {fileID: 1884189049}
-  - {fileID: 1177765950}

@@ -1260,8 +1260,8 @@ MonoBehaviour:
   buttonImage: {fileID: 253181595}
   normalSprite: {fileID: 21300000, guid: 474a0dc2046997648b50bc0c83e75388, type: 3}
   hoverSprite: {fileID: 21300000, guid: b89908aa4cbb07d45ba05173d2a5b460, type: 3}
-  hoverSound: {fileID: 8300000, guid: d8f42014edbccc0439ea92b410ad4557, type: 3}
-  clickSound: {fileID: 8300000, guid: deff2fb538f3b7a44aa556210c060408, type: 3}
+  hoverSound: {fileID: 8300000, guid: 0ab197f381148a8448d2924ddf07fcd4, type: 3}
+  clickSound: {fileID: 8300000, guid: 6c993cb4bdaa0804db796c4465a191e4, type: 3}
 --- !u!114 &253181594
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1411,8 +1411,8 @@ MonoBehaviour:
   buttonImage: {fileID: 262783566}
   normalSprite: {fileID: 21300000, guid: 474a0dc2046997648b50bc0c83e75388, type: 3}
   hoverSprite: {fileID: 21300000, guid: b89908aa4cbb07d45ba05173d2a5b460, type: 3}
-  hoverSound: {fileID: 8300000, guid: d8f42014edbccc0439ea92b410ad4557, type: 3}
-  clickSound: {fileID: 8300000, guid: deff2fb538f3b7a44aa556210c060408, type: 3}
+  hoverSound: {fileID: 8300000, guid: 0ab197f381148a8448d2924ddf07fcd4, type: 3}
+  clickSound: {fileID: 8300000, guid: 6c993cb4bdaa0804db796c4465a191e4, type: 3}
 --- !u!114 &262783565
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2142,8 +2142,8 @@ MonoBehaviour:
   buttonImage: {fileID: 600446118}
   normalSprite: {fileID: 21300000, guid: 474a0dc2046997648b50bc0c83e75388, type: 3}
   hoverSprite: {fileID: 21300000, guid: b89908aa4cbb07d45ba05173d2a5b460, type: 3}
-  hoverSound: {fileID: 8300000, guid: d8f42014edbccc0439ea92b410ad4557, type: 3}
-  clickSound: {fileID: 8300000, guid: deff2fb538f3b7a44aa556210c060408, type: 3}
+  hoverSound: {fileID: 8300000, guid: 0ab197f381148a8448d2924ddf07fcd4, type: 3}
+  clickSound: {fileID: 8300000, guid: 6c993cb4bdaa0804db796c4465a191e4, type: 3}
 --- !u!114 &600446117
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2593,8 +2593,8 @@ MonoBehaviour:
   buttonImage: {fileID: 797224720}
   normalSprite: {fileID: 21300000, guid: 96ac3f70c4966834bb39dcc10b7fdb43, type: 3}
   hoverSprite: {fileID: 21300000, guid: 474a0dc2046997648b50bc0c83e75388, type: 3}
-  hoverSound: {fileID: 8300000, guid: d8f42014edbccc0439ea92b410ad4557, type: 3}
-  clickSound: {fileID: 8300000, guid: deff2fb538f3b7a44aa556210c060408, type: 3}
+  hoverSound: {fileID: 8300000, guid: 0ab197f381148a8448d2924ddf07fcd4, type: 3}
+  clickSound: {fileID: 8300000, guid: 6c993cb4bdaa0804db796c4465a191e4, type: 3}
 --- !u!1 &807972721
 GameObject:
   m_ObjectHideFlags: 0
@@ -2826,8 +2826,8 @@ MonoBehaviour:
   buttonImage: {fileID: 0}
   normalSprite: {fileID: 0}
   hoverSprite: {fileID: 0}
-  hoverSound: {fileID: 0}
-  clickSound: {fileID: 8300000, guid: deff2fb538f3b7a44aa556210c060408, type: 3}
+  hoverSound: {fileID: 8300000, guid: 0ab197f381148a8448d2924ddf07fcd4, type: 3}
+  clickSound: {fileID: 8300000, guid: 6c993cb4bdaa0804db796c4465a191e4, type: 3}
 --- !u!114 &835380729
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3846,8 +3846,8 @@ MonoBehaviour:
   buttonImage: {fileID: 1222735120}
   normalSprite: {fileID: 21300000, guid: 96ac3f70c4966834bb39dcc10b7fdb43, type: 3}
   hoverSprite: {fileID: 21300000, guid: 474a0dc2046997648b50bc0c83e75388, type: 3}
-  hoverSound: {fileID: 8300000, guid: d8f42014edbccc0439ea92b410ad4557, type: 3}
-  clickSound: {fileID: 8300000, guid: deff2fb538f3b7a44aa556210c060408, type: 3}
+  hoverSound: {fileID: 8300000, guid: 0ab197f381148a8448d2924ddf07fcd4, type: 3}
+  clickSound: {fileID: 8300000, guid: 6c993cb4bdaa0804db796c4465a191e4, type: 3}
 --- !u!1 &1241744343
 GameObject:
   m_ObjectHideFlags: 0
@@ -4860,8 +4860,8 @@ MonoBehaviour:
   buttonImage: {fileID: 1496013623}
   normalSprite: {fileID: 21300000, guid: 474a0dc2046997648b50bc0c83e75388, type: 3}
   hoverSprite: {fileID: 21300000, guid: b89908aa4cbb07d45ba05173d2a5b460, type: 3}
-  hoverSound: {fileID: 8300000, guid: d8f42014edbccc0439ea92b410ad4557, type: 3}
-  clickSound: {fileID: 8300000, guid: deff2fb538f3b7a44aa556210c060408, type: 3}
+  hoverSound: {fileID: 8300000, guid: 0ab197f381148a8448d2924ddf07fcd4, type: 3}
+  clickSound: {fileID: 8300000, guid: 6c993cb4bdaa0804db796c4465a191e4, type: 3}
 --- !u!1 &1499961574
 GameObject:
   m_ObjectHideFlags: 0
@@ -5887,8 +5887,8 @@ MonoBehaviour:
   buttonImage: {fileID: 1790417395}
   normalSprite: {fileID: 21300000, guid: 96ac3f70c4966834bb39dcc10b7fdb43, type: 3}
   hoverSprite: {fileID: 21300000, guid: 474a0dc2046997648b50bc0c83e75388, type: 3}
-  hoverSound: {fileID: 8300000, guid: d8f42014edbccc0439ea92b410ad4557, type: 3}
-  clickSound: {fileID: 8300000, guid: deff2fb538f3b7a44aa556210c060408, type: 3}
+  hoverSound: {fileID: 8300000, guid: 0ab197f381148a8448d2924ddf07fcd4, type: 3}
+  clickSound: {fileID: 8300000, guid: 6c993cb4bdaa0804db796c4465a191e4, type: 3}
 --- !u!114 &1790417394
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6790,8 +6790,8 @@ MonoBehaviour:
   buttonImage: {fileID: 2005583418}
   normalSprite: {fileID: 21300000, guid: 96ac3f70c4966834bb39dcc10b7fdb43, type: 3}
   hoverSprite: {fileID: 21300000, guid: 474a0dc2046997648b50bc0c83e75388, type: 3}
-  hoverSound: {fileID: 8300000, guid: d8f42014edbccc0439ea92b410ad4557, type: 3}
-  clickSound: {fileID: 8300000, guid: deff2fb538f3b7a44aa556210c060408, type: 3}
+  hoverSound: {fileID: 8300000, guid: 0ab197f381148a8448d2924ddf07fcd4, type: 3}
+  clickSound: {fileID: 8300000, guid: 6c993cb4bdaa0804db796c4465a191e4, type: 3}
 --- !u!114 &2005583417
 MonoBehaviour:
   m_ObjectHideFlags: 0
