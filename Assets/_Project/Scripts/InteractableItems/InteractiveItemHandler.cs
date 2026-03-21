@@ -53,6 +53,17 @@ namespace Game
 
             if (!eventData.IsEnteracted) return;
 
+            if (itemParameters.questId > -1 && itemParameters.questTaskId > -1)
+            {
+                Quest quest = questManager.GetQuest(itemParameters.questId);
+                QuestStatus questStatus = questManager.GetQuestStatus(quest.Id);
+
+                QuestTask task = questManager.GetQuestTask(quest.Id, itemParameters.questTaskId);
+                questStatus.TasksStatusData.TryGetValue(task.Id, out Game.Data.TaskStatus taskStatus);
+
+                if (taskStatus.State == QuestState.NotStarted) return;
+            }
+
             PlayChestAnimation chestAnimaton = eventData.TriggerObj.GetComponent<PlayChestAnimation>();
             chestAnimaton?.Triggered(eventData);
 

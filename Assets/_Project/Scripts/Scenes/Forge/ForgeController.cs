@@ -173,7 +173,7 @@ namespace Game
                     questManager.UpdateQuestTask(blacksmithQuest.Id, task1.Id, QuestState.Completed);
                     questManager.UpdateQuest(blacksmithQuest.Id, QuestState.Completed);
 
-                    var blacksmithDialogueJson = Resources.Load<TextAsset>("Dialogues/NPC/Dialogues/Second");
+                    var blacksmithDialogueJson = Resources.Load<TextAsset>("Dialogues/NPC/Blacksmith/Second");
                     var blacksmithDialogue = JsonConvert.DeserializeObject<DialogueGraph>(blacksmithDialogueJson.text);
                     dialogueManager.StartDialogue(blacksmithDialogue);
                 }
