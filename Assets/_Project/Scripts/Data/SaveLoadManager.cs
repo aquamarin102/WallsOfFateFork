@@ -53,7 +53,6 @@ namespace Game.Data
         /// </summary>
         public void Clear()
         {
-            AssembledPickups.Clear();
             questManager.ClearMinigameRuntimeState();
             Repository.ClearSaveData();
             PlayerSpawnData.ClearData();

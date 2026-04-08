@@ -10,8 +10,6 @@ public class FloatingTextMinigame : MonoBehaviour
     private float startTime;
     private Camera targetCam;
 
-    
-
     private void Awake()
     {
         tmp = GetComponent<TMP_Text>();

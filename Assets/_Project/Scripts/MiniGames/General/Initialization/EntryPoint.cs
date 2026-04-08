@@ -44,7 +44,7 @@ namespace Game
 
     public class EntryPoint : MonoBehaviour
     {
-        private DialogueManager subscribedDialogueManager;
+        private DialogManager subscribedDialogueManager;
 
         #region Singleton
         private static EntryPoint _instance;
@@ -104,7 +104,7 @@ namespace Game
 
         private void SubscribeToDialogueManager()
         {
-            DialogueManager dialogueManager = FindObjectOfType<DialogueManager>();
+            DialogManager dialogueManager = FindObjectOfType<DialogManager>();
             if (dialogueManager == null || dialogueManager == subscribedDialogueManager)
             {
                 return;
@@ -131,7 +131,7 @@ namespace Game
 
         public bool IsMinigameActive => MinigameManager.Instance != null && MinigameManager.Instance.transform.gameObject.activeSelf;
 
-        public void LaunchMinigame(MiniGameData launchData, DialogueGraph dialogueGraph)
+        public void LaunchMinigame(MiniGameData launchData, DialogGraph dialogueGraph)
         {
             if (launchData == null)
             {

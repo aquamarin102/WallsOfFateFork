@@ -14,7 +14,6 @@ namespace Game
             Container.Bind<QuestManager>().AsSingle().NonLazy();
             Container.Bind<GameflowManager>().AsSingle().NonLazy();
             Container.Bind<SaveLoadManager>().AsSingle().NonLazy();
-            //Container.Bind<QuestManager>().AsSingle().NonLazy();
         }
     }
 }

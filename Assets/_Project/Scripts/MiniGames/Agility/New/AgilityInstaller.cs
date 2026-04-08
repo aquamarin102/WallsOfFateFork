@@ -165,9 +165,9 @@ namespace Game.MiniGame.Agility
 
         private void PrepareScene()
         {
-            var legacyProcess = AgilitySceneUtility.FindInLoadedScene<GameProcess>();
-            if (legacyProcess != null)
-                legacyProcess.enabled = false;
+            //var legacyProcess = AgilitySceneUtility.FindInLoadedScene<GameProcess>();
+            //if (legacyProcess != null)
+            //    legacyProcess.enabled = false;
 
             if (patternRunnerObject != null)
                 patternRunnerObject.SetActive(true);

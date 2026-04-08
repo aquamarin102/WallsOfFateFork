@@ -15,7 +15,7 @@ namespace Game
         public int maxItemsToEnable = 6;
 
         [Header("Перетащите сюда ВСЕ InteractableItem, которые могут появляться")]
-        public List<InteractibleItemInfluenceArea> items = new();   // только вручную
+        public List<InteractableItemInfluenceArea> items = new();   // только вручную
 
         /* ─────────────────────────────────────── */
 
@@ -43,7 +43,7 @@ namespace Game
         {
             if (items.Count == 0)
             {
-                items = GetComponentsInChildren<InteractibleItemInfluenceArea>(true).ToList();
+                items = GetComponentsInChildren<InteractableItemInfluenceArea>(true).ToList();
                 //Debug.LogWarning($"{name}: список предметов пуст — заполните его в инспекторе!");
                 //return;
             }

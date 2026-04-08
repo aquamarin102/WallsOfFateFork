@@ -14,9 +14,9 @@ public class MouseHoverIndicator : MonoBehaviour
         }
     }
 
-    private bool FindSIblin()
+    private bool FindSibling()
     {
-        bool isSiblin = false;
+        bool isSibling = false;
         // Проверяем, есть ли соседний элемент с именем "InteractionIndicator"
         if (transform.parent != null)
         {
@@ -24,16 +24,16 @@ public class MouseHoverIndicator : MonoBehaviour
             {
                 if (sibling != transform && sibling.name == "InteractionIndicator")
                 {
-                    isSiblin = sibling.gameObject.activeSelf;                   
+                    isSibling = sibling.gameObject.activeSelf;                   
                 }
             }
         }
-        return isSiblin;
+        return isSibling;
     }
 
     private void Update()
     {
-        if (FindSIblin())
+        if (FindSibling())
         {
             interactionIndicator.SetActive(false);
         }
@@ -43,7 +43,7 @@ public class MouseHoverIndicator : MonoBehaviour
     private void OnMouseEnter()
     {
         
-        if (FindSIblin()) return;
+        if (FindSibling()) return;
 
         if (interactionIndicator != null)
         {
@@ -53,7 +53,7 @@ public class MouseHoverIndicator : MonoBehaviour
 
     private void OnMouseExit()
     {
-        if (interactionIndicator != null || FindSIblin())
+        if (interactionIndicator != null || FindSibling())
         {
             interactionIndicator.SetActive(false);
         }

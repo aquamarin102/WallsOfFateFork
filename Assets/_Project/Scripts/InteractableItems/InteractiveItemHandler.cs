@@ -15,7 +15,7 @@ namespace Game
     {
         [Header("References")]
         [SerializeField] private GameObject _floatingTextPrefab;
-        [SerializeField] private List<InteractibleItemInfluenceArea> influenceArias;
+        [SerializeField] private List<InteractableItemInfluenceArea> influenceArias;
 
         public Action<InteractableItemParameters> OnItemHandled;
 
@@ -23,7 +23,7 @@ namespace Game
         private QuestManager questManager;
 
         [Inject]
-        private void Construct([InjectOptional] PlayerManager playerManager, [InjectOptional] QuestManager questManager)
+        private void Construct(PlayerManager playerManager, QuestManager questManager)
         {
             this.playerManager = playerManager;
             this.questManager = questManager;
@@ -48,10 +48,6 @@ namespace Game
 
         public async Task HandleAsync((TriggerEvent eventData, InteractableItemParameters itemParameters) data)
         {
-            if (!TryResolveDependencies())
-            {
-                return;
-            }
 
             var (eventData, itemParameters) = data;
 
@@ -85,7 +81,7 @@ namespace Game
             PlayChestAnimation chestAnimaton = eventData.TriggerObj.GetComponent<PlayChestAnimation>();
             chestAnimaton?.Triggered(eventData);
 
-            PlayerAnimatinController playerAnimator = eventData.PlayerObj.GetComponent<PlayerAnimatinController>();
+            PlayerAnimationController playerAnimator = eventData.PlayerObj.GetComponent<PlayerAnimationController>();
             playerAnimator?.InteractWith(eventData, false);
 
             ShowFloatingText(eventData.PlayerObj, itemParameters);
@@ -125,13 +121,6 @@ namespace Game
             //    var collider = itemObj.GetComponent<Collider>();
             //    if (collider != null) collider.enabled = false;
             //}
-        }
-
-        private bool TryResolveDependencies()
-        {
-            playerManager ??= PlayerManager.Instance;
-            questManager ??= QuestManager.Instance;
-            return playerManager?.PlayerData != null && questManager != null;
         }
     }
 }

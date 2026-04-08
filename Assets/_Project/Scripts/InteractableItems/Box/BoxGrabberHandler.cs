@@ -44,7 +44,7 @@ namespace Game
         private void ToggleGrab(TriggerEvent eventData)
         {
             GameObject box = eventData.TriggerObj;
-            PlayerAnimatinController playerAnimator = eventData.PlayerObj.GetComponent<PlayerAnimatinController>();
+            PlayerAnimationController playerAnimator = eventData.PlayerObj.GetComponent<PlayerAnimationController>();
             if (currentBox == box)
             {
                 DetachBox();

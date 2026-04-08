@@ -82,7 +82,7 @@ namespace Game
         void OnMouseUpAsButton()
         {
             if (_hasBeenUsed) return;
-            if (GetComponent<InteractibleItemInfluenceArea>() != null) return;
+            if (GetComponent<InteractableItemInfluenceArea>() != null) return;
 
             var playerGO = GameObject.FindGameObjectWithTag("Player");
             var mover = playerGO?.GetComponent<PlayerMoveController>();

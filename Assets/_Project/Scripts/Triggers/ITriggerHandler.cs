@@ -4,6 +4,6 @@ namespace Game
 {
     public interface ITriggerHandler
     {
-        public void Handle(TriggerEvent iventData);
+        public void Handle(TriggerEvent eventData);
     }
 }

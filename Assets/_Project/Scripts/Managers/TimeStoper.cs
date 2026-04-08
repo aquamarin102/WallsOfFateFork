@@ -2,7 +2,7 @@
 using System.Linq;
 using UnityEngine;
 
-namespace Assets._Project.Scripts.Managers
+namespace Game
 {
     public class TimeStopper : MonoBehaviour
     {

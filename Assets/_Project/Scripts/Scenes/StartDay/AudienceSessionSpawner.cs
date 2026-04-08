@@ -13,7 +13,7 @@ public class AudienceSessionSpawner : MonoBehaviour
     [SerializeField] private Transform _spawnPoint;
     [SerializeField] private Transform _dialogSpot;
     [SerializeField] private Transform _exitSpot;
-    [SerializeField] private DialogueManager _dialogueManager;
+    [SerializeField] private DialogManager _dialogueManager;
 
     private readonly Queue<NPCDefinition> _sessionQueue = new();
     private NPCController currentNpc;
@@ -83,12 +83,12 @@ public class AudienceSessionSpawner : MonoBehaviour
     }
 
     /* ─────────── колбэки ─────────── */
-    private void OnDialogueFinished(DialogueGraph dialogue)
+    private void OnDialogueFinished(DialogGraph dialogue)
     {
         if (dialogue.Name == "Keymaster")
         {
             var advisorDialogueJson = Resources.Load<TextAsset>("Dialogues/StartDay/Advisor/cellar_quest_start");
-            var advisorDialogue = JsonConvert.DeserializeObject<DialogueGraph>(advisorDialogueJson.text);
+            var advisorDialogue = JsonConvert.DeserializeObject<DialogGraph>(advisorDialogueJson.text);
             _dialogueManager.StartDialogue(advisorDialogue);
 
 

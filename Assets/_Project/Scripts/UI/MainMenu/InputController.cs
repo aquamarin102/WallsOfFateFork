@@ -21,7 +21,7 @@ namespace Game
         private bool subscribedToLoadingEvents;
 
         [Inject]
-        private void Construct([InjectOptional] LoadingManager loadingManager)
+        private void Construct(LoadingManager loadingManager)
         {
             this.loadingManager = loadingManager;
         }
@@ -159,12 +159,6 @@ namespace Game
                 return true;
             }
 
-            loadingManager ??= LoadingManager.Instance;
-            if (loadingManager == null)
-            {
-                return false;
-            }
-
             loadingManager.LoadingStarted += OnLoadingStarted;
             loadingManager.LoadingFinished += OnLoadingFinished;
             subscribedToLoadingEvents = true;
@@ -173,7 +167,7 @@ namespace Game
 
         private void UnsubscribeFromLoadingEvents()
         {
-            if (!subscribedToLoadingEvents || loadingManager == null)
+            if (!subscribedToLoadingEvents)
             {
                 return;
             }

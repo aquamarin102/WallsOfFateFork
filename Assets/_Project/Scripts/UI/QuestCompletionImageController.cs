@@ -151,23 +151,6 @@ namespace Game.UI
 
         private bool TryBindQuestManager()
         {
-            QuestManager currentQuestManager = QuestManager.Instance ?? _questManager;
-            if (currentQuestManager == null)
-            {
-                return false;
-            }
-
-            if (ReferenceEquals(currentQuestManager, _questManager))
-            {
-                return true;
-            }
-
-            if (_questManager != null)
-            {
-                _questManager.AllQuestsCompletedStateChanged -= OnAllQuestsCompletedStateChanged;
-            }
-
-            _questManager = currentQuestManager;
             _questManager.AllQuestsCompletedStateChanged += OnAllQuestsCompletedStateChanged;
             return true;
         }

@@ -6,7 +6,7 @@ namespace Game
 {
     internal class CellarController : MonoBehaviour
     {
-        [SerializeField] private DialogueManager dialogueManager;
+        [SerializeField] private DialogManager dialogueManager;
         [SerializeField] private InteractiveItemHandler interactiveItemHandler;
         [SerializeField] private string ThiefPrefabName;
 
@@ -17,7 +17,7 @@ namespace Game
         private bool subscribedToItemEvents;
 
         [Inject]
-        private void Construct([InjectOptional] QuestManager questManager, [InjectOptional] NPCPrefabFactory factory)
+        private void Construct(QuestManager questManager, NPCPrefabFactory factory)
         {
             this.questManager = questManager;
             this.npcPrefabFactory = factory;
@@ -25,7 +25,6 @@ namespace Game
 
         private void Start()
         {
-            TryResolveDependencies();
             TrySubscribeToSceneEvents();
             TryApplyInitialSceneState();
         }
@@ -39,7 +38,6 @@ namespace Game
                 return;
             }
 
-            TryResolveDependencies();
             TrySubscribeToSceneEvents();
             TryApplyInitialSceneState();
         }
@@ -77,13 +75,8 @@ namespace Game
             initialSceneStateApplied = true;
         }
 
-        public void OnDialogueFinished(DialogueGraph dialogue)
+        public void OnDialogueFinished(DialogGraph dialogue)
         {
-            if (!TryResolveDependencies())
-            {
-                return;
-            }
-
             if (dialogue == null)
             {
                 return;
@@ -108,7 +101,7 @@ namespace Game
 
         public void OnQuestItemInteraction(InteractableItemParameters itemParameters)
         {
-            if (!TryResolveDependencies() || itemParameters == null)
+            if (itemParameters == null)
             {
                 return;
             }
@@ -161,13 +154,6 @@ namespace Game
                     questManager.UpdateQuestTask(messengerQuest.Id, task.Id, QuestState.InProgress);
                 }
             }
-        }
-
-        private bool TryResolveDependencies()
-        {
-            questManager ??= QuestManager.Instance;
-            dialogueManager ??= DialogueManager.Instance;
-            return questManager != null;
         }
 
         private void TrySubscribeToSceneEvents()

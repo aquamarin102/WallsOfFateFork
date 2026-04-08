@@ -8,10 +8,6 @@ namespace Game
 {
     public class LoadingManager
     {
-        public static LoadingManager Instance { get; private set; }
-
-        public bool StartupIntroShown { get; set; }
-
         public event Action LoadingStarted;
         public event Action LoadingFinished;
         public event Action<float> LoadingProgressUpdated;
@@ -22,11 +18,6 @@ namespace Game
         private Coroutine activeLoadCoroutine;
 
         public bool IsLoading { get; private set; }
-
-        public LoadingManager()
-        {
-            Instance = this;
-        }
 
         public void LoadSceneAsync(string sceneName)
         {

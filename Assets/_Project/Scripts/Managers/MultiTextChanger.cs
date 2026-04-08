@@ -20,18 +20,13 @@ namespace Game
         private QuestManager questManager;
 
         [Inject]
-        private void Construct([InjectOptional] QuestManager questmanager)
+        private void Construct(QuestManager questmanager)
         {
             this.questManager = questmanager;
         }
 
         private void Update()
         {
-            if (!TryResolveQuestManager())
-            {
-                return;
-            }
-
             UpdateQuestUI();
         }
 
@@ -114,12 +109,6 @@ namespace Game
             {
                 if (_textMeshProLinks[i] != null) _textMeshProLinks[i].gameObject.SetActive(false);
             }
-        }
-
-        private bool TryResolveQuestManager()
-        {
-            questManager ??= QuestManager.Instance;
-            return questManager != null;
         }
     }
 }

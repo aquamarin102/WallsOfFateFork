@@ -10,7 +10,7 @@ namespace Game
 {
     internal class MainRoomController : MonoBehaviour
     {
-        [SerializeField] private DialogueManager dialogueManager;
+        [SerializeField] private DialogManager dialogueManager;
         [SerializeField] private InteractiveItemHandler interactiveItemHandler;
         [SerializeField] private string keyMasterName;
         [SerializeField] private string messengerName;
@@ -23,7 +23,7 @@ namespace Game
         private bool pendingDialogueChecked;
 
         [Inject]
-        private void Construct([InjectOptional] QuestManager questManager, [InjectOptional] NPCPrefabFactory factory)
+        private void Construct(QuestManager questManager, NPCPrefabFactory factory)
         {
             this.questManager = questManager;
             this.npcPrefabFactory = factory;
@@ -37,7 +37,6 @@ namespace Game
                 TutorialSheetDefinitions.MainRoomEditorAssetPath,
                 null);
 
-            TryResolveDependencies();
             TrySubscribeToSceneEvents();
             TryApplyInitialSceneState();
             TryStartPendingMinigameDialogueIfNeeded();
@@ -53,7 +52,6 @@ namespace Game
                 return;
             }
 
-            TryResolveDependencies();
             TrySubscribeToSceneEvents();
             TryApplyInitialSceneState();
             TryStartPendingMinigameDialogueIfNeeded();
@@ -72,9 +70,9 @@ namespace Game
             }
         }
 
-        public void OnDialogueFinished(DialogueGraph dialogue)
+        public void OnDialogueFinished(DialogGraph dialogue)
         {
-            if (!TryResolveDependencies() || dialogue == null)
+            if (dialogue == null)
             {
                 return;
             }
@@ -145,7 +143,7 @@ namespace Game
 
         private void TryStartPendingMinigameDialogueIfNeeded()
         {
-            if (pendingDialogueChecked || !TryResolveDependencies())
+            if (pendingDialogueChecked)
             {
                 return;
             }
@@ -173,7 +171,7 @@ namespace Game
 
             if (dialogueManager == null)
             {
-                dialogueManager = DialogueManager.Instance;
+                dialogueManager = DialogManager.Instance;
             }
 
             if (dialogueManager == null)
@@ -186,7 +184,7 @@ namespace Game
                 yield return null;
             }
 
-            DialogueGraph dialogueGraph = LoadDialogueGraph(dialoguePath);
+            DialogGraph dialogueGraph = LoadDialogueGraph(dialoguePath);
             if (dialogueGraph == null)
             {
                 yield break;
@@ -195,7 +193,7 @@ namespace Game
             dialogueManager.StartDialogue(dialogueGraph);
         }
 
-        private DialogueGraph LoadDialogueGraph(string dialoguePath)
+        private DialogGraph LoadDialogueGraph(string dialoguePath)
         {
             TextAsset textAsset = Resources.Load<TextAsset>(dialoguePath);
             if (textAsset == null)
@@ -206,7 +204,7 @@ namespace Game
 
             try
             {
-                return JsonConvert.DeserializeObject<DialogueGraph>(textAsset.text);
+                return JsonConvert.DeserializeObject<DialogGraph>(textAsset.text);
             }
             catch (JsonException ex)
             {
@@ -215,17 +213,10 @@ namespace Game
             }
         }
 
-        private static bool DialogueContainsMinigameTransition(DialogueGraph dialogue)
+        private static bool DialogueContainsMinigameTransition(DialogGraph dialogue)
         {
             return dialogue?.Sentences != null &&
                    dialogue.Sentences.Exists(sentence => sentence != null && sentence.StartMinigame);
-        }
-
-        private bool TryResolveDependencies()
-        {
-            questManager ??= QuestManager.Instance;
-            dialogueManager ??= DialogueManager.Instance;
-            return questManager != null;
         }
 
         private void TrySubscribeToSceneEvents()
@@ -245,7 +236,7 @@ namespace Game
 
         private void TryApplyInitialSceneState()
         {
-            if (initialSceneStateApplied || !TryResolveDependencies())
+            if (initialSceneStateApplied)
             {
                 return;
             }

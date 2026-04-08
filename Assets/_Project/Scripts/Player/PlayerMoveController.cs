@@ -35,7 +35,7 @@ namespace Game
         [Header("Pitch Settings")]
         [SerializeField] private float walkingPitch = 1f;
         [SerializeField] private float runningPitch = 1.5f;
-        [SerializeField] private DialogueManager _dialogueManager;
+        [SerializeField] private DialogManager _dialogueManager;
 
         private Vector3 grabDirection;
         private bool isBoxGrabMode = false;
@@ -73,15 +73,15 @@ namespace Game
         private bool isRunning;
         private float footstepTimer;
 
-        private PlayerAnimatinController interactManager;   // ссылка на менеджер взаимодействия
+        private PlayerAnimationController interactManager;   // ссылка на менеджер взаимодействия
 
         // --------------------------------------------------
         [Inject] private void Construct(Transform camTransform) => cameraTransform = camTransform;
 
         private void Awake()
         {
-            _dialogueManager = DialogueManager.Instance;
-            interactManager = GetComponent<PlayerAnimatinController>();
+            _dialogueManager = DialogManager.Instance;
+            interactManager = GetComponent<PlayerAnimationController>();
             //if (!interactManager) Debug.LogError("PlayerMoveController: InteractManager missing!");
         }
 
@@ -535,7 +535,7 @@ namespace Game
             Collider hitCollider = hit.collider;
             Vector3 hitPoint = hit.point;
 
-            if (TryFindClosestInteractionZone(hitCollider, hitPoint, out InteractibleItemInfluenceArea itemArea))
+            if (TryFindClosestInteractionZone(hitCollider, hitPoint, out InteractableItemInfluenceArea itemArea))
             {
                 Transform target = itemArea.triggerObject != null ? itemArea.triggerObject.transform : itemArea.transform;
                 MoveToAndCallback(target, isClickRun, () => _ = itemArea.InvokeDirectInteractionAsync(gameObject), interactionStopDistance);
@@ -556,7 +556,7 @@ namespace Game
                 return true;
             }
 
-            if (TryFindClosestInteractionZone(hitCollider, hitPoint, out StartDayDialogueTriggerZone startDayDialogueZone))
+            if (TryFindClosestInteractionZone(hitCollider, hitPoint, out StartDayDialogTriggerZone startDayDialogueZone))
             {
                 Transform target = startDayDialogueZone.triggerObject != null ? startDayDialogueZone.triggerObject.transform : startDayDialogueZone.transform;
                 MoveToAndCallback(target, isClickRun, () => startDayDialogueZone.InvokeDirectInteraction(gameObject), interactionStopDistance);
@@ -637,7 +637,7 @@ namespace Game
             Transform targetTransform = candidate.transform;
             if (candidate is InfluenceArea area && area.triggerObject != null)
                 targetTransform = area.triggerObject.transform;
-            else if (candidate is StartDayDialogueTriggerZone zone && zone.triggerObject != null)
+            else if (candidate is StartDayDialogTriggerZone zone && zone.triggerObject != null)
                 targetTransform = zone.triggerObject.transform;
 
             float targetDistance = (targetTransform.position - hitPoint).sqrMagnitude;
