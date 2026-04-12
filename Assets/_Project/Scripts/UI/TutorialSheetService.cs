@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Game.Data;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace Game.UI
@@ -186,21 +187,32 @@ namespace Game.UI
     internal sealed class RuntimeTutorialOverlay : MonoBehaviour
     {
         private const float BackgroundAlpha = 0.82f;
+        private const float CloseInputDelay = 1f;
         private static readonly Vector2 MaxSheetSize = new(1600f, 920f);
 
         private float _previousTimeScale = 1f;
+        private float _closeInputAllowedAt;
         private Action _onClosed;
         private Action<RuntimeTutorialOverlay> _onDestroyed;
         private bool _isClosed;
+        private bool _waitForPointerRelease;
 
         public void Initialize(Sprite tutorialSprite, Action onClosed, Action<RuntimeTutorialOverlay> onDestroyed)
         {
             _onClosed = onClosed;
             _onDestroyed = onDestroyed;
             _previousTimeScale = Time.timeScale;
+            _closeInputAllowedAt = Time.unscaledTime + CloseInputDelay;
+            _waitForPointerRelease = IsAnyPointerPressed();
 
             BuildOverlay(tutorialSprite);
             Time.timeScale = 0f;
+        }
+
+        private void Update()
+        {
+            if (_waitForPointerRelease && !IsAnyPointerPressed())
+                _waitForPointerRelease = false;
         }
 
         private void BuildOverlay(Sprite tutorialSprite)
@@ -219,7 +231,7 @@ namespace Game.UI
 
             Button button = clickCatcherObject.GetComponent<Button>();
             button.transition = Selectable.Transition.None;
-            button.onClick.AddListener(Close);
+            button.onClick.AddListener(TryCloseFromClick);
 
             GameObject sheetObject = new("Sheet", typeof(RectTransform), typeof(Image));
             sheetObject.transform.SetParent(clickCatcherObject.transform, false);
@@ -240,6 +252,14 @@ namespace Game.UI
             sheetRect.sizeDelta = spriteSize * scale;
         }
 
+        private void TryCloseFromClick()
+        {
+            if (_waitForPointerRelease || Time.unscaledTime < _closeInputAllowedAt)
+                return;
+
+            Close();
+        }
+
         private void Close()
         {
             if (_isClosed)
@@ -257,6 +277,21 @@ namespace Game.UI
                 Time.timeScale = _previousTimeScale;
 
             _onDestroyed?.Invoke(this);
+        }
+
+        private static bool IsAnyPointerPressed()
+        {
+            Mouse mouse = Mouse.current;
+            if (mouse != null &&
+                (mouse.leftButton.isPressed ||
+                 mouse.rightButton.isPressed ||
+                 mouse.middleButton.isPressed))
+            {
+                return true;
+            }
+
+            Touchscreen touchscreen = Touchscreen.current;
+            return touchscreen != null && touchscreen.primaryTouch.press.isPressed;
         }
     }
 }

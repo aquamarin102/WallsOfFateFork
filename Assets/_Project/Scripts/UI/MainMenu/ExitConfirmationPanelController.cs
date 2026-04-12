@@ -1,15 +1,27 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using Zenject;
 
 namespace Game.UI
 {
     public class ExitConfirmationPanelController : MonoBehaviour
     {
+        private const string MainMenuSceneName = "MainMenu";
+
         [SerializeField] private GameObject panelRoot;
 
         public Button confirmButton;
         public Button declineButton;
+
+        private LoadingManager loadingManager;
+
+        [Inject]
+        private void Construct([InjectOptional] LoadingManager loadingManager)
+        {
+            this.loadingManager = loadingManager;
+        }
 
         private void Awake()
         {
@@ -61,12 +73,34 @@ namespace Game.UI
 
         public void QuitGame()
         {
+            if (SceneManager.GetActiveScene().name != MainMenuSceneName)
+            {
+                LoadMainMenu();
+                return;
+            }
+
             Application.Quit();
         }
 
         public void QuitToMenuGame()
         {
-            QuitGame();
+            if (SceneManager.GetActiveScene().name == MainMenuSceneName)
+            {
+                QuitGame();
+                return;
+            }
+
+            LoadMainMenu();
+        }
+
+        private void LoadMainMenu()
+        {
+            HideExitPanel();
+
+            if (loadingManager != null)
+                loadingManager.LoadScene(MainMenuSceneName);
+            else
+                SceneManager.LoadScene(MainMenuSceneName);
         }
 
         private void ResolvePanelRoot()
