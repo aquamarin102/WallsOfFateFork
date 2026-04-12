@@ -55,7 +55,6 @@ namespace Game
         //[SerializeField] private OutlineTrigger outlineTrigger;
 
         private BoxCollider boxCollider;
-        private int lastProcessedInteractPressId;
         //private bool interactPressedThisFrame;
 
         //private void Reset()
@@ -129,8 +128,8 @@ namespace Game
 
         protected bool ConsumeInteractPress()
         {
-            var inputManager = InputManager.GetInstance();
-            return inputManager != null && inputManager.TryConsumeInteractPress(ref lastProcessedInteractPressId);
+            // PlayerMoveController chooses one interaction target for E and invokes it directly.
+            return false;
         }
 
         public virtual async System.Threading.Tasks.Task InvokeEventAsync(Collider obj)

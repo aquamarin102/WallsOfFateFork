@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using Zenject;
 
@@ -25,12 +26,16 @@ namespace Game
 
         [Header("Mouse & Click Settings")]
         [SerializeField] private float stopThreshold = 0.1f;     // статичные цели
-        [SerializeField] private float clickRunThreshold = 0.3f; // двойной клик
         [SerializeField] private float holdThreshold = 0.2f;     // follow курсора
         [SerializeField] private float interactionStopDistance = 1.2f;
         [SerializeField] private float mouseRaycastDistance = 500f;
         [SerializeField] private float navMeshSampleRadius = 2.5f;
         [SerializeField] private float holdRetargetDistance = 0.35f;
+        [SerializeField] private float doubleClickThreshold = 0.3f;
+        [SerializeField] private float doubleClickMaxScreenDistance = 35f;
+
+        [Header("Interaction Settings")]
+        [SerializeField] private float keyboardInteractionRadius = 1.6f;
 
         [Header("Pitch Settings")]
         [SerializeField] private float walkingPitch = 1f;
@@ -42,15 +47,20 @@ namespace Game
         private Vector3 heldBoxPlayerOffset;
 
         private bool isHoldMove;
-        private bool isClickRun;
-        private float lastClickTime = -1f;
+        private bool isWalkingMode;
+        private bool isPathRunRequested = true;
         private float mouseDownTime;
+        private float lastClickTime = -1f;
+        private Vector2 lastClickPosition;
+        private UnityEngine.Object lastClickInteractionTarget;
+        private int lastProcessedInteractPressId;
 
         private Vector3 clickTarget;
         private Transform dynamicTarget;
         private float dynamicStopDist;
 
         private Action _onArriveAction;
+        private Func<bool> _canInvokeArriveAction;
 
         [Header("Footstep Settings")]
         [SerializeField] private float walkingStepInterval = 0.48f;
@@ -139,6 +149,8 @@ namespace Game
 
         private void Update()
         {
+            HandleMovementModeInput();
+            HandleInteractionInput();
             HandleMouseInput();
             HandleMovement();
             UpdateFootstep();
@@ -153,20 +165,26 @@ namespace Game
         #region Mouse Input
         private void HandleMouseInput()
         {
+
+            bool pointerDown = IsPrimaryPointerPressedThisFrame();
+            bool pointerHeld = IsPrimaryPointerPressed();
+            bool pointerUp = IsPrimaryPointerReleasedThisFrame();
+
             if (DialogManager.Instance.Active == true) return;
+
             if (IsPointerOverUi())
             {
-                if (Input.GetMouseButtonUp(0))
+                if (pointerUp)
                     isHoldMove = false;
                 return;
             }
 
             if (isBoxGrabMode)
             {
-                if (Input.GetMouseButtonDown(0))
+                if (pointerDown)
                     mouseDownTime = Time.time;
 
-                if (Input.GetMouseButtonUp(0))
+                if (pointerUp)
                 {
                     float held = Time.time - mouseDownTime;
                     if (held < holdThreshold)
@@ -178,18 +196,15 @@ namespace Game
                 return;
             }
 
-            if (Input.GetMouseButtonDown(0))
+            if (pointerDown)
             {
-                float now = Time.time;
-                isClickRun = (now - lastClickTime) <= clickRunThreshold;
-                lastClickTime = now;
-                mouseDownTime = now;
+                mouseDownTime = Time.time;
             }
 
-            if (Input.GetMouseButton(0) && !isHoldMove && Time.time - mouseDownTime >= holdThreshold)
+            if (pointerHeld && !isHoldMove && Time.time - mouseDownTime >= holdThreshold)
                 isHoldMove = true;
 
-            if (Input.GetMouseButtonUp(0))
+            if (pointerUp)
             {
                 float held = Time.time - mouseDownTime;
                 dynamicTarget = null;                     // сброс преследования
@@ -201,30 +216,38 @@ namespace Game
 
         private void ProcessClick()
         {
-            Camera mainCamera = Camera.main;
-            if (mainCamera == null)
+            if (!TryCreatePointerRay(out Ray ray))
                 return;
 
-            Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
+            TryReadPointerPosition(out Vector2 clickPosition);
             RaycastHit[] hits = Physics.RaycastAll(ray, mouseRaycastDistance, ~0, QueryTriggerInteraction.Ignore);
             Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
 
-            foreach (RaycastHit hit in hits)
+            bool hasInteractionTarget = TryResolveInteractionTarget(hits, out InteractionTarget interactionTarget);
+            bool isInteractionDoubleClick = hasInteractionTarget &&
+                IsInteractionDoubleClick(interactionTarget.Identity, clickPosition);
+
+            RegisterClick(hasInteractionTarget ? interactionTarget.Identity : null, clickPosition);
+
+            if (isInteractionDoubleClick)
             {
-                Collider hitCollider = hit.collider;
-                if (hitCollider == null)
-                    continue;
-
-                if (TryProcessInteractionClick(hit))
-                    return;
-
+                if (isBoxGrabMode)
+                    interactionTarget.Invoke();
+                else
+                    MoveToInteractionTarget(interactionTarget);
+                return;
             }
 
             if (isBoxGrabMode)
+            {
+                if (TryResolveMovementDestination(ray, hits, out Vector3 boxDestination))
+                    MoveToAndCallback(boxDestination, IsRunModeActive(), null);
+
                 return;
+            }
 
             if (TryResolveMovementDestination(ray, hits, out Vector3 destination))
-                MoveToAndCallback(destination, isClickRun, null);
+                MoveToAndCallback(destination, IsRunModeActive(), null);
         }
 
         private bool TryResolveMovementDestination(Ray ray, out Vector3 destination)
@@ -299,11 +322,40 @@ namespace Game
             if (!NavMesh.SamplePosition(targetPoint, out NavMeshHit navHit, navMeshSampleRadius, NavMesh.AllAreas))
                 return false;
 
-            if (!agent.CalculatePath(navHit.position, navMeshPath) || navMeshPath.status != NavMeshPathStatus.PathComplete)
+            if (!agent.CalculatePath(navHit.position, navMeshPath) || navMeshPath.status == NavMeshPathStatus.PathInvalid)
                 return false;
 
-            destination = navHit.position;
+            if (navMeshPath.status == NavMeshPathStatus.PathComplete)
+            {
+                destination = navHit.position;
+                return true;
+            }
+
+            if (!TryGetPartialPathDestination(navMeshPath, out destination))
+                return false;
+
             return true;
+        }
+
+        private bool TryGetPartialPathDestination(NavMeshPath path, out Vector3 destination)
+        {
+            Vector3[] corners = path.corners;
+            for (int i = corners.Length - 1; i >= 0; i--)
+            {
+                Vector3 corner = corners[i];
+                corner.y = transform.position.y;
+                if ((corner - transform.position).sqrMagnitude <= stopThreshold * stopThreshold)
+                    continue;
+
+                if (NavMesh.SamplePosition(corners[i], out NavMeshHit navHit, navMeshSampleRadius, NavMesh.AllAreas))
+                {
+                    destination = navHit.position;
+                    return true;
+                }
+            }
+
+            destination = default;
+            return false;
         }
         #endregion
 
@@ -324,21 +376,33 @@ namespace Game
             }
 
             // ---- WASD breaks mouse modes ----
-            float h = Input.GetAxisRaw("Horizontal");
-            float v = Input.GetAxisRaw("Vertical");
+            Vector2 moveAxes = ReadMoveInput();
+            float h = moveAxes.x;
+            float v = moveAxes.y;
             Vector3 input = new(h, 0, v);
             if (input.sqrMagnitude > 0.01f)
             {
-                isHoldMove = false; isClickRun = false; dynamicTarget = null;
+                isHoldMove = false; ClearDynamic();
                 agent.isStopped = true; agent.ResetPath();
             }
 
             Vector3 desired = Vector3.zero;
+            bool usesNavigationPath = false;
+            bool arrivedByInteractionRadius = TryInvokeArriveActionByPredicate();
 
             // A) Преследование динамической цели
-            if (dynamicTarget)
+            if (arrivedByInteractionRadius)
             {
-                if (!dynamicTarget.gameObject.activeInHierarchy) StopMovement();
+                desired = Vector3.zero;
+            }
+            else if (dynamicTarget)
+            {
+                usesNavigationPath = true;
+                if (TryInvokeArriveActionByPredicate())
+                {
+                    desired = Vector3.zero;
+                }
+                else if (!dynamicTarget.gameObject.activeInHierarchy) StopMovement();
                 else
                 {
                     if (agent.destination != dynamicTarget.position)
@@ -347,16 +411,18 @@ namespace Game
 
                     if (!agent.pathPending && agent.remainingDistance <= dynamicStopDist + 0.05f)
                     {
-                        agent.isStopped = true; isClickRun = false;
-                        var cb = _onArriveAction; ClearDynamic(); cb?.Invoke();
+                        InvokeArriveAction();
                     }
                 }
             }
             // B) Follow‑режим (удержание)
             else if (isHoldMove && !IsPointerOverUi())
             {
-                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-                if (TryResolveMovementDestination(ray, out Vector3 destination))
+                usesNavigationPath = true;
+                isPathRunRequested = IsRunModeActive();
+
+                if (TryCreatePointerRay(out Ray ray) &&
+                    TryResolveMovementDestination(ray, out Vector3 destination))
                 {
                     bool shouldRetarget = !agent.hasPath ||
                         agent.isStopped ||
@@ -376,10 +442,18 @@ namespace Game
             // C) Click‑to‑point
             else if (agent.hasPath && !agent.isStopped)
             {
-                desired = agent.desiredVelocity.WithY(0).normalized;
-                if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance + 0.05f)
+                usesNavigationPath = true;
+                if (TryInvokeArriveActionByPredicate())
                 {
-                    agent.isStopped = true; isClickRun = false; _onArriveAction?.Invoke(); _onArriveAction = null;
+                    desired = Vector3.zero;
+                }
+                else
+                {
+                    desired = agent.desiredVelocity.WithY(0).normalized;
+                    if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance + 0.05f)
+                    {
+                        InvokeArriveAction();
+                    }
                 }
             }
             // D) WASD прямое движение
@@ -426,7 +500,7 @@ namespace Game
             // Скорость + гравитация
             bool hasPlanarInput = desired.sqrMagnitude > 0.0001f;
             bool running = !isBoxGrabMode && hasPlanarInput &&
-                (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift) || isClickRun);
+                (usesNavigationPath ? isPathRunRequested : IsRunModeActive());
             float speed = moveSpeed * (running ? runMultiplier : 1f);
             Vector3 planarMoveDirection = desired * speed;
 
@@ -463,23 +537,25 @@ namespace Game
 
         // ==================================================
         #region Public API
-        public void MoveToAndCallback(Vector3 target, bool run, Action onArrive, float stopDistance = 0.1f)
+        public void MoveToAndCallback(Vector3 target, bool run, Action onArrive, float stopDistance = 0.1f, Func<bool> canInvokeArriveAction = null)
         {
-            dynamicTarget = null; clickTarget = target; isClickRun = run; isHoldMove = false;
+            dynamicTarget = null; clickTarget = target; isPathRunRequested = run; isHoldMove = false;
             agent.stoppingDistance = stopDistance; agent.SetDestination(target); agent.isStopped = false;
             _onArriveAction = onArrive;
+            _canInvokeArriveAction = canInvokeArriveAction;
         }
 
-        public void MoveToAndCallback(Transform target, bool run, Action onArrive, float stopDistance = 1f)
+        public void MoveToAndCallback(Transform target, bool run, Action onArrive, float stopDistance = 1f, Func<bool> canInvokeArriveAction = null)
         {
-            dynamicTarget = target; dynamicStopDist = stopDistance; isClickRun = run; isHoldMove = false;
+            dynamicTarget = target; dynamicStopDist = stopDistance; isPathRunRequested = run; isHoldMove = false;
             agent.stoppingDistance = stopDistance; agent.SetDestination(target.position); agent.isStopped = false;
             _onArriveAction = onArrive;
+            _canInvokeArriveAction = canInvokeArriveAction;
         }
 
         public void StopMovement()
         {
-            agent.isStopped = true; agent.ResetPath(); isHoldMove = false; isClickRun = false; clickTarget = Vector3.zero; ClearDynamic();
+            agent.isStopped = true; agent.ResetPath(); isHoldMove = false; clickTarget = Vector3.zero; ClearDynamic();
             currentPlanarSpeed = 0f;
             isRunning = false;
         }
@@ -487,7 +563,31 @@ namespace Game
 
         // ==================================================
         #region Helpers
-        private void ClearDynamic() { dynamicTarget = null; _onArriveAction = null; }
+        private void ClearDynamic()
+        {
+            dynamicTarget = null;
+            _onArriveAction = null;
+            _canInvokeArriveAction = null;
+        }
+
+        private bool TryInvokeArriveActionByPredicate()
+        {
+            return _onArriveAction != null &&
+                   _canInvokeArriveAction != null &&
+                   _canInvokeArriveAction() &&
+                   InvokeArriveAction();
+        }
+
+        private bool InvokeArriveAction()
+        {
+            agent.isStopped = true;
+            agent.ResetPath();
+
+            Action callback = _onArriveAction;
+            ClearDynamic();
+            callback?.Invoke();
+            return true;
+        }
 
         private void ApplyHeldBoxCorrection()
         {
@@ -528,46 +628,448 @@ namespace Game
             return EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
         }
 
-        private bool TryProcessInteractionClick(RaycastHit hit)
+        private void HandleMovementModeInput()
         {
-            Collider hitCollider = hit.collider;
-            Vector3 hitPoint = hit.point;
+            if (DialogManager.Instance.Active == true)
+                return;
 
+            if (WasWalkTogglePressedThisFrame())
+            {
+                isWalkingMode = !isWalkingMode;
+                isPathRunRequested = IsRunModeActive();
+            }
+        }
+
+        private bool IsRunModeActive()
+        {
+            return !isWalkingMode;
+        }
+
+        private void HandleInteractionInput()
+        {
+            if (DialogManager.Instance.Active == true)
+                return;
+
+            if (!ConsumeInteractInput())
+                return;
+
+            if (TryFindBestInteractionTargetAroundPlayer(out InteractionTarget interactionTarget))
+            {
+                interactionTarget.Invoke();
+                return;
+            }
+
+            if (heldBoxMover != null)
+                ToggleBoxInteraction(heldBoxMover, heldBoxMover.gameObject);
+        }
+
+        private bool ConsumeInteractInput()
+        {
+            global::InputManager inputManager = global::InputManager.GetInstance();
+            if (inputManager != null && inputManager.TryConsumeInteractPress(ref lastProcessedInteractPressId))
+                return true;
+
+            Keyboard keyboard = Keyboard.current;
+            return keyboard != null && keyboard.eKey.wasPressedThisFrame;
+        }
+
+        private static Vector2 ReadMoveInput()
+        {
+            Vector2 move = Vector2.zero;
+            global::InputManager inputManager = global::InputManager.GetInstance();
+            if (inputManager != null)
+            {
+                Vector3 sharedMove = inputManager.GetMoveDirection();
+                move = new Vector2(sharedMove.x, sharedMove.y);
+                if (move.sqrMagnitude > 0.0001f)
+                    return Vector2.ClampMagnitude(move, 1f);
+            }
+
+            Gamepad gamepad = Gamepad.current;
+            if (gamepad != null)
+            {
+                move = gamepad.leftStick.ReadValue();
+                if (move.sqrMagnitude > 0.0001f)
+                    return Vector2.ClampMagnitude(move, 1f);
+            }
+
+            Keyboard keyboard = Keyboard.current;
+            if (keyboard == null)
+                return Vector2.zero;
+
+            if (keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed)
+                move.x -= 1f;
+            if (keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed)
+                move.x += 1f;
+            if (keyboard.sKey.isPressed || keyboard.downArrowKey.isPressed)
+                move.y -= 1f;
+            if (keyboard.wKey.isPressed || keyboard.upArrowKey.isPressed)
+                move.y += 1f;
+
+            return Vector2.ClampMagnitude(move, 1f);
+        }
+
+        private static bool WasWalkTogglePressedThisFrame()
+        {
+            Keyboard keyboard = Keyboard.current;
+            return keyboard != null &&
+                   (keyboard.leftCtrlKey.wasPressedThisFrame || keyboard.rightCtrlKey.wasPressedThisFrame);
+        }
+
+        private bool TryCreatePointerRay(out Ray ray)
+        {
+            ray = default;
+
+            Camera mainCamera = Camera.main;
+            if (mainCamera == null || !TryReadPointerPosition(out Vector2 pointerPosition))
+                return false;
+
+            ray = mainCamera.ScreenPointToRay(pointerPosition);
+            return true;
+        }
+
+        private static bool TryReadPointerPosition(out Vector2 position)
+        {
+            Mouse mouse = Mouse.current;
+            if (mouse != null)
+            {
+                position = mouse.position.ReadValue();
+                return true;
+            }
+
+            Pointer pointer = Pointer.current;
+            if (pointer != null)
+            {
+                position = pointer.position.ReadValue();
+                return true;
+            }
+
+            position = default;
+            return false;
+        }
+
+        private static bool IsPrimaryPointerPressedThisFrame()
+        {
+            Mouse mouse = Mouse.current;
+            if (mouse != null)
+                return mouse.leftButton.wasPressedThisFrame;
+
+            Pointer pointer = Pointer.current;
+            return pointer != null && pointer.press.wasPressedThisFrame;
+        }
+
+        private static bool IsPrimaryPointerReleasedThisFrame()
+        {
+            Mouse mouse = Mouse.current;
+            if (mouse != null)
+                return mouse.leftButton.wasReleasedThisFrame;
+
+            Pointer pointer = Pointer.current;
+            return pointer != null && pointer.press.wasReleasedThisFrame;
+        }
+
+        private static bool IsPrimaryPointerPressed()
+        {
+            Mouse mouse = Mouse.current;
+            if (mouse != null)
+                return mouse.leftButton.isPressed;
+
+            Pointer pointer = Pointer.current;
+            return pointer != null && pointer.press.isPressed;
+        }
+
+        private bool TryFindBestInteractionTargetAroundPlayer(out InteractionTarget interactionTarget)
+        {
+            interactionTarget = default;
+            float bestScore = float.PositiveInfinity;
+
+            Collider[] colliders = Physics.OverlapSphere(
+                transform.position,
+                keyboardInteractionRadius,
+                ~0,
+                QueryTriggerInteraction.Collide);
+
+            foreach (Collider candidateCollider in colliders)
+            {
+                if (candidateCollider == null || candidateCollider.transform.IsChildOf(transform))
+                    continue;
+
+                Vector3 hitPoint = candidateCollider.ClosestPoint(transform.position);
+                if (!TryResolveInteractionTarget(candidateCollider, hitPoint, out InteractionTarget candidate))
+                    continue;
+
+                float score = candidate.GetScore(transform.position);
+                if (score >= bestScore)
+                    continue;
+
+                bestScore = score;
+                interactionTarget = candidate;
+            }
+
+            return interactionTarget.IsValid;
+        }
+
+        private bool TryResolveInteractionTarget(RaycastHit[] hits, out InteractionTarget interactionTarget)
+        {
+            interactionTarget = default;
+            float bestScore = float.PositiveInfinity;
+
+            foreach (RaycastHit hit in hits)
+            {
+                Collider hitCollider = hit.collider;
+                if (hitCollider == null || hitCollider.transform.IsChildOf(transform))
+                    continue;
+
+                if (!TryResolveInteractionTarget(hitCollider, hit.point, out InteractionTarget candidate))
+                    continue;
+
+                float score = candidate.GetScore(hit.point);
+                if (score >= bestScore)
+                    continue;
+
+                bestScore = score;
+                interactionTarget = candidate;
+            }
+
+            return interactionTarget.IsValid;
+        }
+
+        private bool TryResolveInteractionTarget(Collider hitCollider, Vector3 hitPoint, out InteractionTarget interactionTarget)
+        {
             if (TryFindClosestInteractionZone(hitCollider, hitPoint, out InteractableItemInfluenceArea itemArea))
             {
-                Transform target = itemArea.triggerObject != null ? itemArea.triggerObject.transform : itemArea.transform;
-                MoveToAndCallback(target, isClickRun, () => _ = itemArea.InvokeDirectInteractionAsync(gameObject), interactionStopDistance);
+                interactionTarget = CreateInteractionTarget(
+                    itemArea,
+                    ResolveInteractionTransform(itemArea),
+                    itemArea.GetComponent<Collider>(),
+                    () => _ = itemArea.InvokeDirectInteractionAsync(gameObject));
                 return true;
             }
 
             if (TryFindClosestInteractionZone(hitCollider, hitPoint, out DoorInfluenceArea doorArea))
             {
-                Transform target = doorArea.triggerObject != null ? doorArea.triggerObject.transform : doorArea.transform;
-                MoveToAndCallback(target, isClickRun, () => _ = doorArea.InvokeDirectInteractionAsync(gameObject), interactionStopDistance);
+                interactionTarget = CreateInteractionTarget(
+                    doorArea,
+                    ResolveInteractionTransform(doorArea),
+                    doorArea.GetComponent<Collider>(),
+                    () => _ = doorArea.InvokeDirectInteractionAsync(gameObject));
                 return true;
             }
 
             if (TryFindClosestInteractionZone(hitCollider, hitPoint, out InfluenceArea influenceArea))
             {
-                Transform target = influenceArea.triggerObject != null ? influenceArea.triggerObject.transform : influenceArea.transform;
-                MoveToAndCallback(target, isClickRun, () => _ = influenceArea.InvokeDirectInteractionAsync(gameObject), interactionStopDistance);
+                interactionTarget = CreateInteractionTarget(
+                    influenceArea,
+                    ResolveInteractionTransform(influenceArea),
+                    influenceArea.GetComponent<Collider>(),
+                    () => _ = influenceArea.InvokeDirectInteractionAsync(gameObject));
                 return true;
             }
 
             if (TryFindClosestInteractionZone(hitCollider, hitPoint, out StartDayDialogTriggerZone startDayDialogueZone))
             {
-                Transform target = startDayDialogueZone.triggerObject != null ? startDayDialogueZone.triggerObject.transform : startDayDialogueZone.transform;
-                MoveToAndCallback(target, isClickRun, () => startDayDialogueZone.InvokeDirectInteraction(gameObject), interactionStopDistance);
+                interactionTarget = CreateInteractionTarget(
+                    startDayDialogueZone,
+                    ResolveInteractionTransform(startDayDialogueZone),
+                    startDayDialogueZone.GetComponent<Collider>(),
+                    () => startDayDialogueZone.InvokeDirectInteraction(gameObject));
                 return true;
             }
 
             if (TryFindComponentOnClickedObject(hitCollider, out InteractableItem interactableItem))
             {
-                MoveToAndCallback(interactableItem.transform, isClickRun, interactableItem.Interact, interactionStopDistance);
+                interactionTarget = new InteractionTarget(
+                    interactableItem,
+                    interactableItem.transform,
+                    interactableItem.GetComponent<Collider>(),
+                    interactableItem.ApproachDistance,
+                    interactableItem.Interact);
                 return true;
             }
 
+            if (TryFindComponentOnClickedObject(hitCollider, out BoxMover boxMover))
+            {
+                GameObject boxObject = boxMover.gameObject;
+                interactionTarget = CreateInteractionTarget(
+                    boxMover,
+                    boxMover.transform,
+                    boxMover.GetComponent<Collider>(),
+                    () => ToggleBoxInteraction(boxMover, boxObject));
+                return true;
+            }
+
+            if (TryFindComponentOnClickedObject(hitCollider, out PlayChestAnimation chestAnimation))
+            {
+                GameObject chestObject = chestAnimation.gameObject;
+                interactionTarget = CreateInteractionTarget(
+                    chestAnimation,
+                    chestAnimation.transform,
+                    chestAnimation.GetComponent<Collider>(),
+                    () => chestAnimation.Triggered(new TriggerEvent(
+                        InfluenceType.Object,
+                        gameObject,
+                        chestObject,
+                        true,
+                        string.Empty)));
+                return true;
+            }
+
+            interactionTarget = default;
             return false;
+        }
+
+        private InteractionTarget CreateInteractionTarget(UnityEngine.Object identity, Transform target, Collider interactionCollider, Action invoke)
+        {
+            return new InteractionTarget(
+                identity,
+                target != null ? target : transform,
+                interactionCollider,
+                interactionStopDistance,
+                invoke);
+        }
+
+        private void MoveToInteractionTarget(InteractionTarget interactionTarget)
+        {
+            if (!interactionTarget.IsValid)
+                return;
+
+            if (IsInteractionTargetAvailable(interactionTarget))
+            {
+                StopMovement();
+                interactionTarget.Invoke();
+                return;
+            }
+
+            if (TryResolveInteractionMoveDestination(interactionTarget, out Vector3 destination))
+            {
+                MoveToAndCallback(
+                    destination,
+                    IsRunModeActive(),
+                    interactionTarget.Invoke,
+                    interactionTarget.StopDistance,
+                    () => IsInteractionTargetAvailable(interactionTarget));
+                return;
+            }
+
+            MoveToAndCallback(
+                interactionTarget.MoveTarget,
+                IsRunModeActive(),
+                interactionTarget.Invoke,
+                interactionTarget.StopDistance,
+                () => IsInteractionTargetAvailable(interactionTarget));
+        }
+
+        private bool IsInteractionTargetAvailable(InteractionTarget interactionTarget)
+        {
+            if (interactionTarget.IsPlayerInRange(transform.position, keyboardInteractionRadius))
+                return true;
+
+            Collider[] colliders = Physics.OverlapSphere(
+                transform.position,
+                keyboardInteractionRadius,
+                ~0,
+                QueryTriggerInteraction.Collide);
+
+            foreach (Collider candidateCollider in colliders)
+            {
+                if (candidateCollider == null || candidateCollider.transform.IsChildOf(transform))
+                    continue;
+
+                Vector3 hitPoint = candidateCollider.ClosestPoint(transform.position);
+                if (!TryResolveInteractionTarget(candidateCollider, hitPoint, out InteractionTarget candidate))
+                    continue;
+
+                if (candidate.Matches(interactionTarget))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private bool TryResolveInteractionMoveDestination(InteractionTarget interactionTarget, out Vector3 destination)
+        {
+            if (interactionTarget.TryGetClosestPoint(transform.position, out Vector3 closestPoint))
+            {
+                if (TryGetPathableDestination(closestPoint, out destination))
+                    return true;
+
+                closestPoint.y = transform.position.y;
+                if (TryGetPathableDestination(closestPoint, out destination))
+                    return true;
+            }
+
+            if (interactionTarget.MoveTarget != null)
+            {
+                Vector3 targetPosition = interactionTarget.MoveTarget.position;
+                if (TryGetPathableDestination(targetPosition, out destination))
+                    return true;
+
+                targetPosition.y = transform.position.y;
+                if (TryGetPathableDestination(targetPosition, out destination))
+                    return true;
+            }
+
+            destination = default;
+            return false;
+        }
+
+        private bool IsInteractionDoubleClick(UnityEngine.Object interactionTarget, Vector2 clickPosition)
+        {
+            if (interactionTarget == null || interactionTarget != lastClickInteractionTarget)
+                return false;
+
+            if (Time.unscaledTime - lastClickTime > doubleClickThreshold)
+                return false;
+
+            return (clickPosition - lastClickPosition).sqrMagnitude <=
+                   doubleClickMaxScreenDistance * doubleClickMaxScreenDistance;
+        }
+
+        private void RegisterClick(UnityEngine.Object interactionTarget, Vector2 clickPosition)
+        {
+            lastClickInteractionTarget = interactionTarget;
+            lastClickPosition = clickPosition;
+            lastClickTime = Time.unscaledTime;
+        }
+
+        private void ToggleBoxInteraction(BoxMover boxMover, GameObject boxObject)
+        {
+            if (boxMover == null || boxObject == null)
+                return;
+
+            TriggerEvent eventData = new TriggerEvent(
+                InfluenceType.Object,
+                gameObject,
+                boxObject,
+                true,
+                string.Empty);
+
+            if (boxMover.IsBeingHeld)
+            {
+                boxMover.StopHolding();
+                interactManager?.InteractWith(eventData, false);
+                return;
+            }
+
+            if (heldBoxMover != null && heldBoxMover != boxMover)
+                heldBoxMover.StopHolding();
+
+            interactManager?.InteractWith(eventData, true);
+            boxMover.StartHolding();
+        }
+
+        private static Transform ResolveInteractionTransform(InfluenceArea influenceArea)
+        {
+            return influenceArea.triggerObject != null
+                ? influenceArea.triggerObject.transform
+                : influenceArea.transform;
+        }
+
+        private static Transform ResolveInteractionTransform(StartDayDialogTriggerZone triggerZone)
+        {
+            return triggerZone.triggerObject != null
+                ? triggerZone.triggerObject.transform
+                : triggerZone.transform;
         }
 
         private static bool TryFindRelatedComponent<T>(Collider hitCollider, out T component) where T : Component
@@ -640,6 +1142,92 @@ namespace Game
 
             float targetDistance = (targetTransform.position - hitPoint).sqrMagnitude;
             return boundsDistance * 10f + targetDistance;
+        }
+
+        private readonly struct InteractionTarget
+        {
+            public readonly UnityEngine.Object Identity;
+            public readonly Transform MoveTarget;
+            public readonly Collider InteractionCollider;
+            public readonly float StopDistance;
+            private readonly Action invoke;
+
+            public InteractionTarget(UnityEngine.Object identity, Transform moveTarget, Collider interactionCollider, float stopDistance, Action invoke)
+            {
+                Identity = identity;
+                MoveTarget = moveTarget;
+                InteractionCollider = interactionCollider;
+                StopDistance = stopDistance;
+                this.invoke = invoke;
+            }
+
+            public bool IsValid => Identity != null && MoveTarget != null && invoke != null;
+
+            public void Invoke()
+            {
+                if (IsValid)
+                    invoke();
+            }
+
+            public float GetScore(Vector3 origin)
+            {
+                if (TryGetClosestPoint(origin, out Vector3 closestPoint))
+                    return (closestPoint - origin).sqrMagnitude;
+
+                if (MoveTarget == null)
+                    return float.PositiveInfinity;
+
+                Vector3 delta = MoveTarget.position - origin;
+                delta.y = 0f;
+                return delta.sqrMagnitude;
+            }
+
+            public bool IsPlayerInRange(Vector3 playerPosition, float interactionRadius)
+            {
+                float radius = Mathf.Max(StopDistance, interactionRadius);
+                return GetScore(playerPosition) <= radius * radius;
+            }
+
+            public bool Matches(InteractionTarget other)
+            {
+                if (Identity != null && Identity == other.Identity)
+                    return true;
+
+                if (MoveTarget != null && MoveTarget == other.MoveTarget)
+                    return true;
+
+                if (InteractionCollider != null && InteractionCollider == other.InteractionCollider)
+                    return true;
+
+                GameObject gameObject = GetIdentityGameObject(Identity);
+                GameObject otherGameObject = GetIdentityGameObject(other.Identity);
+                return gameObject != null && gameObject == otherGameObject;
+            }
+
+            public bool TryGetClosestPoint(Vector3 origin, out Vector3 closestPoint)
+            {
+                if (InteractionCollider == null ||
+                    !InteractionCollider.enabled ||
+                    !InteractionCollider.gameObject.activeInHierarchy)
+                {
+                    closestPoint = default;
+                    return false;
+                }
+
+                closestPoint = InteractionCollider.ClosestPoint(origin);
+                return true;
+            }
+
+            private static GameObject GetIdentityGameObject(UnityEngine.Object identity)
+            {
+                if (identity is Component component)
+                    return component.gameObject;
+
+                if (identity is GameObject gameObject)
+                    return gameObject;
+
+                return null;
+            }
         }
 
         private void UpdateFootstep()

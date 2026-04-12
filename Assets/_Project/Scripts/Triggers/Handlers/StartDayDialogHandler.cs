@@ -27,12 +27,26 @@ namespace Game
             DialogGraph dialogueGraph;
             DialogManager _dialogueManager = DialogManager.Instance;
 
-            GameObject npc = eventData.PlayerObj.transform.gameObject;
+            if (_dialogueManager == null || _dialogueManager.Active)
+                return;
+
+            GameObject npc = ResolveNpcObject(eventData);
+            if (npc == null)
+                return;
+
             dialogueGraph = GetDialogueGraph(npc);
             if (dialogueGraph != null)
             {
                 _dialogueManager.StartDialog(dialogueGraph);
             }
+        }
+
+        private static GameObject ResolveNpcObject(TriggerEvent eventData)
+        {
+            if (eventData.IsEnteracted)
+                return eventData.TriggerObj != null ? eventData.TriggerObj : eventData.PlayerObj;
+
+            return eventData.PlayerObj != null ? eventData.PlayerObj : eventData.TriggerObj;
         }
 
         private DialogGraph GetDialogueGraph(GameObject obj)

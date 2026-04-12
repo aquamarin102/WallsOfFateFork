@@ -20,6 +20,12 @@ namespace Game
         public bool HasBeenUsed => hasBeenUsed;
         private QuestManager questManager;
 
+        [Inject]
+        private new void Construct(QuestManager questManager)
+        {
+            this.questManager = questManager;
+        }
+
         private void Start()
         {
             LoadItemState();

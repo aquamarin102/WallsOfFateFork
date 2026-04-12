@@ -9,8 +9,6 @@ namespace Game
     [RequireComponent(typeof(BoxCollider))]
     internal class StartDayDialogTriggerZone : MonoBehaviour
     {
-        private int lastProcessedInteractPressId;
-
         public InfluenceType AreaType;
         public InfluenceInteractionType InteractionType;
         public GameObject triggerObject;
@@ -54,9 +52,8 @@ namespace Game
 
         private void InvokeEvent(Collider obj)
         {
-            bool interacted = InputManager.GetInstance().TryConsumeInteractPress(ref lastProcessedInteractPressId);
             GameObject targetObject = triggerObject != null ? triggerObject : gameObject;
-            TriggerEvent eventData = new TriggerEvent(AreaType, obj.gameObject, targetObject, interacted, Parameters);
+            TriggerEvent eventData = new TriggerEvent(AreaType, obj.gameObject, targetObject, false, Parameters);
             OnEventTriggered?.Invoke(eventData);
         }
 

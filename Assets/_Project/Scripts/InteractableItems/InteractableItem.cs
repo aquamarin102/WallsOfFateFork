@@ -36,6 +36,7 @@ namespace Game
         private Transform playerTransform;
         private bool _hasBeenUsed = false;
         public bool HasBeenUsed => _hasBeenUsed;
+        public float ApproachDistance => approachDistance;
 
         private PlayerManager playerManager;
 
@@ -77,23 +78,6 @@ namespace Game
                         o.enabled = false;
                 }
             }
-        }
-
-        void OnMouseUpAsButton()
-        {
-            if (_hasBeenUsed) return;
-            if (GetComponent<InteractableItemInfluenceArea>() != null) return;
-
-            var playerGO = GameObject.FindGameObjectWithTag("Player");
-            var mover = playerGO?.GetComponent<PlayerMoveController>();
-            if (mover == null) return;
-
-            mover.MoveToAndCallback(
-                this.transform,
-                true,
-                () => Interact(),
-                approachDistance
-            );
         }
 
         public void ResetForRespawn()
