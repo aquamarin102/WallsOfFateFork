@@ -34,7 +34,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: 0, z: 0, w: 0.7071068}
   m_LocalPosition: {x: -6.68, y: -0.15, z: -8491}
-  m_LocalScale: {x: 3300, y: 3300, z: 3300}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -94,6 +94,7 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!54 &327145242724060236
 Rigidbody:
@@ -157,14 +158,7 @@ MonoBehaviour:
   minHealingAmount: 5
   healingAmount: 8
   isDead: 0
-  floatingTextWorldPrefab: {fileID: 8503380163757038419, guid: 2fd5f98ba8460eb4a99e6a13faa9fc55, type: 3}
-  playerRenderer: {fileID: 4740986561959723536, guid: 3564ee49fbda014448cb368bc0e6a6a5, type: 3}
-  flashDuration: 0.1
   Portrait: 
-  initialBuffPulseDuration: 1
-  initialDebuffPulseDuration: 1
-  minPulseDuration: 0.2
-  pulseDecayFactor: 0.8
 --- !u!114 &-1778501640093764346
 MonoBehaviour:
   m_ObjectHideFlags: 0

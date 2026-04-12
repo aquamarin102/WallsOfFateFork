@@ -104,7 +104,7 @@ public static class AgilityHazardFactory
 
     public static GameObject CreateChickenHazard(Transform parent, string name, Vector3 position, int damage = 1)
     {
-        var actor = CreateVisualActor(parent, name, position, ResolveChickenPrefab(), damage, 0.18f, 0.72f, new Vector3(0f, 0.36f, 0f), solidBody: true);
+        var actor = CreateVisualActor(parent, name, position, ResolveChickenPrefab(), damage, 0.5f, 2.5f, new Vector3(0f, 0f, 0f), solidBody: false);
         var repel = actor.AddComponent<SoftRepelOnTouch>();
         repel.hideFlags = HideFlags.None;
         return actor;
@@ -246,7 +246,7 @@ public static class AgilityHazardFactory
             Object.Destroy(collider);
         }
 
-        AlignVisualToGround(actorRoot, visual.transform, capsule);
+        //AlignVisualToGround(actorRoot, visual.transform, capsule);
     }
 
     private static void AlignVisualToGround(Transform actorRoot, Transform visualRoot, CapsuleCollider capsule)

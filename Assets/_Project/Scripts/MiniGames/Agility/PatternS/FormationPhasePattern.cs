@@ -9,7 +9,8 @@ public abstract class FormationPhasePattern : PatternBehaviour
     public float entryPortion = 0.22f;
     public float exitPortion = 0.18f;
     public float movementLerp = 1f;
-    public float actorHeightOffset = 0.75f;
+    //public float actorHeightOffset = 0.75f;
+    public float actorHeightOffset = 0;
     public Color telegraphColor = new Color(1f, 0.78f, 0.22f, 0.75f);
 
     [Header("Motion Feel")]
@@ -369,6 +370,9 @@ public abstract class FormationPhasePattern : PatternBehaviour
             spawnPosition.y = GroundY;
 
             GameObject actor = AgilityHazardFactory.CreateChickenHazard(transform, $"ThreatActor_{entrance}", spawnPosition);
+            //actor.transform.SetParent(transform, worldPositionStays: true);
+            //actor.transform.position = spawnPosition;
+
             Actors.Add(new FormationActorSlot
             {
                 entrance = entrance,

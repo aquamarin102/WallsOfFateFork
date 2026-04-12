@@ -26449,9 +26449,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2564f31dc160a6f469868441f448be16, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.DoorForEnotherSceneHandler
-  influenceArias:
-  - {fileID: 370577511}
-  - {fileID: 218478205}
+  influenceAreas: []
 --- !u!1 &300978957
 GameObject:
   m_ObjectHideFlags: 0
@@ -26487,7 +26485,6 @@ MonoBehaviour:
   _monoInstallers:
   - {fileID: 300978961}
   - {fileID: 300978960}
-  - {fileID: 0}
   _installerPrefabs: []
   _autoRun: 1
   OnPreInstall:
@@ -54420,7 +54417,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cbcee3ffdb03da14fad85782670a1150, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.MainRoomController
-  dialogueManager: {fileID: 1508713023}
+  dialogueManager: {fileID: 0}
   interactiveItemHandler: {fileID: 1870349702}
   keyMasterName: keymaster_MainRoom
   messengerName: Messenger
@@ -60831,7 +60828,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1508713024}
-  - component: {fileID: 1508713023}
+  - component: {fileID: 1508713025}
   m_Layer: 0
   m_Name: DialogueManager
   m_TagString: Untagged
@@ -60839,30 +60836,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1508713023
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1508713022}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 13327bdc95ce235429c6e5902e3dc668, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::dialogueManager
-  DialogueUI: {fileID: 2077674617}
-  PlayerPanel: {fileID: 1137950729103118988, guid: 0b2027924cee8dd419a6c4d9d948b077, type: 3}
-  NPCPanel: {fileID: 7748268193640722440, guid: 0eab7fd4a3e780b4ba933439d050a6cf, type: 3}
-  NPCPortrait: {fileID: 1748381032}
-  SpawnPoint: {fileID: 101456412}
-  resourcesUI: {fileID: 861803240}
-  OptionsList: {fileID: 2112719732}
-  IsInDialogue: 0
-  characterRevealDelay: 0.045
-  nextSentenceDelay: 0.18
-  firstSentenceDelay: 0.1
-  optionTextScale: 0.8
 --- !u!4 &1508713024
 Transform:
   m_ObjectHideFlags: 0
@@ -60878,6 +60851,30 @@ Transform:
   m_Children: []
   m_Father: {fileID: 706285932}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1508713025
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1508713022}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c73f3a8d8628b334783595a09bc60570, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Game.DialogManager
+  DialogueUI: {fileID: 2077674617}
+  PlayerPanel: {fileID: 2947497137651062322, guid: 66308de92121cac4a8474b7e8cf122ee, type: 3}
+  NPCPanel: {fileID: 3634988932631031838, guid: 4d0f78096fbd1f64f94cd4358dfc69cd, type: 3}
+  NPCPortrait: {fileID: 1748381032}
+  SpawnPoint: {fileID: 101456412}
+  resourcesUI: {fileID: 861803240}
+  OptionsList: {fileID: 2112719732}
+  IsInDialogue: 0
+  characterRevealDelay: 0.045
+  nextSentenceDelay: 0.18
+  firstSentenceDelay: 0.1
+  optionTextScale: 0.8
 --- !u!1 &1524818282 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2112949344464362567, guid: de3a70a181d21d849842ac59e40438bf, type: 3}
@@ -63771,7 +63768,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetObjects:
-  - {fileID: 0}
   - {fileID: 2127873604}
 --- !u!1 &1784926914
 GameObject:
@@ -337661,9 +337657,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cdcd06815c47d30489f70df42db56a48, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  frustumSettings:
-    baseSettings: {fileID: 0}
-    qualitySettings: {fileID: 0}
 --- !u!114 &8909679293929560632
 MonoBehaviour:
   m_ObjectHideFlags: 0

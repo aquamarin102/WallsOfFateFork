@@ -10,15 +10,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 151194a2dc0c72942b8a498bb8d90f1a, type: 3}
       propertyPath: m_LocalScale.x
-      value: 200
+      value: 100
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 151194a2dc0c72942b8a498bb8d90f1a, type: 3}
       propertyPath: m_LocalScale.y
-      value: 200
+      value: 100
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 151194a2dc0c72942b8a498bb8d90f1a, type: 3}
       propertyPath: m_LocalScale.z
-      value: 200
+      value: 100
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 151194a2dc0c72942b8a498bb8d90f1a, type: 3}
       propertyPath: m_LocalPosition.x
@@ -112,3 +112,9 @@ MonoBehaviour:
   argumentColor: {r: 1, g: 1, b: 1, a: 1}
   exitColor: {r: 0.2, g: 0.8, b: 0.35, a: 1}
   forbiddenColor: {r: 0.8, g: 0.2, b: 0.2, a: 1}
+  timedBarrierBlockedColor: {r: 0.82, g: 0.22, b: 0.22, a: 1}
+  timedBarrierPassableColor: {r: 0.48, g: 0.12, b: 0.12, a: 1}
+  timedBarrierStartsPassable: 0
+  timedBarrierAutoLowerDistance: 1
+  timedBarrierLowerDistance: 0.04
+  timedBarrierTransitionDuration: 0.08
