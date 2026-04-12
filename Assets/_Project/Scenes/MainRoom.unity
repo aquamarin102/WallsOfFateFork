@@ -20040,9 +20040,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 42d06ddc0a418dc4d86100594543dcd2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.DoorInfluenceArea
-  AreaType: 0
+  AreaType: 2
   InteractionType: 0
-  triggerObject: {fileID: 0}
+  triggerObject: {fileID: 981875867}
   Parameters: 
   questId: -1
   questTaskId: -1
@@ -25872,7 +25872,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2564f31dc160a6f469868441f448be16, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.DoorForEnotherSceneHandler
-  influenceAreas: []
+  influenceAreas:
+  - {fileID: 370577511}
+  - {fileID: 218478205}
 --- !u!1 &300978957
 GameObject:
   m_ObjectHideFlags: 0
@@ -26842,9 +26844,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 42d06ddc0a418dc4d86100594543dcd2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.DoorInfluenceArea
-  AreaType: 0
+  AreaType: 2
   InteractionType: 0
-  triggerObject: {fileID: 0}
+  triggerObject: {fileID: 1154842035}
   Parameters: 
   questId: -1
   questTaskId: -1
