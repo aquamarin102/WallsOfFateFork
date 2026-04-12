@@ -183,7 +183,7 @@ namespace Game
 
                 var blacksmithDialogueJson = Resources.Load<TextAsset>("Dialogues/NPC/Blacksmith/First");
                 var blacksmithDialogue = JsonConvert.DeserializeObject<DialogGraph>(blacksmithDialogueJson.text);
-                dialogueManager.StartDialogue(blacksmithDialogue);
+                dialogueManager.StartDialog(blacksmithDialogue);
             }
 
             if (taskStatus.State == QuestState.Completed && taskStatus1.State == QuestState.InProgress)
@@ -193,7 +193,7 @@ namespace Game
 
                 var blacksmithDialogueJson = Resources.Load<TextAsset>("Dialogues/NPC/Blacksmith/Second");
                 var blacksmithDialogue = JsonConvert.DeserializeObject<DialogGraph>(blacksmithDialogueJson.text);
-                dialogueManager.StartDialogue(blacksmithDialogue);
+                dialogueManager.StartDialog(blacksmithDialogue);
             }
         }
 
@@ -283,7 +283,7 @@ namespace Game
                 yield break;
             }
 
-            while (dialogueManager.IsInDialogue)
+            while (dialogueManager.Active)
             {
                 yield return null;
             }
@@ -294,7 +294,7 @@ namespace Game
                 yield break;
             }
 
-            dialogueManager.StartDialogue(dialogueGraph);
+            dialogueManager.StartDialog(dialogueGraph);
         }
 
         private DialogGraph LoadDialogueGraph(string dialoguePath)

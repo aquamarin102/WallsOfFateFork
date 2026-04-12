@@ -55,7 +55,7 @@ namespace Game
             }
 
             DialogManager dialogManager = DialogManager.Instance;
-            if (dialogManager == null || dialogManager.IsInDialogue)
+            if (dialogManager == null || dialogManager.Active)
             {
                 return;
             }
@@ -67,7 +67,7 @@ namespace Game
                 return;
             }
 
-            dialogManager.StartDialogue(dialogueGraph);
+            dialogManager.StartDialog(dialogueGraph);
             await Task.CompletedTask;
         }
 

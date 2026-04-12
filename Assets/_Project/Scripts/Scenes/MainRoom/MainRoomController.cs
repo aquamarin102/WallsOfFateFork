@@ -179,7 +179,7 @@ namespace Game
                 yield break;
             }
 
-            while (dialogueManager.IsInDialogue)
+            while (dialogueManager.Active)
             {
                 yield return null;
             }
@@ -190,7 +190,7 @@ namespace Game
                 yield break;
             }
 
-            dialogueManager.StartDialogue(dialogueGraph);
+            dialogueManager.StartDialog(dialogueGraph);
         }
 
         private DialogGraph LoadDialogueGraph(string dialoguePath)

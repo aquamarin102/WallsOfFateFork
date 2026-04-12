@@ -11,61 +11,37 @@ namespace Game
 {
     public class DialogManager : MonoBehaviour
     {
-        #region UI
-        [SerializeField] GameObject DialogueUI;
-        [SerializeField] GameObject PlayerPanel;
-        [SerializeField] GameObject NPCPanel;
-        [SerializeField] Image NPCPortrait;
-        [SerializeField] RectTransform SpawnPoint;
-        [SerializeField] GameObject resourcesUI;
-        [SerializeField] GameObject OptionsList;
-        #endregion
-
         #region MainInfo
-        private DialogGraph currentDialogue;
+        private DialogGraph currentDialog;
         private Sentence currentSentence;
         private List<Sentence> currentOptions = new();
         #endregion
 
+        private GameObject dialogContainer;
+        private RectTransform spawnPoint;
+        private LimitY scrollController;
+        private GameObject optionsList;
+        private Image npcPortrait;
+
         #region Utility
-        public bool IsInDialogue = false;
         [SerializeField] private float characterRevealDelay = 0.045f;
         [SerializeField] private float nextSentenceDelay = 0.18f;
         [SerializeField] private float firstSentenceDelay = 0.1f;
         [SerializeField] private float optionTextScale = 0.8f;
 
-        private List<GameObject> spawnedPanels = new();
+        private readonly List<GameObject> spawnedPanels = new();
 
-        private static DialogManager _instance;
         private PlayerManager playerManager;
 
         private GameObject optionPrefab;
-        private LimitY scrollController;
+        private GameObject playerPanelPrefab;
+        private GameObject npcPanelPrefab;
+
         private Coroutine queuedSentenceRoutine;
         private Coroutine activeTypingRoutine;
         private TMP_Text activeTextComponent;
 
-        public static DialogManager Instance
-        {
-            get
-            {
-                if (_instance == null)
-                {
-                    _instance = FindObjectOfType<DialogManager>();
-
-                    if (_instance == null)
-                    {
-                        Debug.LogError("No DialogueManager found in scene!");
-                        return null;
-                    }
-                }
-                return _instance;
-            }
-            private set
-            {
-                _instance = value;
-            }
-        }
+        public static DialogManager Instance { get; private set; }
 
         bool startMinigame;
         MiniGameData miniGameData;
@@ -73,6 +49,7 @@ namespace Game
 
         #region Events
         public event Action<DialogGraph> OnFinished;
+        public event Action<DialogGraph> OnStarted;
         public event Action<MiniGameData, DialogGraph> OnMiniGameStartRequested;
         #endregion
 
@@ -82,34 +59,72 @@ namespace Game
             this.playerManager = playerManager;
         }
 
+        public bool Active => currentDialog != null;
+
         private void Awake()
         {
-            if (_instance == null)
+            if (Instance == null)
             {
                 Instance = this;
-                _instance = this;
             }
-            else if (_instance != this)
+            else if (Instance != this)
             {
                 Destroy(gameObject);
                 return;
             }
 
-            if (DialogueUI == null)
-            {
-                Debug.LogError("DialogueUI is not assigned in DialogueManager!", this);
-            }
+            dialogContainer = transform.Find("DialogContainer").gameObject;
 
-            if (SpawnPoint != null)
-            {
-                scrollController = SpawnPoint.GetComponent<LimitY>();
-            }
+            var scrollContent = dialogContainer.transform.Find("Scroll/View/Content");
 
-            playerManager ??= PlayerManager.Instance;
-            _ = EntryPoint.Instance;
+            spawnPoint = scrollContent.transform as RectTransform;
+            scrollController = scrollContent.GetComponent<LimitY>();
+            optionsList = dialogContainer.transform.Find("OptionsPanel/OptionsContainer/View/OptionsList").gameObject;
+            npcPortrait = dialogContainer.transform.Find("NPCPortrait").GetComponent<Image>();
         }
 
-        #region PannelsUI
+        private void Start()
+        {
+            optionPrefab = Resources.Load<GameObject>("UI/Dialog/Option");
+            npcPanelPrefab = Resources.Load<GameObject>("UI/Dialog/NPCPanelMedium");
+            playerPanelPrefab = Resources.Load<GameObject>("UI/Dialog/PlayerPanelMedium");
+        }
+
+        private void OnDestroy()
+        {
+            StopActiveTyping();
+
+            if (queuedSentenceRoutine != null)
+            {
+                StopCoroutine(queuedSentenceRoutine);
+            }
+
+            OnFinished = null;
+            OnStarted = null;
+            OnMiniGameStartRequested = null;
+            Instance = null;
+        }
+
+        private void Update()
+        {
+            if (currentOptions.Count > 0)
+            {
+                for (int i = 0; i < currentOptions.Count; i++)
+                {
+                    if (Input.GetKeyDown(Enum.Parse<KeyCode>((49 + i).ToString())))
+                    {
+                        SelectOption(i);
+                    }
+                }
+
+                return;
+            }
+
+            if (Active && currentOptions.Count == 0 && IsFastForwardInputPressed())
+            {
+                FastForwardDialogue();
+            }
+        }
 
         private void ClearSpawnedPanels()
         {
@@ -136,12 +151,14 @@ namespace Game
 
         private void ClearOptionsList()
         {
-            if (OptionsList == null)
+            currentOptions.Clear();
+
+            if (optionsList == null)
             {
                 return;
             }
 
-            foreach (Transform child in OptionsList.transform)
+            foreach (Transform child in optionsList.transform)
             {
                 Destroy(child.gameObject);
             }
@@ -149,42 +166,16 @@ namespace Game
 
         private void RefreshDialogueLayout(bool scrollToLatest = false, bool immediate = false)
         {
-            if (SpawnPoint == null)
+            if (scrollToLatest)
             {
-                return;
+                scrollController.ScrollToLatest(immediate);
+            }
+            else
+            {
+                scrollController.RefreshLayoutAndClamp();
             }
 
-            scrollController ??= SpawnPoint.GetComponent<LimitY>();
-
-            if (scrollController != null)
-            {
-                if (scrollToLatest)
-                {
-                    scrollController.ScrollToLatest(immediate);
-                }
-                else
-                {
-                    scrollController.RefreshLayoutAndClamp();
-                }
-
-                return;
-            }
-
-            Canvas.ForceUpdateCanvases();
-            LayoutRebuilder.ForceRebuildLayoutImmediate(SpawnPoint);
-        }
-
-        private void ResetDialogueScroll()
-        {
-            scrollController ??= SpawnPoint != null ? SpawnPoint.GetComponent<LimitY>() : null;
-
-            if (scrollController != null)
-            {
-                scrollController.ResetScrollPosition();
-                return;
-            }
-
-            RefreshDialogueLayout();
+            return;
         }
 
         private void QueueCurrentSentenceDisplay(float delay)
@@ -206,7 +197,7 @@ namespace Game
 
             queuedSentenceRoutine = null;
 
-            if (!IsInDialogue || currentSentence == null)
+            if (currentSentence == null)
             {
                 yield break;
             }
@@ -216,26 +207,10 @@ namespace Game
 
         private void FocusSentencePanel(GameObject sentencePanel, bool immediate = false)
         {
-            if (sentencePanel == null || SpawnPoint == null)
-            {
-                RefreshDialogueLayout(scrollToLatest: true, immediate: immediate);
-                return;
-            }
-
-            scrollController ??= SpawnPoint.GetComponent<LimitY>();
-
-            if (scrollController != null)
-            {
-                RectTransform sentenceRect = sentencePanel.GetComponent<RectTransform>();
-                scrollController.FocusOnChild(sentenceRect, immediate);
-                return;
-            }
-
-            RefreshDialogueLayout(scrollToLatest: true, immediate: immediate);
+            RectTransform sentenceRect = sentencePanel.GetComponent<RectTransform>();
+            scrollController.FocusOnChild(sentenceRect, immediate);
+            return;
         }
-        #endregion
-
-        #region MiniGame
 
         void ConfigMiniGame()
         {
@@ -254,70 +229,31 @@ namespace Game
 
             return new MiniGameData(minigameType, sceneName, minigameParams);
         }
-        #endregion
 
-        #region MainLogic
-        private void Start()
-        {
-            playerManager ??= PlayerManager.Instance;
-            optionPrefab = Resources.Load<GameObject>("UI/Dialogues/Option");
-
-            if (DialogueUI != null)
-            {
-                DialogueUI.SetActive(false);
-            }
-        }
-
-        private void Update()
-        {
-            if (currentOptions.Count > 0)
-            {
-                for (int i = 0; i < currentOptions.Count; i++)
-                {
-                    if (Input.GetKeyDown(Enum.Parse<KeyCode>((49 + i).ToString())))
-                    {
-                        SelectOption(i);
-                    }
-                }
-            }
-
-            if (IsInDialogue && currentOptions.Count == 0 && IsFastForwardInputPressed())
-            {
-                FastForwardDialogue();
-            }
-        }
-
-        public void StartDialogue(DialogGraph currentDialogue)
+        public void StartDialog(DialogGraph dialog)
         {          
-            if (IsInDialogue || currentDialogue == null)
+            if (Active || dialog == null)
             {
                 return;
             }
 
-            this.currentDialogue = currentDialogue;
-            IsInDialogue = true;
+            currentDialog = dialog;
+
             startMinigame = false;
             miniGameData = null;
-            currentOptions.Clear();
 
             StopActiveTyping();
             ClearSpawnedPanels();
             ClearOptionsList();
 
-            if (resourcesUI != null) {
-                resourcesUI.SetActive(false);
-            }
+            Sprite npcPortraitImage = Resources.Load<Sprite>("Characters/Portraits/" + this.currentDialog.Portrait);
+            npcPortrait.sprite = npcPortraitImage;
 
-            if (DialogueUI != null)
-            {
-                Sprite mySprite = Resources.Load<Sprite>("Characters/Portraits/" + this.currentDialogue.Portrait);
-                NPCPortrait.sprite = mySprite;
+            dialogContainer.SetActive(true);
+            OnStarted?.Invoke(currentDialog);
 
-                DialogueUI.SetActive(true);
-            }
-
-            ResetDialogueScroll();
-            currentSentence = currentDialogue.Sentences[0];
+            scrollController.ResetScrollPosition();
+            currentSentence = dialog.Sentences[0];
             QueueCurrentSentenceDisplay(firstSentenceDelay);
         }
 
@@ -332,16 +268,16 @@ namespace Game
 
             if (currentSentence.IsPlayer)
             {
-                panelPrefab = PlayerPanel;
+                panelPrefab = playerPanelPrefab;
             }
             else
             {
-                panelPrefab = NPCPanel;
+                panelPrefab = npcPanelPrefab;
             }
 
-            if (panelPrefab != null && SpawnPoint != null)
+            if (panelPrefab != null && spawnPoint != null)
             {
-                sentencePanel = Instantiate(panelPrefab, SpawnPoint, false);
+                sentencePanel = Instantiate(panelPrefab, spawnPoint, false);
                 sentencePanel.transform.SetAsLastSibling();
                 spawnedPanels.Add(sentencePanel);
 
@@ -399,7 +335,6 @@ namespace Game
             var optionSentence = currentOptions[optionIndex];
 
             ClearOptionsList();
-            currentOptions.Clear();
 
             currentSentence = optionSentence;
             QueueCurrentSentenceDisplay(nextSentenceDelay * 0.5f);
@@ -431,12 +366,6 @@ namespace Game
             if (currentSentence == null)
                 return;
 
-            playerManager ??= PlayerManager.Instance;
-            if (playerManager?.PlayerData == null)
-            {
-                return;
-            }
-
             playerManager.PlayerData.AddResource(ResourceType.Gold, currentSentence.Gold);
             playerManager.PlayerData.AddResource(ResourceType.Food, currentSentence.Food);
             playerManager.PlayerData.AddResource(ResourceType.PeopleSatisfaction, currentSentence.PeopleSatisfaction);
@@ -450,7 +379,7 @@ namespace Game
 
         private void AdvanceToNextSentence(bool immediate = false)
         {
-            var nextSentence = currentDialogue.Sentences.Find(s => s.Id == currentSentence.NextSentenceId);
+            var nextSentence = currentDialog.Sentences.Find(s => s.Id == currentSentence.NextSentenceId);
             if (nextSentence == null)
             {
                 CloseDialogue();
@@ -475,23 +404,14 @@ namespace Game
 
         private void LoadAllOptions()
         {
-            currentOptions.Clear();
-
-            if (currentDialogue == null) return;
-
-            if (OptionsList == null || optionPrefab == null)
-            {
-                return;
-            }
-
             ClearOptionsList();
-            var optionCounter = 1;
 
+            var optionCounter = 1;
             while (currentSentence.IsOption)
             {
                 currentOptions.Add(currentSentence);
                 var optionObject = Instantiate(optionPrefab);
-                optionObject.transform.SetParent(OptionsList.transform, false);
+                optionObject.transform.SetParent(optionsList.transform, false);
 
                 Button optionButton = optionObject.GetComponent<Button>();
                 var capturedIndex = optionCounter - 1;
@@ -506,12 +426,12 @@ namespace Game
 
                 optionCounter++;
 
-                if (currentDialogue.Sentences.IndexOf(currentSentence) + 1 >= currentDialogue.Sentences.Count)
+                if (currentDialog.Sentences.IndexOf(currentSentence) + 1 >= currentDialog.Sentences.Count)
                 {
                     break;
                 }
 
-                currentSentence = currentDialogue.Sentences[currentDialogue.Sentences.IndexOf(currentSentence) + 1];
+                currentSentence = currentDialog.Sentences[currentDialog.Sentences.IndexOf(currentSentence) + 1];
             }
 
             RefreshDialogueLayout(scrollToLatest: true);
@@ -533,9 +453,7 @@ namespace Game
 
         private void CloseDialogue()
         {
-            StopActiveTyping();
             ClearOptionsList();
-            currentOptions.Clear();
 
             if (queuedSentenceRoutine != null)
             {
@@ -550,27 +468,17 @@ namespace Game
         {
             yield return new WaitForSecondsRealtime(delay);
 
-            var finishedDialogue = currentDialogue;
+            var finishedDialogue = currentDialog;
             bool shouldStartMinigame = startMinigame && miniGameData != null;
             MiniGameData launchData = miniGameData;
-            EntryPoint entryPoint = shouldStartMinigame ? EntryPoint.Instance : null;
 
-            if (resourcesUI != null)
-            {
-                resourcesUI.gameObject.SetActive(true);
-            }
-
-            if (DialogueUI != null)
-            {
-                DialogueUI.SetActive(false);
-            }
+            dialogContainer.SetActive(false);
 
             StopActiveTyping();
             ClearSpawnedPanels();
             queuedSentenceRoutine = null;
 
-            IsInDialogue = false;
-            currentDialogue = null;
+            currentDialog = null;
             currentSentence = null;
             startMinigame = false;
             miniGameData = null;
@@ -584,7 +492,7 @@ namespace Game
                 }
                 else
                 {
-                    entryPoint?.LaunchMinigame(launchData, finishedDialogue);
+                    //entryPoint?.LaunchMinigame(launchData, finishedDialogue);
                 }
             }
         }
@@ -622,20 +530,5 @@ namespace Game
 
             ProcessNextSentence();
         }
-
-        private void OnDestroy()
-        {
-            StopActiveTyping();
-
-            if (queuedSentenceRoutine != null)
-            {
-                StopCoroutine(queuedSentenceRoutine);
-            }
-
-            OnFinished = null;
-            OnMiniGameStartRequested = null;
-            ClearSpawnedPanels();
-        }
-        #endregion
     }
 }

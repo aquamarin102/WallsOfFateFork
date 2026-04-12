@@ -13,7 +13,6 @@ public class AudienceSessionSpawner : MonoBehaviour
     [SerializeField] private Transform _spawnPoint;
     [SerializeField] private Transform _dialogSpot;
     [SerializeField] private Transform _exitSpot;
-    [SerializeField] private DialogManager _dialogueManager;
 
     private readonly Queue<NPCDefinition> _sessionQueue = new();
     private NPCController currentNpc;
@@ -59,7 +58,7 @@ public class AudienceSessionSpawner : MonoBehaviour
         _sessionQueue.Enqueue(Resources.Load<NPCDefinition>("Characters/StartDayPrefabs/person2"));
         _sessionQueue.Enqueue(Resources.Load<NPCDefinition>("Characters/StartDayPrefabs/keymaster"));
 
-        _dialogueManager.OnFinished += OnDialogueFinished;
+        DialogManager.Instance.OnFinished += OnDialogFinished;
         SpawnNext();
     }
 
@@ -83,13 +82,13 @@ public class AudienceSessionSpawner : MonoBehaviour
     }
 
     /* ─────────── колбэки ─────────── */
-    private void OnDialogueFinished(DialogGraph dialogue)
+    private void OnDialogFinished(DialogGraph dialog)
     {
-        if (dialogue.Name == "Keymaster")
+        if (dialog.Name == "Keymaster")
         {
             var advisorDialogueJson = Resources.Load<TextAsset>("Dialogues/StartDay/Advisor/cellar_quest_start");
             var advisorDialogue = JsonConvert.DeserializeObject<DialogGraph>(advisorDialogueJson.text);
-            _dialogueManager.StartDialogue(advisorDialogue);
+            DialogManager.Instance.StartDialog(advisorDialogue);
 
 
             Quest keyMasterQuest = questManager.GetQuest(3);
@@ -100,7 +99,7 @@ public class AudienceSessionSpawner : MonoBehaviour
 
         }
 
-        if (dialogue.Name == "Cellar_Quest_Start")
+        if (dialog.Name == "Cellar_Quest_Start")
         {
             loadingManager.LoadSceneAsync("MainRoom");
         }

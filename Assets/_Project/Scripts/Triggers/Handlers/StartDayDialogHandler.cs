@@ -31,7 +31,7 @@ namespace Game
             dialogueGraph = GetDialogueGraph(npc);
             if (dialogueGraph != null)
             {
-                _dialogueManager.StartDialogue(dialogueGraph);
+                _dialogueManager.StartDialog(dialogueGraph);
             }
         }
 

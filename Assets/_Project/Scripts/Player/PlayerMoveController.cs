@@ -35,7 +35,6 @@ namespace Game
         [Header("Pitch Settings")]
         [SerializeField] private float walkingPitch = 1f;
         [SerializeField] private float runningPitch = 1.5f;
-        [SerializeField] private DialogManager _dialogueManager;
 
         private Vector3 grabDirection;
         private bool isBoxGrabMode = false;
@@ -80,7 +79,6 @@ namespace Game
 
         private void Awake()
         {
-            _dialogueManager = DialogManager.Instance;
             interactManager = GetComponent<PlayerAnimationController>();
             //if (!interactManager) Debug.LogError("PlayerMoveController: InteractManager missing!");
         }
@@ -155,7 +153,7 @@ namespace Game
         #region Mouse Input
         private void HandleMouseInput()
         {
-            if (_dialogueManager.IsInDialogue == true) return;
+            if (DialogManager.Instance.Active == true) return;
             if (IsPointerOverUi())
             {
                 if (Input.GetMouseButtonUp(0))
@@ -315,7 +313,7 @@ namespace Game
         {
             Vector3 positionBeforeMove = transform.position;
 
-            if (_dialogueManager.IsInDialogue == true)
+            if (DialogManager.Instance.Active == true)
             {
                 moveDirection = new Vector3(0, moveDirection.y, 0);
                 characterController.Move(moveDirection * Time.deltaTime);
@@ -646,7 +644,7 @@ namespace Game
 
         private void UpdateFootstep()
         {
-            if (_dialogueManager.IsInDialogue == true || footstepSource == null)
+            if (DialogManager.Instance.Active == true || footstepSource == null)
             {
                 footstepTimer = 0f;
                 return;
