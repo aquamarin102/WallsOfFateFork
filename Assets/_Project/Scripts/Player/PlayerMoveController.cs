@@ -33,6 +33,7 @@ namespace Game
         [SerializeField] private float holdRetargetDistance = 0.35f;
         [SerializeField] private float doubleClickThreshold = 0.3f;
         [SerializeField] private float doubleClickMaxScreenDistance = 35f;
+        [SerializeField] private float interactionClickProbeRadius = 0.65f;
 
         [Header("Interaction Settings")]
         [SerializeField] private float keyboardInteractionRadius = 1.6f;
@@ -146,6 +147,7 @@ namespace Game
 
         public float CurrentPlanarSpeed => currentPlanarSpeed;
         public bool IsRunning => isRunning;
+        public float InteractionRadius => keyboardInteractionRadius;
 
         private void Update()
         {
@@ -224,6 +226,14 @@ namespace Game
             Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
 
             bool hasInteractionTarget = TryResolveInteractionTarget(hits, out InteractionTarget interactionTarget);
+            if (!isBoxGrabMode &&
+                (!hasInteractionTarget || interactionTarget.Kind != InteractionTargetKind.Item) &&
+                TryResolveItemTargetNearPointer(ray, hits, out InteractionTarget pointerItemTarget))
+            {
+                interactionTarget = pointerItemTarget;
+                hasInteractionTarget = true;
+            }
+
             bool isInteractionDoubleClick = hasInteractionTarget &&
                 IsInteractionDoubleClick(interactionTarget.Identity, clickPosition);
 
@@ -547,7 +557,7 @@ namespace Game
 
         public void MoveToAndCallback(Transform target, bool run, Action onArrive, float stopDistance = 1f, Func<bool> canInvokeArriveAction = null)
         {
-            dynamicTarget = target; dynamicStopDist = stopDistance; isPathRunRequested = run; isHoldMove = false;
+            dynamicTarget = target; clickTarget = target.position; dynamicStopDist = stopDistance; isPathRunRequested = run; isHoldMove = false;
             agent.stoppingDistance = stopDistance; agent.SetDestination(target.position); agent.isStopped = false;
             _onArriveAction = onArrive;
             _canInvokeArriveAction = canInvokeArriveAction;
@@ -780,6 +790,11 @@ namespace Game
 
         private bool TryFindBestInteractionTargetAroundPlayer(out InteractionTarget interactionTarget)
         {
+            return TryFindBestInteractionTargetAroundPlayer(null, out interactionTarget);
+        }
+
+        private bool TryFindBestInteractionTargetAroundPlayer(Func<InteractionTarget, bool> canUseTarget, out InteractionTarget interactionTarget)
+        {
             interactionTarget = default;
             float bestScore = float.PositiveInfinity;
 
@@ -796,6 +811,9 @@ namespace Game
 
                 Vector3 hitPoint = candidateCollider.ClosestPoint(transform.position);
                 if (!TryResolveInteractionTarget(candidateCollider, hitPoint, out InteractionTarget candidate))
+                    continue;
+
+                if (canUseTarget != null && !canUseTarget(candidate))
                     continue;
 
                 float score = candidate.GetScore(transform.position);
@@ -834,6 +852,90 @@ namespace Game
             return interactionTarget.IsValid;
         }
 
+        private bool TryResolveItemTargetNearPointer(Ray ray, RaycastHit[] hits, out InteractionTarget interactionTarget)
+        {
+            interactionTarget = default;
+            float bestScore = float.PositiveInfinity;
+            float probeRadius = Mathf.Max(0.01f, interactionClickProbeRadius);
+
+            RaycastHit[] probeHits = Physics.SphereCastAll(
+                ray,
+                probeRadius,
+                mouseRaycastDistance,
+                ~0,
+                QueryTriggerInteraction.Collide);
+            Array.Sort(probeHits, (a, b) => a.distance.CompareTo(b.distance));
+
+            foreach (RaycastHit hit in probeHits)
+            {
+                Collider hitCollider = hit.collider;
+                if (hitCollider == null || hitCollider.transform.IsChildOf(transform))
+                    continue;
+
+                TryUsePointerItemTarget(
+                    hitCollider,
+                    hit.point,
+                    hit.point,
+                    hit.distance * 0.01f,
+                    ref bestScore,
+                    ref interactionTarget);
+            }
+
+            foreach (RaycastHit hit in hits)
+            {
+                Collider hitCollider = hit.collider;
+                if (hitCollider == null || hitCollider.transform.IsChildOf(transform))
+                    continue;
+
+                Collider[] colliders = Physics.OverlapSphere(
+                    hit.point,
+                    probeRadius,
+                    ~0,
+                    QueryTriggerInteraction.Collide);
+
+                foreach (Collider candidateCollider in colliders)
+                {
+                    if (candidateCollider == null || candidateCollider.transform.IsChildOf(transform))
+                        continue;
+
+                    Vector3 candidatePoint = candidateCollider.ClosestPoint(hit.point);
+                    float distanceFromPointerHit = (candidatePoint - hit.point).sqrMagnitude;
+                    TryUsePointerItemTarget(
+                        candidateCollider,
+                        candidatePoint,
+                        hit.point,
+                        hit.distance * 0.01f + distanceFromPointerHit * 10f,
+                        ref bestScore,
+                        ref interactionTarget);
+                }
+            }
+
+            return interactionTarget.IsValid;
+        }
+
+        private bool TryUsePointerItemTarget(
+            Collider candidateCollider,
+            Vector3 hitPoint,
+            Vector3 scoreOrigin,
+            float distanceBias,
+            ref float bestScore,
+            ref InteractionTarget interactionTarget)
+        {
+            if (!TryResolveInteractionTarget(candidateCollider, hitPoint, out InteractionTarget candidate))
+                return false;
+
+            if (candidate.Kind != InteractionTargetKind.Item)
+                return false;
+
+            float score = distanceBias + candidate.GetScore(scoreOrigin);
+            if (score >= bestScore)
+                return false;
+
+            bestScore = score;
+            interactionTarget = candidate;
+            return true;
+        }
+
         private bool TryResolveInteractionTarget(Collider hitCollider, Vector3 hitPoint, out InteractionTarget interactionTarget)
         {
             if (TryFindClosestInteractionZone(hitCollider, hitPoint, out InteractableItemInfluenceArea itemArea))
@@ -842,7 +944,10 @@ namespace Game
                     itemArea,
                     ResolveInteractionTransform(itemArea),
                     itemArea.GetComponent<Collider>(),
-                    () => _ = itemArea.InvokeDirectInteractionAsync(gameObject));
+                    () => _ = itemArea.InvokeDirectInteractionAsync(gameObject),
+                    InteractionTargetKind.Item,
+                    true,
+                    true);
                 return true;
             }
 
@@ -852,7 +957,8 @@ namespace Game
                     doorArea,
                     ResolveInteractionTransform(doorArea),
                     doorArea.GetComponent<Collider>(),
-                    () => _ = doorArea.InvokeDirectInteractionAsync(gameObject));
+                    () => _ = doorArea.InvokeDirectInteractionAsync(gameObject),
+                    InteractionTargetKind.Generic);
                 return true;
             }
 
@@ -862,7 +968,8 @@ namespace Game
                     influenceArea,
                     ResolveInteractionTransform(influenceArea),
                     influenceArea.GetComponent<Collider>(),
-                    () => _ = influenceArea.InvokeDirectInteractionAsync(gameObject));
+                    () => _ = influenceArea.InvokeDirectInteractionAsync(gameObject),
+                    InteractionTargetKind.Generic);
                 return true;
             }
 
@@ -872,7 +979,8 @@ namespace Game
                     startDayDialogueZone,
                     ResolveInteractionTransform(startDayDialogueZone),
                     startDayDialogueZone.GetComponent<Collider>(),
-                    () => startDayDialogueZone.InvokeDirectInteraction(gameObject));
+                    () => startDayDialogueZone.InvokeDirectInteraction(gameObject),
+                    InteractionTargetKind.Generic);
                 return true;
             }
 
@@ -883,7 +991,10 @@ namespace Game
                     interactableItem.transform,
                     interactableItem.GetComponent<Collider>(),
                     interactableItem.ApproachDistance,
-                    interactableItem.Interact);
+                    interactableItem.Interact,
+                    InteractionTargetKind.Item,
+                    true,
+                    true);
                 return true;
             }
 
@@ -894,7 +1005,9 @@ namespace Game
                     boxMover,
                     boxMover.transform,
                     boxMover.GetComponent<Collider>(),
-                    () => ToggleBoxInteraction(boxMover, boxObject));
+                    () => ToggleBoxInteraction(boxMover, boxObject),
+                    InteractionTargetKind.Box,
+                    false);
                 return true;
             }
 
@@ -910,7 +1023,8 @@ namespace Game
                         gameObject,
                         chestObject,
                         true,
-                        string.Empty)));
+                        string.Empty)),
+                    InteractionTargetKind.Generic);
                 return true;
             }
 
@@ -918,14 +1032,24 @@ namespace Game
             return false;
         }
 
-        private InteractionTarget CreateInteractionTarget(UnityEngine.Object identity, Transform target, Collider interactionCollider, Action invoke)
+        private InteractionTarget CreateInteractionTarget(
+            UnityEngine.Object identity,
+            Transform target,
+            Collider interactionCollider,
+            Action invoke,
+            InteractionTargetKind kind,
+            bool canInvokeFromInteractionRadius = true,
+            bool usePlanarColliderDistance = false)
         {
             return new InteractionTarget(
                 identity,
                 target != null ? target : transform,
                 interactionCollider,
                 interactionStopDistance,
-                invoke);
+                invoke,
+                kind,
+                canInvokeFromInteractionRadius,
+                usePlanarColliderDistance);
         }
 
         private void MoveToInteractionTarget(InteractionTarget interactionTarget)
@@ -933,34 +1057,90 @@ namespace Game
             if (!interactionTarget.IsValid)
                 return;
 
-            if (IsInteractionTargetAvailable(interactionTarget))
+            Action onArrive = CreateInteractionArriveAction(interactionTarget);
+
+            if (interactionTarget.CanInvokeFromInteractionRadius && IsInteractionTargetAvailable(interactionTarget))
             {
                 StopMovement();
-                interactionTarget.Invoke();
+                onArrive.Invoke();
                 return;
             }
+
+            Func<bool> canInvokeOnApproach = interactionTarget.CanInvokeFromInteractionRadius
+                ? () => CanInvokeInteractionOnApproach(interactionTarget)
+                : null;
 
             if (TryResolveInteractionMoveDestination(interactionTarget, out Vector3 destination))
             {
                 MoveToAndCallback(
                     destination,
                     IsRunModeActive(),
-                    interactionTarget.Invoke,
+                    onArrive,
                     interactionTarget.StopDistance,
-                    () => IsInteractionTargetAvailable(interactionTarget));
+                    canInvokeOnApproach);
                 return;
             }
 
             MoveToAndCallback(
                 interactionTarget.MoveTarget,
                 IsRunModeActive(),
-                interactionTarget.Invoke,
+                onArrive,
                 interactionTarget.StopDistance,
-                () => IsInteractionTargetAvailable(interactionTarget));
+                canInvokeOnApproach);
+        }
+
+        private Action CreateInteractionArriveAction(InteractionTarget interactionTarget)
+        {
+            if (interactionTarget.Kind != InteractionTargetKind.Item)
+                return interactionTarget.Invoke;
+
+            return () =>
+            {
+                if (TryFindBestInteractionTargetAroundPlayer(
+                        candidate => candidate.Matches(interactionTarget),
+                        out InteractionTarget matchingTarget))
+                {
+                    matchingTarget.Invoke();
+                    return;
+                }
+
+                if (TryFindBestInteractionTargetAroundPlayer(
+                        candidate => candidate.Kind == InteractionTargetKind.Item,
+                        out InteractionTarget nearbyItemTarget))
+                {
+                    nearbyItemTarget.Invoke();
+                    return;
+                }
+
+                interactionTarget.Invoke();
+            };
+        }
+
+        private bool CanInvokeInteractionOnApproach(InteractionTarget interactionTarget)
+        {
+            if (IsInteractionTargetAvailable(interactionTarget))
+                return true;
+
+            return interactionTarget.Kind == InteractionTargetKind.Item &&
+                   HasReachedClickTarget() &&
+                   TryFindBestInteractionTargetAroundPlayer(
+                       candidate => candidate.Kind == InteractionTargetKind.Item,
+                       out _);
+        }
+
+        private bool HasReachedClickTarget()
+        {
+            Vector3 delta = clickTarget - transform.position;
+            delta.y = 0f;
+            float tolerance = Mathf.Max(agent.stoppingDistance + 0.35f, stopThreshold + 0.35f);
+            return delta.sqrMagnitude <= tolerance * tolerance;
         }
 
         private bool IsInteractionTargetAvailable(InteractionTarget interactionTarget)
         {
+            if (!interactionTarget.CanInvokeFromInteractionRadius)
+                return false;
+
             if (interactionTarget.IsPlayerInRange(transform.position, keyboardInteractionRadius))
                 return true;
 
@@ -1144,20 +1324,41 @@ namespace Game
             return boundsDistance * 10f + targetDistance;
         }
 
+        private enum InteractionTargetKind
+        {
+            Generic,
+            Item,
+            Box
+        }
+
         private readonly struct InteractionTarget
         {
             public readonly UnityEngine.Object Identity;
             public readonly Transform MoveTarget;
             public readonly Collider InteractionCollider;
             public readonly float StopDistance;
+            public readonly InteractionTargetKind Kind;
+            public readonly bool CanInvokeFromInteractionRadius;
+            private readonly bool usePlanarColliderDistance;
             private readonly Action invoke;
 
-            public InteractionTarget(UnityEngine.Object identity, Transform moveTarget, Collider interactionCollider, float stopDistance, Action invoke)
+            public InteractionTarget(
+                UnityEngine.Object identity,
+                Transform moveTarget,
+                Collider interactionCollider,
+                float stopDistance,
+                Action invoke,
+                InteractionTargetKind kind,
+                bool canInvokeFromInteractionRadius = true,
+                bool usePlanarColliderDistance = false)
             {
                 Identity = identity;
                 MoveTarget = moveTarget;
                 InteractionCollider = interactionCollider;
                 StopDistance = stopDistance;
+                Kind = kind;
+                CanInvokeFromInteractionRadius = canInvokeFromInteractionRadius;
+                this.usePlanarColliderDistance = usePlanarColliderDistance;
                 this.invoke = invoke;
             }
 
@@ -1172,7 +1373,12 @@ namespace Game
             public float GetScore(Vector3 origin)
             {
                 if (TryGetClosestPoint(origin, out Vector3 closestPoint))
+                {
+                    if (usePlanarColliderDistance)
+                        closestPoint.y = origin.y;
+
                     return (closestPoint - origin).sqrMagnitude;
+                }
 
                 if (MoveTarget == null)
                     return float.PositiveInfinity;
