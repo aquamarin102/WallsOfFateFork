@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7437702133700656307}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: ring_01_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -41,7 +41,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8483243393750807365}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: chipciEnd
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -72,7 +72,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6480672038476577070}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: headEnd
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -103,7 +103,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4910233470958613792}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: middle_02_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -135,7 +135,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8233960433071218214}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: spine_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -167,7 +167,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3656682217282606998}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: upperarm_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -199,7 +199,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3816300467258040337}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: hammerEnd
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -232,7 +232,7 @@ GameObject:
   - component: {fileID: 1945929361963741835}
   - component: {fileID: 1019585715387343224}
   - component: {fileID: 6825813777809594322}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: beltclasp_low
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -301,6 +301,7 @@ SkinnedMeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   serializedVersion: 2
   m_Quality: 0
   m_UpdateWhenOffscreen: 0
@@ -338,7 +339,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3974837436734266155}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: middle_03_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -369,7 +370,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3295653998898257882}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: FatrukBack2_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -401,7 +402,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 9126942445664897473}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: FatrukMiddleEnd
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -432,7 +433,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7537058657135890387}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: clavicle_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -464,7 +465,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4537903345679557471}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: FatrukMiddle2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -496,7 +497,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3802281707916404940}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: pinky_01_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -528,7 +529,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1205710549824835071}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: index_01_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -560,7 +561,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5499414821919115074}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: hand_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -598,7 +599,7 @@ GameObject:
   - component: {fileID: 1543210835196802925}
   - component: {fileID: 7251316572395648178}
   - component: {fileID: 2045141710252326247}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: eyes_low
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -667,6 +668,7 @@ SkinnedMeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   serializedVersion: 2
   m_Quality: 0
   m_UpdateWhenOffscreen: 0
@@ -703,7 +705,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4461093347896354896}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: hand_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -739,7 +741,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1766898633977576346}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: FatrukSide3_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -771,7 +773,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3079411007030455526}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: index_03_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -802,7 +804,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4329492186944918508}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: FatrukBack1_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -834,7 +836,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3358734916707239196}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: thumb_01_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -866,7 +868,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5029577792082770426}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: upperarm_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -898,7 +900,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6882722705541111592}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: FatrukBackSide3_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -930,7 +932,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 357590911494437841}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: HairEnd
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -961,7 +963,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2691526881152440870}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: foot_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -993,7 +995,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4277497752597008720}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: ring_03_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1024,7 +1026,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1042711408490812843}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: pinky_03_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1055,7 +1057,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6920520088968455440}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: pinky_03_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1088,7 +1090,7 @@ GameObject:
   - component: {fileID: 420660292909942984}
   - component: {fileID: 1125234676090336859}
   - component: {fileID: 3874705972538236347}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: belthammer_low
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1157,6 +1159,7 @@ SkinnedMeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   serializedVersion: 2
   m_Quality: 0
   m_UpdateWhenOffscreen: 0
@@ -1195,7 +1198,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2594785005195549178}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: ring_02_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1227,7 +1230,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4962769383185815577}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: FatrukBackSide2_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1259,7 +1262,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2250193085059044602}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: FatrukSide2_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1293,7 +1296,7 @@ GameObject:
   - component: {fileID: 7204948288117779328}
   - component: {fileID: 2662175470527405692}
   - component: {fileID: 6788526664789531770}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: fartuk_low
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1362,6 +1365,7 @@ SkinnedMeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   serializedVersion: 2
   m_Quality: 0
   m_UpdateWhenOffscreen: 0
@@ -1433,7 +1437,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7185098699337423306}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: ball_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1467,7 +1471,7 @@ GameObject:
   - component: {fileID: 9172903660245413891}
   - component: {fileID: 7404011594065272373}
   - component: {fileID: 5371327483002303030}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: chipci_low
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1536,6 +1540,7 @@ SkinnedMeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   serializedVersion: 2
   m_Quality: 0
   m_UpdateWhenOffscreen: 0
@@ -1573,7 +1578,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8700227877924593270}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: ring_03_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1604,7 +1609,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3388003575602887555}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: middle_01_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1636,7 +1641,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6536152657271291488}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: BeltEnd
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1667,7 +1672,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7603512961133363694}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: FatrukPartEnd_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1698,7 +1703,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2776592977351455023}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: FatrukPart2_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1730,7 +1735,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6987144424253138743}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: pinky_02_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1762,7 +1767,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2434912081424413191}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: hammer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1794,7 +1799,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7851959385381815574}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: FatrukBackSide4_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1825,7 +1830,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2875203454630287021}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: pinky_01_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1857,7 +1862,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7550424261831094725}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: thumb_02_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1889,7 +1894,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3910415133533956209}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: index_01_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1921,7 +1926,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2704076186522736716}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: thumb_02_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1953,7 +1958,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 754691374369397091}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: FatrukBack4_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1984,7 +1989,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4465654276983174111}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: FatrukBackSide2_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2016,7 +2021,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5267688847060223916}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: FatrukMiddle3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2048,7 +2053,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6812554809947912401}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: neck_01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2080,7 +2085,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8592744030822931986}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: FatrukBack3_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2112,7 +2117,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7490907923215156099}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: FatrukBackSide1_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2144,7 +2149,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4533060798434888064}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: FatrukSide2_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2176,7 +2181,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3939657178296091697}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: lowerarm_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2208,7 +2213,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4910149770483829662}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: thumb_01_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2240,7 +2245,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5411744019226924266}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: FatrukSide3_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2272,7 +2277,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4099009456684644937}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: spine_03
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2306,7 +2311,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7458118474309546605}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: FatrukPart1_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2340,7 +2345,7 @@ GameObject:
   - component: {fileID: 8959686278098841276}
   - component: {fileID: 2583314299772766179}
   - component: {fileID: 4725303205942209770}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: hammer_low
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2409,6 +2414,7 @@ SkinnedMeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   serializedVersion: 2
   m_Quality: 0
   m_UpdateWhenOffscreen: 0
@@ -2452,7 +2458,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 548223356094895748}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: calf_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2484,7 +2490,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4969488513958995118}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: index_03_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2515,7 +2521,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5035147933247132298}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: ballEnd_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2548,7 +2554,7 @@ GameObject:
   - component: {fileID: 8827752487453004701}
   - component: {fileID: 5256304297746740214}
   - component: {fileID: 3891619881918204119}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: body_low
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2617,6 +2623,7 @@ SkinnedMeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   serializedVersion: 2
   m_Quality: 0
   m_UpdateWhenOffscreen: 0
@@ -2722,7 +2729,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3092777231443423385}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: thumb_03_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2753,7 +2760,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7116126238081202898}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: FatrukMiddle1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2785,7 +2792,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4874225711412053872}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: Hair1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2817,7 +2824,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2835423127370691252}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: index_02_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2849,7 +2856,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1270486873640840952}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: thumb_03_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2880,7 +2887,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8978955464303535318}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: pelvis
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2926,7 +2933,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5047217684038721440}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: Hair2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2958,7 +2965,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2118779085144228921}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: FatrukSide1_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2990,7 +2997,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 627473467924904289}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: FatrukBack4_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3021,7 +3028,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 9040507064623786437}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: head
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3054,7 +3061,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 881839755179440811}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: middle_01_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3086,7 +3093,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5539555557881039824}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: FatrukBackSide4_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3117,7 +3124,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3886246317111842926}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: FatrukPartEnd_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3148,7 +3155,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6485073701035824670}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: middle_02_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3180,7 +3187,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6854113994527822875}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: root
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3214,7 +3221,7 @@ GameObject:
   - component: {fileID: 7413736623922274544}
   - component: {fileID: 4031936931978467570}
   - component: {fileID: 1584559898822266332}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: pocketclasp1_low
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3283,6 +3290,7 @@ SkinnedMeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   serializedVersion: 2
   m_Quality: 0
   m_UpdateWhenOffscreen: 0
@@ -3320,7 +3328,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6211630632430298369}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: FatrukBackSide1_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3352,7 +3360,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8868502317614899964}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: spine_01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3384,7 +3392,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8382350510134738066}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: FatrukBack2_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3416,7 +3424,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1158464349088452407}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: ball_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3448,7 +3456,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7509503306798612033}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: FatrukPart2_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3480,7 +3488,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6642989835751171328}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: foot_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3512,7 +3520,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2664338052520728655}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: FatrukBack3_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3544,7 +3552,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5645339921824037139}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: FatrukPart3_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3576,7 +3584,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1977243762926780108}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: ballEnd_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3607,7 +3615,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 245397337722883618}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: chipci
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3639,7 +3647,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7311784005761936623}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: pinky_02_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3671,7 +3679,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4961556005761277993}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: ring_02_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3703,7 +3711,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4444712481059520877}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: clavicle_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3735,7 +3743,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5175837529874549325}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: ring_01_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3767,7 +3775,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5466324323875254530}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: index_02_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3801,7 +3809,7 @@ GameObject:
   - component: {fileID: 1418664069918934697}
   - component: {fileID: 7239889127375536515}
   - component: {fileID: 128260894749100855}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: beltmain_low
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3870,6 +3878,7 @@ SkinnedMeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   serializedVersion: 2
   m_Quality: 0
   m_UpdateWhenOffscreen: 0
@@ -3917,7 +3926,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5809902878884545547}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: calf_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3949,7 +3958,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4498679436415819711}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: FatrukPart3_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3986,9 +3995,9 @@ GameObject:
   - component: {fileID: 2119124874553033334}
   - component: {fileID: 7937982792098785137}
   - component: {fileID: -5815068566688414377}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: Blacksmith
-  m_TagString: Untagged
+  m_TagString: NPC
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -4106,6 +4115,8 @@ MonoBehaviour:
   targetObject: {fileID: 0}
   highlightOnHover: 1
   highlightOnTrigger: 1
+  highlightOnGlobalHold: 1
+  fallbackInteractionRadius: 1.6
 --- !u!114 &-5815068566688414377
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4122,6 +4133,8 @@ MonoBehaviour:
   InteractionType: 0
   triggerObject: {fileID: 7948130630642926901}
   Parameters: 
+  questId: -1
+  questTaskId: -1
 --- !u!1 &7949829164951037400
 GameObject:
   m_ObjectHideFlags: 0
@@ -4131,7 +4144,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6589865437190126653}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: FatrukBack1_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4163,7 +4176,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1031039455255040935}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: middle_03_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4194,7 +4207,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5404252506217183261}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: thigh_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4226,7 +4239,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3149450839001912352}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: FatrukBackSide3_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4258,7 +4271,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5081701222802081892}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: FatrukSide1_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4290,7 +4303,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3566251956610116940}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: FatrukPart1_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4322,7 +4335,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2371331724159752757}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: FatrukSide4_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4353,7 +4366,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6466625012399049208}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: thigh_r
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4385,7 +4398,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4243296203424947141}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: FatrukSide4_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4416,7 +4429,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6212798338601940439}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: Belt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4448,7 +4461,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8753448592994018813}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: lowerarm_l
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4480,7 +4493,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5057766152117098524}
-  m_Layer: 0
+  m_Layer: 14
   m_Name: Hair3
   m_TagString: Untagged
   m_Icon: {fileID: 0}

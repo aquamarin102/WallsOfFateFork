@@ -41,6 +41,7 @@ namespace Game
         {
             RemoveInvalidZenjectAutoInjecter();
             ConfigureCamera();
+            EnsureObstacleTransparency();
         }
 
         private void Update()
@@ -87,6 +88,14 @@ namespace Game
             transform.rotation = Quaternion.Euler(angleX, angleY, 0f);
         }
 
+        private void EnsureObstacleTransparency()
+        {
+            if (GetComponent<CameraObstacleTransparency>() == null)
+            {
+                gameObject.AddComponent<CameraObstacleTransparency>();
+            }
+        }
+
         private void TryResolvePlayer()
         {
             if (_player != null)
@@ -94,7 +103,7 @@ namespace Game
                 return;
             }
 
-            PlayerMoveController[] players = FindObjectsOfType<PlayerMoveController>(true);
+            PlayerMoveController[] players = FindObjectsByType<PlayerMoveController>(FindObjectsInactive.Include);
             if (players.Length > 0 && players[0] != null)
             {
                 _player = players[0].transform;
