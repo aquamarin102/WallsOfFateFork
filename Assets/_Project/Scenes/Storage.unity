@@ -57805,6 +57805,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 3393235770061430848, guid: a017305685ad7e445b3644bf2b500597, type: 3}
   m_PrefabInstance: {fileID: 1427163923}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1427163925 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1375814721604547069, guid: a017305685ad7e445b3644bf2b500597, type: 3}
+  m_PrefabInstance: {fileID: 1427163923}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c73f3a8d8628b334783595a09bc60570, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Game.DialogManager
 --- !u!1 &1428195831
 GameObject:
   m_ObjectHideFlags: 0
@@ -72855,7 +72866,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 636e744691c429f48920ff0f2bb93fb2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.CellarController
-  dialogueManager: {fileID: 0}
+  dialogueManager: {fileID: 1427163925}
   interactiveItemHandler: {fileID: 327432779}
   ThiefPrefabName: Thief
 --- !u!1001 &1840284423

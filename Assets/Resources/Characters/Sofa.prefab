@@ -500,7 +500,7 @@ MonoBehaviour:
   AreaType: 1
   InteractionType: 0
   triggerObject: {fileID: 5130903298930597553}
-  Parameters: First
+  Parameters: Sofa
   questId: 2
   questTaskId: 0
 --- !u!114 &491375020046469582

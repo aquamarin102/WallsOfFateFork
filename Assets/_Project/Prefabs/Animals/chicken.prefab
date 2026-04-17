@@ -9,6 +9,18 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 56b137ba2968d174d9a5519d960b700d, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 56b137ba2968d174d9a5519d960b700d, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 56b137ba2968d174d9a5519d960b700d, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 56b137ba2968d174d9a5519d960b700d, type: 3}
       propertyPath: m_LocalPosition.x
       value: -10.404
       objectReference: {fileID: 0}
@@ -204,10 +216,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 246c04dfc0ad72d4d947b4c8da3b71df, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  outlineMethod: 0
+  outlineColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  outlineWidth: 2
   hoverCheckDistance: 100
   hoverLayerMask:
     serializedVersion: 2
     m_Bits: 4294967295
+  targetObject: {fileID: 0}
+  highlightOnHover: 1
+  highlightOnTrigger: 1
+  highlightOnGlobalHold: 1
+  fallbackInteractionRadius: 1.6
 --- !u!114 &8396470282819953916
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -225,6 +245,8 @@ MonoBehaviour:
   amount: 10
   message: "\u041F\u0442\u0438\u0446\u0430 \u0445\u0438\u0442\u0440\u0430, \u043D\u043E
     \u044F \u0445\u0438\u0442\u0440\u0435\u0435. "
+  Key: key
+  localizationFileName: intaractive-items
   floatingTextPrefab: {fileID: 4848396624485697127, guid: b674c6ddfaf88fa4c8200c48bc74b5fa, type: 3}
   spawnOffset: {x: 0, y: 2.3, z: 0}
   destroyAfterUse: 1

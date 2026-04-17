@@ -761,7 +761,7 @@ MonoBehaviour:
   AreaType: 1
   InteractionType: 0
   triggerObject: {fileID: 6487916388078063443}
-  Parameters: First
+  Parameters: KeyMaster
   questId: 3
   questTaskId: 1
 --- !u!114 &-4760248045942692307
