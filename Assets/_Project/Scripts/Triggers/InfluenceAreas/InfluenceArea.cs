@@ -53,6 +53,7 @@ namespace Game
         public int questId = -1; // от какого квеста зависит 
         public int questTaskId = -1; // от какого таска зависит 
         //[SerializeField] private OutlineTrigger outlineTrigger;
+        public int limitation = 1;
 
         private BoxCollider boxCollider;
         //private bool interactPressedThisFrame;
@@ -201,8 +202,13 @@ namespace Game
 
         public virtual async System.Threading.Tasks.Task InvokeDirectInteractionAsync(GameObject playerObj)
         {
+            if (limitation <= 0)
+                return;
+
             GameObject targetObject = triggerObject != null ? triggerObject : gameObject;
             TriggerEvent eventData = new TriggerEvent(AreaType, playerObj, targetObject, true, Parameters);
+
+            limitation--;
             await OnEventTriggered.InvokeAsync(eventData);
         }
 
