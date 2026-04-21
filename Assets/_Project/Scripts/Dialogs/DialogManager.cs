@@ -357,7 +357,8 @@ namespace Game
                 {
                     FocusSentencePanel(sentencePanel, immediate: true);
                     activeTypingRoutine = StartCoroutine(TypeSentence(currentSentence.Text, sentenceText));
-                    nameText.text = currentDialog.CharacterName;
+                    if (!currentSentence.IsPlayer) nameText.text = currentDialog.CharacterName;
+                    else nameText.text = "Магнат";
                 }
             }
         }
