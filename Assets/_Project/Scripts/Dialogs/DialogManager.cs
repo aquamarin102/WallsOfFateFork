@@ -28,6 +28,9 @@ namespace Game
         [SerializeField] private float nextSentenceDelay = 0.35f;
         [SerializeField] private float firstSentenceDelay = 0.1f;
         [SerializeField] private float optionTextScale = 0.8f;
+        [SerializeField] private int sentencePanelTopPadding = 0;
+        [SerializeField] private int sentencePanelBottomPadding = 6;
+        [SerializeField] private float sentencePanelSpacing = 2f;
 
         private readonly List<GameObject> spawnedPanels = new();
 
@@ -355,12 +358,78 @@ namespace Game
 
                 if (sentenceText != null)
                 {
-                    FocusSentencePanel(sentencePanel, immediate: true);
+                    if (nameText != null)
+                    {
+                        if (!currentSentence.IsPlayer) nameText.text = currentDialog.CharacterName;
+                        else nameText.text = "Магнат";
+                    }
+
                     activeTypingRoutine = StartCoroutine(TypeSentence(currentSentence.Text, sentenceText));
-                    if (!currentSentence.IsPlayer) nameText.text = currentDialog.CharacterName;
-                    else nameText.text = "Магнат";
                 }
             }
+        }
+
+        private void ConfigureSentencePanelLayout(GameObject sentencePanel, TMP_Text sentenceText, TMP_Text nameText)
+        {
+            if (sentencePanel == null || sentenceText == null)
+                return;
+
+            RectTransform panelRect = sentencePanel.GetComponent<RectTransform>();
+            if (panelRect == null)
+                return;
+
+            float currentY = sentencePanelTopPadding;
+            float nameHeight = FitTextToPreferredHeight(nameText);
+            if (nameText != null)
+            {
+                AnchorTextToPanelTop(nameText.rectTransform, currentY);
+                currentY += nameHeight + sentencePanelSpacing;
+            }
+
+            float textHeight = FitTextToPreferredHeight(sentenceText);
+            AnchorTextToPanelTop(sentenceText.rectTransform, currentY);
+            currentY += textHeight + sentencePanelBottomPadding;
+
+            Vector2 size = panelRect.sizeDelta;
+            size.y = Mathf.Ceil(Mathf.Max(currentY, nameHeight + textHeight));
+            panelRect.sizeDelta = size;
+
+            LayoutRebuilder.ForceRebuildLayoutImmediate(panelRect);
+            if (spawnPoint != null)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(spawnPoint);
+            }
+        }
+
+        private static float FitTextToPreferredHeight(TMP_Text textComponent)
+        {
+            if (textComponent == null)
+                return 0f;
+
+            RectTransform textRect = textComponent.rectTransform;
+            float textWidth = Mathf.Max(1f, textRect.rect.width, textRect.sizeDelta.x);
+            float preferredHeight = Mathf.Ceil(textComponent.GetPreferredValues(textComponent.text, textWidth, 0f).y);
+            preferredHeight = Mathf.Max(preferredHeight, 1f);
+
+            Vector2 size = textRect.sizeDelta;
+            size.y = preferredHeight;
+            textRect.sizeDelta = size;
+
+            return preferredHeight;
+        }
+
+        private static void AnchorTextToPanelTop(RectTransform textRect, float topOffset)
+        {
+            if (textRect == null)
+                return;
+
+            textRect.anchorMin = new Vector2(textRect.anchorMin.x, 1f);
+            textRect.anchorMax = new Vector2(textRect.anchorMax.x, 1f);
+            textRect.pivot = new Vector2(textRect.pivot.x, 1f);
+
+            Vector2 position = textRect.anchoredPosition;
+            position.y = -topOffset;
+            textRect.anchoredPosition = position;
         }
 
 
@@ -509,7 +578,10 @@ namespace Game
             textComponent.maxVisibleCharacters = 0;
             textComponent.ForceMeshUpdate();
 
-            FocusSentencePanel(textComponent.transform.parent.gameObject, immediate: true);
+            GameObject sentencePanel = textComponent.transform.parent.gameObject;
+            TMP_Text nameText = sentencePanel.transform.Find("Name")?.GetComponent<TMP_Text>();
+            ConfigureSentencePanelLayout(sentencePanel, textComponent, nameText);
+            FocusSentencePanel(textComponent.transform.parent.gameObject);
 
             int totalVisibleCharacters = textComponent.textInfo.characterCount;
 
@@ -521,9 +593,18 @@ namespace Game
                 yield break;
             }
 
+            int lastFocusedLine = GetVisibleCharacterLine(textComponent, 0);
             for (int visibleCharacters = 1; visibleCharacters <= totalVisibleCharacters; visibleCharacters++)
             {
                 textComponent.maxVisibleCharacters = visibleCharacters;
+
+                int currentLine = GetVisibleCharacterLine(textComponent, visibleCharacters);
+                if (currentLine != lastFocusedLine)
+                {
+                    lastFocusedLine = currentLine;
+                    FocusSentencePanel(sentencePanel);
+                }
+
                 yield return new WaitForSecondsRealtime(characterRevealDelay);
             }
 
@@ -532,6 +613,15 @@ namespace Game
             activeTypingRoutine = null;
 
             ProcessNextSentence();
+        }
+
+        private static int GetVisibleCharacterLine(TMP_Text textComponent, int visibleCharacters)
+        {
+            if (textComponent == null || visibleCharacters <= 0 || textComponent.textInfo.characterCount == 0)
+                return -1;
+
+            int characterIndex = Mathf.Clamp(visibleCharacters - 1, 0, textComponent.textInfo.characterCount - 1);
+            return textComponent.textInfo.characterInfo[characterIndex].lineNumber;
         }
     }
 }

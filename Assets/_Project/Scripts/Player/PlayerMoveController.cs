@@ -244,18 +244,27 @@ namespace Game
                 hasInteractionTarget = true;
             }
 
+            bool isHeldBoxReleaseDoubleClick = isBoxGrabMode &&
+                IsPointerDoubleClick(clickPosition) &&
+                IsPointerOverHeldBox(hits);
             bool isInteractionDoubleClick = hasInteractionTarget &&
                 IsInteractionDoubleClick(interactionTarget.Identity, clickPosition);
 
             RegisterClick(hasInteractionTarget ? interactionTarget.Identity : null, clickPosition);
 
+            if (isHeldBoxReleaseDoubleClick)
+            {
+                ReleaseHeldBox();
+                return;
+            }
+
             if (isInteractionDoubleClick)
             {
-                if (isBoxGrabMode)
-                    interactionTarget.Invoke();
-                else
+                if (!isBoxGrabMode)
+                {
                     MoveToInteractionTarget(interactionTarget);
-                return;
+                    return;
+                }
             }
 
             if (isBoxGrabMode)
@@ -790,6 +799,12 @@ namespace Game
             if (!ConsumeInteractInput())
                 return;
 
+            if (isBoxGrabMode && heldBoxMover != null)
+            {
+                ReleaseHeldBox();
+                return;
+            }
+
             if (TryFindBestInteractionTargetAroundPlayer(out InteractionTarget interactionTarget))
             {
                 interactionTarget.Invoke();
@@ -1089,6 +1104,11 @@ namespace Game
                 return true;
             }
 
+            if (TryResolveBoxInteractionTarget(hitCollider, hitPoint, out interactionTarget))
+            {
+                return true;
+            }
+
             if (TryFindClosestInteractionZone(hitCollider, hitPoint, out InfluenceArea influenceArea))
             {
                 interactionTarget = CreateInteractionTarget(
@@ -1127,14 +1147,7 @@ namespace Game
 
             if (TryFindComponentOnClickedObject(hitCollider, out BoxMover boxMover))
             {
-                GameObject boxObject = boxMover.gameObject;
-                interactionTarget = CreateInteractionTarget(
-                    boxMover,
-                    boxMover.transform,
-                    boxMover.GetComponent<Collider>(),
-                    () => ToggleBoxInteraction(boxMover, boxObject),
-                    InteractionTargetKind.Box,
-                    false);
+                interactionTarget = CreateBoxInteractionTarget(boxMover, boxMover.gameObject);
                 return true;
             }
 
@@ -1157,6 +1170,65 @@ namespace Game
 
             interactionTarget = default;
             return false;
+        }
+
+        private bool TryResolveBoxInteractionTarget(Collider hitCollider, Vector3 hitPoint, out InteractionTarget interactionTarget)
+        {
+            if (TryFindComponentOnClickedObject(hitCollider, out BoxMover boxMover))
+            {
+                interactionTarget = CreateBoxInteractionTarget(boxMover, boxMover.gameObject);
+                return true;
+            }
+
+            if (TryFindClosestInteractionZone(hitCollider, hitPoint, out InfluenceArea influenceArea) &&
+                TryGetBoxMoverFromInfluenceArea(influenceArea, out boxMover, out GameObject boxObject))
+            {
+                interactionTarget = CreateBoxInteractionTarget(boxMover, boxObject);
+                return true;
+            }
+
+            interactionTarget = default;
+            return false;
+        }
+
+        private static bool TryGetBoxMoverFromInfluenceArea(
+            InfluenceArea influenceArea,
+            out BoxMover boxMover,
+            out GameObject boxObject)
+        {
+            boxMover = null;
+            boxObject = null;
+
+            if (influenceArea == null)
+                return false;
+
+            GameObject targetObject = influenceArea.triggerObject != null
+                ? influenceArea.triggerObject
+                : influenceArea.gameObject;
+
+            if (targetObject == null || !targetObject.CompareTag("Box"))
+                return false;
+
+            boxMover = targetObject.GetComponent<BoxMover>() ??
+                       targetObject.GetComponentInParent<BoxMover>() ??
+                       targetObject.GetComponentInChildren<BoxMover>(true);
+
+            if (boxMover == null)
+                return false;
+
+            boxObject = boxMover.gameObject;
+            return true;
+        }
+
+        private InteractionTarget CreateBoxInteractionTarget(BoxMover boxMover, GameObject boxObject)
+        {
+            return CreateInteractionTarget(
+                boxMover,
+                boxMover.transform,
+                boxMover.GetComponent<Collider>(),
+                () => ToggleBoxInteraction(boxMover, boxObject),
+                InteractionTargetKind.Box,
+                false);
         }
 
         private InteractionTarget CreateInteractionTarget(
@@ -1320,11 +1392,40 @@ namespace Game
             return false;
         }
 
+        private bool IsPointerOverHeldBox(RaycastHit[] hits)
+        {
+            GameObject heldBox = heldBoxMover != null ? heldBoxMover.gameObject : null;
+            if (heldBox == null)
+                return false;
+
+            foreach (RaycastHit hit in hits)
+            {
+                if (IsColliderPartOfHeldBox(hit.collider, heldBox))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private static bool IsColliderPartOfHeldBox(Collider collider, GameObject heldBox)
+        {
+            if (collider == null || heldBox == null)
+                return false;
+
+            return collider.transform == heldBox.transform ||
+                   collider.transform.IsChildOf(heldBox.transform);
+        }
+
         private bool IsInteractionDoubleClick(UnityEngine.Object interactionTarget, Vector2 clickPosition)
         {
             if (interactionTarget == null || interactionTarget != lastClickInteractionTarget)
                 return false;
 
+            return IsPointerDoubleClick(clickPosition);
+        }
+
+        private bool IsPointerDoubleClick(Vector2 clickPosition)
+        {
             if (Time.unscaledTime - lastClickTime > doubleClickThreshold)
                 return false;
 
@@ -1363,6 +1464,25 @@ namespace Game
 
             interactManager?.InteractWith(eventData, true);
             boxMover.StartHolding();
+        }
+
+        private void ReleaseHeldBox()
+        {
+            BoxMover boxMover = heldBoxMover;
+            if (boxMover == null)
+                return;
+
+            GameObject boxObject = boxMover.gameObject;
+            TriggerEvent eventData = new TriggerEvent(
+                InfluenceType.Object,
+                gameObject,
+                boxObject,
+                true,
+                string.Empty);
+
+            boxMover.StopHolding();
+            StopBoxGrabMode();
+            interactManager?.InteractWith(eventData, false);
         }
 
         private static Transform ResolveInteractionTransform(InfluenceArea influenceArea)

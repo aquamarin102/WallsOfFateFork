@@ -7,16 +7,17 @@ public class LimitY : MonoBehaviour
 {
     [SerializeField] private RectTransform viewport;
     [SerializeField] private float topPadding = 0f;
-    [SerializeField] private float bottomPadding = 0f;
+    [SerializeField] private float bottomPadding = 40f;
     [SerializeField, Range(0f, 1f)] private float fitContentVerticalBias = 0.72f;
     [SerializeField, Range(0f, 1f)] private float firstMessageViewportBias = 0.9f;
-    [SerializeField, Range(0f, 1f)] private float latestMessageViewportBias = 0.84f;
+    [SerializeField, Range(0f, 1f)] private float latestMessageViewportBias = 0.9f;
     [SerializeField] private float delayBeforeScroll = 0.05f;
     [SerializeField] private float smoothScrollTime = 0.12f;
 
     private RectTransform _content;
     private ScrollRect _scrollRect;
     private Coroutine _scrollRoutine;
+    private readonly Vector3[] _childWorldCorners = new Vector3[4];
 
     private void Awake()
     {
@@ -232,8 +233,8 @@ public class LimitY : MonoBehaviour
         }
 
         float contentHeight = _content.rect.height;
-        float viewportHeight = viewport.rect.height;
-        return Mathf.Max(-topPadding, contentHeight - viewportHeight + bottomPadding);
+        float safeViewportHeight = GetSafeViewportHeight();
+        return Mathf.Max(-topPadding, contentHeight - safeViewportHeight - topPadding);
     }
 
     private bool ContentFitsViewport()
@@ -243,7 +244,7 @@ public class LimitY : MonoBehaviour
             return true;
         }
 
-        return _content.rect.height <= viewport.rect.height;
+        return _content.rect.height <= GetSafeViewportHeight();
     }
 
     private float GetFitContentY()
@@ -253,11 +254,21 @@ public class LimitY : MonoBehaviour
             return -topPadding;
         }
 
-        float freeSpace = Mathf.Max(0f, viewport.rect.height - _content.rect.height);
+        float freeSpace = Mathf.Max(0f, GetSafeViewportHeight() - _content.rect.height);
         float preferredOffset = Mathf.Max(topPadding, freeSpace * fitContentVerticalBias);
-        float maxOffset = Mathf.Max(topPadding, freeSpace - bottomPadding);
+        float maxOffset = Mathf.Max(topPadding, freeSpace + topPadding);
         float offset = Mathf.Min(preferredOffset, maxOffset);
         return -offset;
+    }
+
+    private float GetSafeViewportHeight()
+    {
+        if (viewport == null)
+        {
+            return 1f;
+        }
+
+        return Mathf.Max(1f, viewport.rect.height - topPadding - bottomPadding);
     }
 
     private float GetTargetYForChild(RectTransform child, float viewportBias)
@@ -267,9 +278,34 @@ public class LimitY : MonoBehaviour
             return GetMaxAllowedY();
         }
 
-        Vector3 childCenterInViewport = viewport.InverseTransformPoint(child.TransformPoint(child.rect.center));
+        child.GetWorldCorners(_childWorldCorners);
+        float childBottomInViewport = viewport.InverseTransformPoint(_childWorldCorners[0]).y;
+        float childTopInViewport = viewport.InverseTransformPoint(_childWorldCorners[1]).y;
+        float childCenterInViewport = (childTopInViewport + childBottomInViewport) * 0.5f;
+
+        float upperLimit = viewport.rect.yMax - topPadding;
+        float lowerLimit = viewport.rect.yMin + bottomPadding;
+        float visibleHeight = Mathf.Max(1f, upperLimit - lowerLimit);
+        float childHeight = childTopInViewport - childBottomInViewport;
+
         float desiredY = Mathf.Lerp(viewport.rect.yMax - topPadding, viewport.rect.yMin + bottomPadding, viewportBias);
-        float delta = desiredY - childCenterInViewport.y;
+        float delta = desiredY - childCenterInViewport;
+
+        if (childHeight <= visibleHeight)
+        {
+            float topAfterMove = childTopInViewport + delta;
+            if (topAfterMove > upperLimit)
+            {
+                delta -= topAfterMove - upperLimit;
+            }
+        }
+
+        float bottomAfterMove = childBottomInViewport + delta;
+        if (bottomAfterMove < lowerLimit)
+        {
+            delta += lowerLimit - bottomAfterMove;
+        }
+
         return _content.anchoredPosition.y + delta;
     }
 }

@@ -1031,10 +1031,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LimitY
   viewport: {fileID: 646150931393639142}
   topPadding: 45
-  bottomPadding: 45
+  bottomPadding: 40
   fitContentVerticalBias: 0.5
   firstMessageViewportBias: 0.9
-  latestMessageViewportBias: 0.78
+  latestMessageViewportBias: 0.9
   delayBeforeScroll: 0.05
   smoothScrollTime: 0.12
 --- !u!114 &7986021929691205394
