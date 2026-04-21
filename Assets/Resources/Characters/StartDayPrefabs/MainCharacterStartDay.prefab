@@ -347,6 +347,12 @@ MonoBehaviour:
   stopThreshold: 0.1
   clickRunThreshold: 0.3
   holdThreshold: 0.2
+  clickMoveVfxPrefab: {fileID: 621558832711808307, guid: 79f7ce22c8b2b2d409036d7451ca8f5b, type: 3}
+  clickMoveVfxGroundOffset: 0.03
+  clickMoveVfxGroundProbeHeight: 2
+  clickMoveVfxLifetimeFallback: 5
+  clickMoveVfxMinInterval: 0.08
+  clickMoveVfxHoldInterval: 1.5
   walkingPitch: 1
   runningPitch: 1.5
 --- !u!114 &-7238074601778389795

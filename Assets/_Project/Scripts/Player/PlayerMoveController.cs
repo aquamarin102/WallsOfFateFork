@@ -35,6 +35,14 @@ namespace Game
         [SerializeField] private float doubleClickMaxScreenDistance = 35f;
         [SerializeField] private float interactionClickProbeRadius = 0.65f;
 
+        [Header("Click Movement VFX")]
+        [SerializeField] private GameObject clickMoveVfxPrefab;
+        [SerializeField] private float clickMoveVfxGroundOffset = 0.03f;
+        [SerializeField] private float clickMoveVfxGroundProbeHeight = 2f;
+        [SerializeField] private float clickMoveVfxLifetimeFallback = 5f;
+        [SerializeField] private float clickMoveVfxMinInterval = 0.08f;
+        [SerializeField] private float clickMoveVfxHoldInterval = 0.8f;
+
         [Header("Interaction Settings")]
         [SerializeField] private float keyboardInteractionRadius = 1.6f;
 
@@ -52,6 +60,8 @@ namespace Game
         private bool isPathRunRequested = true;
         private float mouseDownTime;
         private float lastClickTime = -1f;
+        private float lastClickMoveVfxTime = float.NegativeInfinity;
+        private float lastHoldClickMoveVfxTime = float.NegativeInfinity;
         private Vector2 lastClickPosition;
         private UnityEngine.Object lastClickInteractionTarget;
         private int lastProcessedInteractPressId;
@@ -251,13 +261,19 @@ namespace Game
             if (isBoxGrabMode)
             {
                 if (TryResolveMovementDestination(ray, hits, out Vector3 boxDestination))
+                {
                     MoveToAndCallback(boxDestination, IsRunModeActive(), null);
+                    SpawnClickMoveVfx(boxDestination);
+                }
 
                 return;
             }
 
             if (TryResolveMovementDestination(ray, hits, out Vector3 destination))
+            {
                 MoveToAndCallback(destination, IsRunModeActive(), null);
+                SpawnClickMoveVfx(destination);
+            }
         }
 
         private bool TryResolveMovementDestination(Ray ray, out Vector3 destination)
@@ -444,6 +460,8 @@ namespace Game
                         agent.SetDestination(clickTarget);
                         agent.isStopped = false;
                     }
+
+                    SpawnHeldClickMoveVfx(destination);
                 }
 
                 if (agent.hasPath && !agent.isStopped)
@@ -578,6 +596,115 @@ namespace Game
             dynamicTarget = null;
             _onArriveAction = null;
             _canInvokeArriveAction = null;
+        }
+
+        private void SpawnClickMoveVfx(Vector3 destination)
+        {
+            if (clickMoveVfxPrefab == null)
+                return;
+
+            if (Time.unscaledTime - lastClickMoveVfxTime < clickMoveVfxMinInterval)
+                return;
+
+            lastClickMoveVfxTime = Time.unscaledTime;
+
+            Vector3 spawnPosition = ResolveClickMoveVfxPosition(destination, out Vector3 groundNormal);
+            Quaternion spawnRotation = Quaternion.FromToRotation(Vector3.up, groundNormal);
+            GameObject instance = Instantiate(clickMoveVfxPrefab, spawnPosition, spawnRotation);
+            PlayClickMoveParticles(instance);
+
+            Destroy(instance, ResolveClickMoveVfxLifetime(instance));
+        }
+
+        private void SpawnHeldClickMoveVfx(Vector3 destination)
+        {
+            if (Time.unscaledTime - lastHoldClickMoveVfxTime < clickMoveVfxHoldInterval)
+                return;
+
+            lastHoldClickMoveVfxTime = Time.unscaledTime;
+            SpawnClickMoveVfx(destination);
+        }
+
+        private Vector3 ResolveClickMoveVfxPosition(Vector3 destination, out Vector3 groundNormal)
+        {
+            groundNormal = Vector3.up;
+            float probeHeight = Mathf.Max(0.1f, clickMoveVfxGroundProbeHeight);
+            Ray ray = new(destination + Vector3.up * probeHeight, Vector3.down);
+            int layerMask = groundMask.value != 0 ? groundMask.value : Physics.DefaultRaycastLayers;
+
+            if (Physics.Raycast(
+                    ray,
+                    out RaycastHit hit,
+                    probeHeight + navMeshSampleRadius,
+                    layerMask,
+                    QueryTriggerInteraction.Ignore))
+            {
+                groundNormal = hit.normal.sqrMagnitude > 0.0001f ? hit.normal.normalized : Vector3.up;
+                return hit.point + groundNormal * clickMoveVfxGroundOffset;
+            }
+
+            return destination + Vector3.up * clickMoveVfxGroundOffset;
+        }
+
+        private static void PlayClickMoveParticles(GameObject instance)
+        {
+            if (instance == null)
+                return;
+
+            foreach (ParticleSystem particleSystem in instance.GetComponentsInChildren<ParticleSystem>(true))
+            {
+                particleSystem.gameObject.SetActive(true);
+                particleSystem.Play(true);
+            }
+        }
+
+        private float ResolveClickMoveVfxLifetime(GameObject instance)
+        {
+            float lifetime = Mathf.Max(0.1f, clickMoveVfxLifetimeFallback);
+            if (instance == null)
+                return lifetime;
+
+            foreach (ParticleSystem particleSystem in instance.GetComponentsInChildren<ParticleSystem>(true))
+            {
+                ParticleSystem.MainModule main = particleSystem.main;
+                if (main.loop)
+                    continue;
+
+                float particleLifetime =
+                    GetMaxParticleCurveValue(main.startDelay) +
+                    main.duration +
+                    GetMaxParticleCurveValue(main.startLifetime);
+
+                lifetime = Mathf.Max(lifetime, particleLifetime);
+            }
+
+            return lifetime;
+        }
+
+        private static float GetMaxParticleCurveValue(ParticleSystem.MinMaxCurve curve)
+        {
+            return curve.mode switch
+            {
+                ParticleSystemCurveMode.Constant => curve.constant,
+                ParticleSystemCurveMode.TwoConstants => curve.constantMax,
+                ParticleSystemCurveMode.Curve => GetCurveMaxValue(curve.curve, curve.curveMultiplier),
+                ParticleSystemCurveMode.TwoCurves => Mathf.Max(
+                    GetCurveMaxValue(curve.curveMin, curve.curveMultiplier),
+                    GetCurveMaxValue(curve.curveMax, curve.curveMultiplier)),
+                _ => 0f
+            };
+        }
+
+        private static float GetCurveMaxValue(AnimationCurve curve, float multiplier)
+        {
+            if (curve == null || curve.length == 0)
+                return 0f;
+
+            float maxValue = 0f;
+            foreach (Keyframe keyframe in curve.keys)
+                maxValue = Mathf.Max(maxValue, keyframe.value);
+
+            return maxValue * multiplier;
         }
 
         private bool TryInvokeArriveActionByPredicate()
