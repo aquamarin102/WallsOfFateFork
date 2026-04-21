@@ -16506,6 +16506,7 @@ MonoBehaviour:
   Parameters: 
   questId: -1
   questTaskId: -1
+  limitation: 1
   itemParameters:
     ResourceType: 1
     Amount: 1
@@ -30303,6 +30304,7 @@ MonoBehaviour:
   Parameters: 
   questId: -1
   questTaskId: -1
+  limitation: 1
   itemParameters:
     ResourceType: 2
     Amount: 1
@@ -33210,6 +33212,11 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 178.23553, y: 1498.0021, z: 1183.28}
   m_Center: {x: -0.0000038146973, y: 0.000091552734, z: 0}
+--- !u!1 &805368293 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 75503cbb698365b4c89ca6a9459d9967, type: 3}
+  m_PrefabInstance: {fileID: 1240541087}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &808223421
 GameObject:
   m_ObjectHideFlags: 0
@@ -34122,6 +34129,7 @@ MonoBehaviour:
   Parameters: 
   questId: -1
   questTaskId: -1
+  limitation: 1
   itemParameters:
     ResourceType: 3
     Amount: 8
@@ -39070,6 +39078,7 @@ MonoBehaviour:
   Parameters: 
   questId: -1
   questTaskId: -1
+  limitation: 1
   itemParameters:
     ResourceType: 1
     Amount: 1
@@ -50227,13 +50236,37 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 75503cbb698365b4c89ca6a9459d9967, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1240541091}
   m_SourcePrefab: {fileID: 100100000, guid: 75503cbb698365b4c89ca6a9459d9967, type: 3}
 --- !u!4 &1240541088 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 75503cbb698365b4c89ca6a9459d9967, type: 3}
   m_PrefabInstance: {fileID: 1240541087}
   m_PrefabAsset: {fileID: 0}
+--- !u!65 &1240541091
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 805368293}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 76.74194, y: 76.74187, z: 76.74188}
+  m_Center: {x: 0.000076293945, y: 0, z: 0}
 --- !u!1001 &1241398682
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -57099,6 +57132,7 @@ MonoBehaviour:
   Parameters: 
   questId: -1
   questTaskId: -1
+  limitation: 1
   itemParameters:
     ResourceType: 1
     Amount: 1
@@ -64181,6 +64215,7 @@ MonoBehaviour:
   Parameters: 
   questId: -1
   questTaskId: -1
+  limitation: 1
   itemParameters:
     ResourceType: 1
     Amount: 3
@@ -65828,6 +65863,7 @@ MonoBehaviour:
   Parameters: 
   questId: -1
   questTaskId: -1
+  limitation: 1
   itemParameters:
     ResourceType: 1
     Amount: 0
@@ -73158,6 +73194,7 @@ MonoBehaviour:
   Parameters: 
   questId: -1
   questTaskId: -1
+  limitation: 1
   itemParameters:
     ResourceType: 3
     Amount: 4
@@ -74008,6 +74045,7 @@ MonoBehaviour:
   Parameters: 
   questId: -1
   questTaskId: -1
+  limitation: 1
   itemParameters:
     ResourceType: 1
     Amount: 1
@@ -76855,6 +76893,7 @@ MonoBehaviour:
   Parameters: 
   questId: -1
   questTaskId: -1
+  limitation: 1
   itemParameters:
     ResourceType: 2
     Amount: 1

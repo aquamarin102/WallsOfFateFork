@@ -345,6 +345,7 @@ MonoBehaviour:
   Parameters: AllMinigamesNPC
   questId: -1
   questTaskId: -1
+  limitation: 10000
 --- !u!114 &2497867414999558079
 MonoBehaviour:
   m_ObjectHideFlags: 0

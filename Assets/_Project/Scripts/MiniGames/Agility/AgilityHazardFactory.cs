@@ -104,7 +104,7 @@ public static class AgilityHazardFactory
 
     public static GameObject CreateChickenHazard(Transform parent, string name, Vector3 position, int damage = 1)
     {
-        var actor = CreateVisualActor(parent, name, position, ResolveChickenPrefab(), damage, 0.5f, 2.5f, new Vector3(0f, 0f, 0f), solidBody: false);
+        var actor = CreateVisualActor(parent, name, position, ResolveChickenPrefab(), damage, 0.5f, 2.5f, new Vector3(0f, 0f, 0f), solidBody: true);
         var repel = actor.AddComponent<SoftRepelOnTouch>();
         repel.hideFlags = HideFlags.None;
         return actor;
@@ -156,6 +156,8 @@ public static class AgilityHazardFactory
 
         AttachVisual(actor.transform, capsule, visualPrefab);
         CopyCapsuleShape(capsule, damageCapsule);
+        if (solidBody)
+            ExpandCapsule(damageCapsule, 0.05f, 0.1f);
         return actor;
     }
 
@@ -278,6 +280,15 @@ public static class AgilityHazardFactory
         target.center = source.center;
         target.radius = source.radius;
         target.height = source.height;
+    }
+
+    private static void ExpandCapsule(CapsuleCollider capsule, float radiusPadding, float heightPadding)
+    {
+        if (capsule == null)
+            return;
+
+        capsule.radius += Mathf.Max(0f, radiusPadding);
+        capsule.height += Mathf.Max(0f, heightPadding);
     }
 
     private static GameObject ResolvePatternActorPrefab()

@@ -53,6 +53,11 @@ namespace Game
                 return;
             }
 
+            if (DialogManager.Instance != null && DialogManager.Instance.Active)
+            {
+                return;
+            }
+
             float scroll = Input.GetAxis("Mouse ScrollWheel");
             if (Mathf.Abs(scroll) > 0.01f)
             {

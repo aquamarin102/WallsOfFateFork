@@ -104,8 +104,6 @@ GameObject:
   m_Component:
   - component: {fileID: 3559082642132270967}
   - component: {fileID: 5685506623625604820}
-  - component: {fileID: 2941460705152459382}
-  - component: {fileID: 8839591926536675876}
   m_Layer: 14
   m_Name: eyes_low
   m_TagString: Untagged
@@ -189,41 +187,6 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.10385697, y: -0.0000000037252903, z: -0.08069041}
     m_Extent: {x: 0.014202185, y: 0.046052203, z: 0.013584547}
   m_DirtyAABB: 0
---- !u!114 &2941460705152459382
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 375274651032290739}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fbf3575480402db40813e763382412fb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  color: 0
-  eraseRenderer: 0
---- !u!65 &8839591926536675876
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 375274651032290739}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 2, y: 1, z: 2}
-  m_Center: {x: 0, y: 1, z: 0}
 --- !u!1 &450944411191277559
 GameObject:
   m_ObjectHideFlags: 0
@@ -1325,8 +1288,6 @@ GameObject:
   m_Component:
   - component: {fileID: 6653632458521529638}
   - component: {fileID: 5831398264889882016}
-  - component: {fileID: 4253897323846809739}
-  - component: {fileID: 7941196028658185749}
   m_Layer: 14
   m_Name: cloth_low
   m_TagString: Untagged
@@ -1438,41 +1399,6 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.97078574, y: -0.000087052584, z: -0.008756965}
     m_Extent: {x: 0.6730956, y: 0.53447866, z: 0.23147503}
   m_DirtyAABB: 0
---- !u!114 &4253897323846809739
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1478900368421353048}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fbf3575480402db40813e763382412fb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  color: 0
-  eraseRenderer: 0
---- !u!65 &7941196028658185749
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1478900368421353048}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 2, y: 1, z: 2}
-  m_Center: {x: 0, y: 1, z: 0}
 --- !u!1 &1479371707181830248
 GameObject:
   m_ObjectHideFlags: 0
@@ -2087,8 +2013,6 @@ GameObject:
   m_Component:
   - component: {fileID: 2530842693737845191}
   - component: {fileID: 2338103968620393028}
-  - component: {fileID: 3876486838434633769}
-  - component: {fileID: 6057808933585600717}
   m_Layer: 14
   m_Name: boots_low
   m_TagString: Untagged
@@ -2179,41 +2103,6 @@ SkinnedMeshRenderer:
     m_Center: {x: 0.3781983, y: 0.16333391, z: 0.10018439}
     m_Extent: {x: 0.2297639, y: 0.25086704, z: 0.19056523}
   m_DirtyAABB: 0
---- !u!114 &3876486838434633769
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2840408589200801013}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fbf3575480402db40813e763382412fb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  color: 0
-  eraseRenderer: 0
---- !u!65 &6057808933585600717
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2840408589200801013}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 2, y: 1, z: 2}
-  m_Center: {x: 0, y: 1, z: 0}
 --- !u!1 &2841462230860928124
 GameObject:
   m_ObjectHideFlags: 0
@@ -2946,8 +2835,6 @@ GameObject:
   m_Component:
   - component: {fileID: 8409654615694668828}
   - component: {fileID: 3212191332491640873}
-  - component: {fileID: 7757568000126578181}
-  - component: {fileID: 2753099008594699038}
   m_Layer: 14
   m_Name: blade_low
   m_TagString: Untagged
@@ -3033,41 +2920,6 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.11676851, y: -0.14999357, z: -0.04034625}
     m_Extent: {x: 0.11780268, y: 0.13591072, z: 0.15821289}
   m_DirtyAABB: 0
---- !u!114 &7757568000126578181
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4044241201480333291}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fbf3575480402db40813e763382412fb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  color: 0
-  eraseRenderer: 0
---- !u!65 &2753099008594699038
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4044241201480333291}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 2, y: 1, z: 2}
-  m_Center: {x: 0, y: 1, z: 0}
 --- !u!1 &4095038118700752760
 GameObject:
   m_ObjectHideFlags: 0
@@ -3361,8 +3213,6 @@ GameObject:
   m_Component:
   - component: {fileID: 5702879659529045739}
   - component: {fileID: 6917309547216305936}
-  - component: {fileID: 4583982107940454376}
-  - component: {fileID: 3206611851549687462}
   m_Layer: 14
   m_Name: head_low
   m_TagString: Untagged
@@ -3474,41 +3324,6 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.07137717, y: -0.028130978, z: 0.000000029802322}
     m_Extent: {x: 0.15883486, y: 0.45520857, z: 0.5965066}
   m_DirtyAABB: 0
---- !u!114 &4583982107940454376
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4581849285270325732}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fbf3575480402db40813e763382412fb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  color: 0
-  eraseRenderer: 0
---- !u!65 &3206611851549687462
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4581849285270325732}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 2, y: 1, z: 2}
-  m_Center: {x: 0, y: 1, z: 0}
 --- !u!1 &4605882773946263165
 GameObject:
   m_ObjectHideFlags: 0
@@ -4604,8 +4419,6 @@ GameObject:
   m_Component:
   - component: {fileID: 5857620159405605969}
   - component: {fileID: 4924427402412245848}
-  - component: {fileID: 3586428718578332092}
-  - component: {fileID: 1940799773287363445}
   m_Layer: 14
   m_Name: bag_low
   m_TagString: Untagged
@@ -4695,41 +4508,6 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.027673908, y: 0.061669394, z: -0.047902398}
     m_Extent: {x: 0.2065149, y: 0.1479517, z: 0.16960812}
   m_DirtyAABB: 0
---- !u!114 &3586428718578332092
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6430149653303258606}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fbf3575480402db40813e763382412fb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  color: 0
-  eraseRenderer: 0
---- !u!65 &1940799773287363445
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6430149653303258606}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 2, y: 1, z: 2}
-  m_Center: {x: 0, y: 1, z: 0}
 --- !u!1 &6460263685540437323
 GameObject:
   m_ObjectHideFlags: 0
@@ -4803,8 +4581,6 @@ GameObject:
   m_Component:
   - component: {fileID: 3122963810187885937}
   - component: {fileID: 3385552245879999663}
-  - component: {fileID: 2092181401841476868}
-  - component: {fileID: 2521029541061010640}
   m_Layer: 14
   m_Name: cloak_low
   m_TagString: Untagged
@@ -4905,41 +4681,6 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.29806072, y: -0.00086323917, z: 0.06282838}
     m_Extent: {x: 0.403777, y: 0.44933915, z: 0.21529816}
   m_DirtyAABB: 0
---- !u!114 &2092181401841476868
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6570675521913658801}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fbf3575480402db40813e763382412fb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  color: 0
-  eraseRenderer: 0
---- !u!65 &2521029541061010640
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6570675521913658801}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 2, y: 1, z: 2}
-  m_Center: {x: 0, y: 1, z: 0}
 --- !u!1 &6589569962394913597
 GameObject:
   m_ObjectHideFlags: 0
@@ -4950,8 +4691,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1046387622503163232}
   - component: {fileID: 7296526151501411222}
-  - component: {fileID: 663628207803309908}
-  - component: {fileID: 5066385771461788139}
   m_Layer: 14
   m_Name: neck_low
   m_TagString: Untagged
@@ -5037,41 +4776,6 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.022176936, y: 0.16233729, z: 0.000000037252903}
     m_Extent: {x: 0.07251345, y: 0.07831155, z: 0.095352225}
   m_DirtyAABB: 0
---- !u!114 &663628207803309908
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6589569962394913597}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fbf3575480402db40813e763382412fb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  color: 0
-  eraseRenderer: 0
---- !u!65 &5066385771461788139
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6589569962394913597}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 2, y: 1, z: 2}
-  m_Center: {x: 0, y: 1, z: 0}
 --- !u!1 &6692141457591102668
 GameObject:
   m_ObjectHideFlags: 0
@@ -5305,6 +5009,7 @@ GameObject:
   - component: {fileID: 6882138215155267680}
   - component: {fileID: 2578864614612957974}
   - component: {fileID: 2489172136868069457}
+  - component: {fileID: -4782799708216571309}
   m_Layer: 14
   m_Name: Messenger
   m_TagString: NPC
@@ -5422,6 +5127,31 @@ MonoBehaviour:
   Parameters: Messenger
   questId: 4
   questTaskId: 0
+  limitation: 1
+--- !u!114 &-4782799708216571309
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7280076937197616263}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 246c04dfc0ad72d4d947b4c8da3b71df, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Game.OutlineTrigger
+  outlineMethod: 0
+  outlineColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  outlineWidth: 2
+  hoverCheckDistance: 100
+  hoverLayerMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  targetObject: {fileID: 0}
+  highlightOnHover: 1
+  highlightOnTrigger: 1
+  highlightOnGlobalHold: 1
+  fallbackInteractionRadius: 1.6
 --- !u!1 &7363507171811652826
 GameObject:
   m_ObjectHideFlags: 0

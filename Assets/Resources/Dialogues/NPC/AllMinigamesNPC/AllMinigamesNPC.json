@@ -13,7 +13,7 @@
 			"Id": 1,
 			"IsPlayer": true,
 			"IsOption": true,
-			"Text": "Прыть",
+			"Text": "Ловкость",
 			"NextSentenceId": 5
 		},
 		{
@@ -27,15 +27,14 @@
 			"Id": 3,
 			"IsPlayer": true,
 			"IsOption": true,
-			"Text": "Ум",
+			"Text": "Интеллект",
 			"NextSentenceId": 7
 		},
 		{
 			"Id": 4,
 			"IsPlayer": true,
 			"IsOption": true,
-			"Text": "Уйти",
-			"NextSentenceId": 8
+			"Text": "Что-то не хочу"
 		},
 		{
 			"Id": 5, //ловкость
@@ -85,12 +84,6 @@
 					"Dialog": "Dialogues/NPC/AllMinigamesNPC/AllMinigamesNPC_Fail"
 				}
 			}
-		},
-		{
-			"Id": 8,
-			"IsPlayer": true,
-			"Text": "Что-то не хочу"
 		}
-	
 	]
 }

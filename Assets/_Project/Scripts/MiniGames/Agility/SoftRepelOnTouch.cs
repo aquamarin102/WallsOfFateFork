@@ -3,6 +3,7 @@ using UnityEngine;
 [RequireComponent(typeof(Collider))]
 public class SoftRepelOnTouch : MonoBehaviour
 {
+    [SerializeField] private float touchImpulse = 2.5f;
     [SerializeField] private float repelPerSecond = 8.5f;
     [SerializeField] private float maxDistanceBias = 1.1f;
 
@@ -13,9 +14,22 @@ public class SoftRepelOnTouch : MonoBehaviour
         _collider = GetComponent<Collider>();
     }
 
+    private void OnTriggerEnter(Collider other)
+    {
+        ApplyRepel(other, touchImpulse);
+    }
+
     private void OnTriggerStay(Collider other)
     {
-        ApplyRepel(other);
+        ApplyRepel(other, repelPerSecond * Time.deltaTime);
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision == null)
+            return;
+
+        ApplyRepel(collision.collider, touchImpulse);
     }
 
     private void OnCollisionStay(Collision collision)
@@ -23,10 +37,10 @@ public class SoftRepelOnTouch : MonoBehaviour
         if (collision == null)
             return;
 
-        ApplyRepel(collision.collider);
+        ApplyRepel(collision.collider, repelPerSecond * Time.deltaTime);
     }
 
-    private void ApplyRepel(Collider other)
+    private void ApplyRepel(Collider other, float strength)
     {
         var motor = other != null ? other.GetComponentInParent<PlayerMotor>() : null;
         if (motor == null)
@@ -47,7 +61,7 @@ public class SoftRepelOnTouch : MonoBehaviour
             return;
 
         float distanceFactor = Mathf.Clamp01(maxDistanceBias - direction.magnitude);
-        Vector3 push = direction.normalized * (repelPerSecond * Mathf.Max(0.25f, distanceFactor) * Time.deltaTime);
+        Vector3 push = direction.normalized * (strength * Mathf.Max(0.25f, distanceFactor));
         motor.AddExternalVelocity(push);
     }
 
