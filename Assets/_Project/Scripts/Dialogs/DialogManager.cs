@@ -24,8 +24,8 @@ namespace Game
         private Image npcPortrait;
 
         #region Utility
-        [SerializeField] private float characterRevealDelay = 0.045f;
-        [SerializeField] private float nextSentenceDelay = 0.18f;
+        [SerializeField] private float characterRevealDelay = 0.025f;
+        [SerializeField] private float nextSentenceDelay = 0.35f;
         [SerializeField] private float firstSentenceDelay = 0.1f;
         [SerializeField] private float optionTextScale = 0.8f;
 
@@ -307,9 +307,8 @@ namespace Game
 
             if (queuedSentenceRoutine != null)
             {
-                StopCoroutine(queuedSentenceRoutine);
-                queuedSentenceRoutine = null;
-                DisplayCurrentSentence();
+                // Keep the next-line pause readable while the player clicks through text.
+                return;
             }
         }
 
@@ -327,7 +326,7 @@ namespace Game
             }
 
             activeTextComponent = null;
-            AdvanceToNextSentence(immediate: true);
+            AdvanceToNextSentence();
         }
 
         public void SelectOption(int optionIndex)
@@ -362,6 +361,7 @@ namespace Game
                 }
             }
         }
+
 
         private void UpdateResources()
         {

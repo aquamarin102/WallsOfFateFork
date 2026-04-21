@@ -6,7 +6,7 @@ namespace Game.MiniGame.PowerCheck
 {
     public class HealMine : Mine
     {
-        public HealMine(uint number, float ñooldown, GameObject mine) : base(number, ñooldown, mine) { }
+        public HealMine(uint number, float cooldown, GameObject mine) : base(number, cooldown, mine) { }
 
         public void Heal(MiniGamePlayer player)
         {

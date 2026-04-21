@@ -14,24 +14,31 @@
 			"IsPlayer": true,
 			"IsOption": true,
 			"Text": "Прыть",
-			"NextSentenceId": 4
+			"NextSentenceId": 5
 		},
 		{
 			"Id": 2,
 			"IsPlayer": true,
 			"IsOption": true,
 			"Text": "Сила",
-			"NextSentenceId": 5
+			"NextSentenceId": 6
 		},
 		{
 			"Id": 3,
 			"IsPlayer": true,
 			"IsOption": true,
 			"Text": "Ум",
-			"NextSentenceId": 6
+			"NextSentenceId": 7
 		},
 		{
-			"Id": 4, //ловкость
+			"Id": 4,
+			"IsPlayer": true,
+			"IsOption": true,
+			"Text": "Уйти",
+			"NextSentenceId": 8
+		},
+		{
+			"Id": 5, //ловкость
 			"IsPlayer": false,
 			"Text": "Поуворачивайся от моих куриц!",
 			"StartMinigame": true,
@@ -47,7 +54,7 @@
 			}
 		},
 		{
-			"Id": 5, //сила
+			"Id": 6, //сила
 			"IsPlayer": false,
 			"Text": "Давай, давай! Нападай!",
 			"StartMinigame": true,
@@ -63,21 +70,27 @@
 				}
 			}
 		},
-	    {
-		    "Id": 6, //Интелект
+		{
+			"Id": 7, //Интелект
 			"IsPlayer": false,
 			"Text": "Попробуй напряч свои извилины!",
-		    "StartMinigame": true,
-		    "MiniGameType": "Intelligence",
-		    "MiniGameSceneName": "MiniGameIntellect",
-		    "MinigameParams": {
+			"StartMinigame": true,
+			"MiniGameType": "Intelligence",
+			"MiniGameSceneName": "MiniGameIntellect",
+			"MinigameParams": {
 				"Win": {
 					"Dialog": "Dialogues/NPC/AllMinigamesNPC/AllMinigamesNPC_Success"
 				},
 				"Lose": {
 					"Dialog": "Dialogues/NPC/AllMinigamesNPC/AllMinigamesNPC_Fail"
 				}
-		    }
-	    }
+			}
+		},
+		{
+			"Id": 8,
+			"IsPlayer": true,
+			"Text": "Что-то не хочу"
+		}
+	
 	]
 }

@@ -17,8 +17,8 @@ namespace Game.MiniGame.PowerCheck
         // Словарь для отслеживания активных баффов
         private Dictionary<MiniGamePlayer, bool> activeBuffs = new Dictionary<MiniGamePlayer, bool>();
 
-        public BuffSpeedMine(uint number, float сooldown, GameObject mine, float speedbuff, float buffcooldown, int timebeforeexplosion, float radius, uint damage, bool isDebuff)
-            : base(number, сooldown, mine)
+        public BuffSpeedMine(uint number, float cooldown, GameObject mine, float speedbuff, float buffcooldown, int timebeforeexplosion, float radius, uint damage, bool isDebuff)
+            : base(number, cooldown, mine)
         {
             this.SpeedBuff = speedbuff;
             this.BuffCooldown = buffcooldown;

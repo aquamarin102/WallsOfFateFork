@@ -195,7 +195,7 @@ namespace Game.UI
         private Action _onClosed;
         private Action<RuntimeTutorialOverlay> _onDestroyed;
         private bool _isClosed;
-        private bool _waitForPointerRelease;
+        private bool _waitForCloseInputRelease;
 
         public void Initialize(Sprite tutorialSprite, Action onClosed, Action<RuntimeTutorialOverlay> onDestroyed)
         {
@@ -203,7 +203,7 @@ namespace Game.UI
             _onDestroyed = onDestroyed;
             _previousTimeScale = Time.timeScale;
             _closeInputAllowedAt = Time.unscaledTime + CloseInputDelay;
-            _waitForPointerRelease = IsAnyPointerPressed();
+            _waitForCloseInputRelease = IsAnyCloseInputPressed();
 
             BuildOverlay(tutorialSprite);
             Time.timeScale = 0f;
@@ -211,8 +211,11 @@ namespace Game.UI
 
         private void Update()
         {
-            if (_waitForPointerRelease && !IsAnyPointerPressed())
-                _waitForPointerRelease = false;
+            if (_waitForCloseInputRelease && !IsAnyCloseInputPressed())
+                _waitForCloseInputRelease = false;
+
+            if (WasCloseKeyPressedThisFrame())
+                TryCloseFromInput();
         }
 
         private void BuildOverlay(Sprite tutorialSprite)
@@ -254,7 +257,12 @@ namespace Game.UI
 
         private void TryCloseFromClick()
         {
-            if (_waitForPointerRelease || Time.unscaledTime < _closeInputAllowedAt)
+            TryCloseFromInput();
+        }
+
+        private void TryCloseFromInput()
+        {
+            if (_waitForCloseInputRelease || Time.unscaledTime < _closeInputAllowedAt)
                 return;
 
             Close();
@@ -279,6 +287,11 @@ namespace Game.UI
             _onDestroyed?.Invoke(this);
         }
 
+        private static bool IsAnyCloseInputPressed()
+        {
+            return IsAnyPointerPressed() || IsAnyCloseKeyPressed();
+        }
+
         private static bool IsAnyPointerPressed()
         {
             Mouse mouse = Mouse.current;
@@ -292,6 +305,26 @@ namespace Game.UI
 
             Touchscreen touchscreen = Touchscreen.current;
             return touchscreen != null && touchscreen.primaryTouch.press.isPressed;
+        }
+
+        private static bool IsAnyCloseKeyPressed()
+        {
+            Keyboard keyboard = Keyboard.current;
+            return keyboard != null &&
+                   (keyboard.spaceKey.isPressed ||
+                    keyboard.enterKey.isPressed ||
+                    keyboard.numpadEnterKey.isPressed ||
+                    keyboard.escapeKey.isPressed);
+        }
+
+        private static bool WasCloseKeyPressedThisFrame()
+        {
+            Keyboard keyboard = Keyboard.current;
+            return keyboard != null &&
+                   (keyboard.spaceKey.wasPressedThisFrame ||
+                    keyboard.enterKey.wasPressedThisFrame ||
+                    keyboard.numpadEnterKey.wasPressedThisFrame ||
+                    keyboard.escapeKey.wasPressedThisFrame);
         }
     }
 }

@@ -6,7 +6,7 @@ namespace Game.MiniGame.PowerCheck
 {
     public class DamageMine : Mine
     {
-        public DamageMine(uint number, float ñooldown, GameObject mine) : base(number, ñooldown, mine) { }
+        public DamageMine(uint number, float cooldown, GameObject mine) : base(number, cooldown, mine) { }
 
         public void Damage(MiniGamePlayer player1, MiniGamePlayer player2)
         {

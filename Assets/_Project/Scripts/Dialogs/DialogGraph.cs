@@ -11,6 +11,7 @@ namespace Game
         #region GraphVariables 
         public int Id;
         public bool IsPlayer = false;
+        public string SpeakerName;
         public string Text;
         public int NextSentenceId = -1;
         public bool IsOption = false;
