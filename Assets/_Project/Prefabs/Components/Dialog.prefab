@@ -50,7 +50,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.DialogManager
   characterRevealDelay: 0.025
-  nextSentenceDelay: 0.5
+  nextSentenceDelay: 0.35
   firstSentenceDelay: 0.1
   optionTextScale: 0.8
 --- !u!1 &1083940094336715344
@@ -80,14 +80,14 @@ RectTransform:
   m_GameObject: {fileID: 1083940094336715344}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: -0.0000445048}
-  m_LocalScale: {x: 2.6032312, y: 3.4914286, z: 0.8328694}
+  m_LocalScale: {x: 2.57, y: 3.668, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4017804732565451009}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 273.99994, y: -51.3}
+  m_AnchoredPosition: {x: 273.99994, y: -41.3}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &654188259971306361
@@ -262,7 +262,7 @@ RectTransform:
   m_GameObject: {fileID: 1402815881380260558}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 2.734253, y: 3.6671538, z: 0.87478805}
+  m_LocalScale: {x: 2.57, y: 3.668, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4017804732565451009}
@@ -688,7 +688,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 89, y: 60.5}
+  m_AnchoredPosition: {x: 89, y: 52.8}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &880535588269114658
