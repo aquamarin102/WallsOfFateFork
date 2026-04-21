@@ -70,9 +70,13 @@
 			"MiniGameType": "Agility",
 			"MiniGameSceneName": "MiniGameAgility",
 			"MinigameParams": {
-				"QuestId": 4,
-				"WinDialogue": "Dialogues/NPC/Messenger/MessengerMiniGame_Success",
-				"LoseDialogue": "Dialogues/NPC/Messenger/MessengerMiniGame_Fail"
+				"QuestId": 4,				
+				"Win": {
+		        	"Dialog": "Dialogues/NPC/Messenger/MessengerMiniGame_Success"
+		        },
+		        "Lose": {
+		        	"Dialog": "Dialogues/NPC/Messenger/MessengerMiniGame_Fail"
+		        }
 			}
 		}
 	]

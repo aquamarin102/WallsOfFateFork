@@ -1,10 +1,14 @@
+using Game.Data;
+using Game.MiniGame;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using Game.MiniGame;
+using Zenject;
 
 namespace Game
 {
+
     #region Mini-game Data Structures
     [System.Serializable]
     public class MiniGameData
@@ -44,6 +48,7 @@ namespace Game
 
     public class EntryPoint : MonoBehaviour
     {
+        private DialogGraph pendingPostMinigameDialog;
         private DialogManager subscribedDialogueManager;
 
         #region Singleton
@@ -100,6 +105,10 @@ namespace Game
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
             SubscribeToDialogueManager();
+            if (pendingPostMinigameDialog != null)
+            {
+                StartCoroutine(TryStartPendingDialog());
+            }
         }
 
         private void SubscribeToDialogueManager()
@@ -129,7 +138,35 @@ namespace Game
 
         #region MiniGame Management
 
+        private IEnumerator TryStartPendingDialog()
+        {
+            // Даём сцене немного времени на инициализацию (опционально)
+            yield return null;
+
+            DialogManager dm = FindObjectOfType<DialogManager>();
+            if (dm != null)
+            {
+                dm.StartDialog(pendingPostMinigameDialog);
+                pendingPostMinigameDialog = null;
+            }
+            else
+            {
+                Debug.LogWarning("DialogManager not found for pending post-minigame dialog.");
+                pendingPostMinigameDialog = null;
+            }
+        }
+
+        public void SchedulePostMinigameDialog(DialogGraph dialog)
+        {
+            pendingPostMinigameDialog = dialog;
+        }
+
         public bool IsMinigameActive => MinigameManager.Instance != null && MinigameManager.Instance.transform.gameObject.activeSelf;
+
+        private QuestManager GetQuestManager()
+        {
+            return ProjectContext.Instance.Container.Resolve<QuestManager>();
+        }
 
         public void LaunchMinigame(MiniGameData launchData, DialogGraph dialogueGraph)
         {
@@ -151,7 +188,7 @@ namespace Game
 
             Debug.Log("Created new MinigameManager");
 
-            minigameManager.StartMinigame(launchData, dialogueGraph);
+            minigameManager.StartMinigame(launchData, dialogueGraph, GetQuestManager());
 
             Debug.Log($"Minigame started: {launchData.miniGameType}");
         }

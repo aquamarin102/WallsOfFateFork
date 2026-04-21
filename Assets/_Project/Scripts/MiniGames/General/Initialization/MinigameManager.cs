@@ -1,8 +1,12 @@
 ﻿using Game.Data;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.TextCore.Text;
+using Zenject;
 
 namespace Game.MiniGame
 {
@@ -36,7 +40,7 @@ namespace Game.MiniGame
         private Transform playerTransform;
         private Vector3 previousPosition;
         private Quaternion previousRotation;
-        private DialogGraph dialogueGraph;
+        private DialogGraph dialogueGraph;        
 
         void Awake()
         {
@@ -71,7 +75,7 @@ namespace Game.MiniGame
             SceneManager.sceneLoaded -= OnSceneLoaded;
         }
 
-        public void StartMinigame(MiniGameData gameData, DialogGraph dialogueGraph)
+        public void StartMinigame(MiniGameData gameData, DialogGraph dialogueGraph, QuestManager questManager)
         {
             if (gameData == null)
             {
@@ -80,7 +84,9 @@ namespace Game.MiniGame
             }
 
             ResolveDependencies();
+            
             Time.timeScale = 1f;
+            this.questManager = questManager;
             this.dialogueGraph = dialogueGraph;
             _currentGameData = gameData;
             _previousScene = SceneManager.GetActiveScene().name;
@@ -168,6 +174,14 @@ namespace Game.MiniGame
                             ProcessResources(resourcesDict);
                         }
                     }
+                    if (outcomeJObject.TryGetValue("Dialog", out Newtonsoft.Json.Linq.JToken dialogToken) &&
+                        dialogToken.Type == JTokenType.String)
+                    {
+                        string dialogPath = dialogToken.Value<string>();
+                        UnityEngine.TextAsset textAsset = Resources.Load<UnityEngine.TextAsset>(dialogPath);
+
+                        dialogueGraph = JsonConvert.DeserializeObject<DialogGraph>(textAsset.text);
+                    }
                 }
                 else
                 {
@@ -184,6 +198,11 @@ namespace Game.MiniGame
             PlayerSpawnData.SpawnPosition = previousPosition;
             PlayerSpawnData.SpawnRotation = previousRotation;
 
+
+            if (dialogueGraph != null)
+            {
+                EntryPoint.Instance.SchedulePostMinigameDialog(dialogueGraph);
+            }
             if (loadingManager != null)
             {
                 loadingManager.LoadSceneDirect(_previousScene);

@@ -135,8 +135,12 @@
 			"MinigameParams": {
 				"QuestId": 1,
 				"EnemyPrefab": "MiniGames/PowerCheck/Guard",
-				"WinDialogue": "Dialogues/NPC/ChiefGuard/FightCaptain_Success",
-				"LoseDialogue": "Dialogues/NPC/ChiefGuard/FightCaptain_Fail"
+				"Win": {
+		        	"Dialog": "Dialogues/NPC/ChiefGuard/FightCaptain_Success"
+		        },
+		        "Lose": {
+		        	"Dialog": "Dialogues/NPC/ChiefGuard/FightCaptain_Fail"
+		        }
 			}
 		},
 		{
@@ -164,8 +168,12 @@
 			"MinigameParams": {
 				"QuestId": 1,
 				"EnemyPrefab": "MiniGames/PowerCheck/Thief",
-				"WinDialogue": "Dialogues/NPC/ChiefGuard/FightThief_Success",
-				"LoseDialogue": "Dialogues/NPC/ChiefGuard/FightThief_Fail"
+				"Win": {
+		        	"Dialog": "Dialogues/NPC/ChiefGuard/FightThief_Success"
+		        },
+		        "Lose": {
+		        	"Dialog": "Dialogues/NPC/ChiefGuard/FightThief_Fail"
+		        }
 			}
 		}
 	]

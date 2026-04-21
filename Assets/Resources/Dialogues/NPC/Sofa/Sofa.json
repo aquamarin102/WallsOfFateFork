@@ -173,8 +173,12 @@
       "MiniGameSceneName": "MiniGameIntellect",
       "MinigameParams": {
         "QuestId": 2,
-        "WinDialogue": "Dialogues/NPC/Sofa/SofaMiniGame_Success",
-        "LoseDialogue": "Dialogues/NPC/Sofa/SofaMiniGame_Fail"
+        "Win": {
+          "Dialog": "Dialogues/NPC/Sofa/SofaMiniGame_Success"
+        },
+        "Lose": {
+          "Dialog": "Dialogues/NPC/Sofa/SofaMiniGame_Fail"
+        }
       }
     }
   ]

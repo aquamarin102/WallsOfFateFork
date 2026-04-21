@@ -1,0 +1,13 @@
+{
+	"Name": "AllMinigamesNPC",
+	"Portrait": "Man",
+	"CharacterName": "Никто",
+	"Sentences": [
+		{
+			"Id": 0,
+			"IsPlayer": false,
+			"Text": "А ваше величестово хорош:)",
+			"NextSentenceId": -1
+		}
+	]
+}

@@ -17,6 +17,8 @@ namespace Game
 
         private NPCPrefabFactory npcFactory;
         private readonly HashSet<InfluenceArea> subscribedAreas = new();
+        //public HashSet<InfluenceArea> subscribedAreas = new();
+
 
         [Inject]
         private void Construct([InjectOptional] NPCPrefabFactory npcFactory)
@@ -145,7 +147,7 @@ namespace Game
 
         private DialogGraph GetDialogGraph(GameObject obj, string dialogName)
         {
-            string dialogPath = "Dialogues/NPC/" + obj.name.ToLower() + "/" + dialogName;
+            string dialogPath = "Dialogues/NPC/" + obj.name/*.ToLower()*/ + "/" + dialogName;
 
             TextAsset textAsset = Resources.Load<TextAsset>(dialogPath);
             if (textAsset == null)

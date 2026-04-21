@@ -352,11 +352,13 @@ namespace Game
             if (pannelSpawned)
             {
                 TMP_Text sentenceText = sentencePanel.transform.Find("Text")?.GetComponent<TMP_Text>();
+                TMP_Text nameText = sentencePanel.transform.Find("Name")?.GetComponent<TMP_Text>();
 
                 if (sentenceText != null)
                 {
                     FocusSentencePanel(sentencePanel, immediate: true);
                     activeTypingRoutine = StartCoroutine(TypeSentence(currentSentence.Text, sentenceText));
+                    nameText.text = currentDialog.CharacterName;
                 }
             }
         }
