@@ -3476,6 +3476,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 153374736879508207, guid: 54a8c8b12f0dfcf4aba9331bb13bd152, type: 3}
+      propertyPath: ExplosionEffect
+      value: 
+      objectReference: {fileID: 3933175987864466684, guid: 7bf35ff99b8c9004bbcc53bc42869fb7, type: 3}
     - target: {fileID: 5102846518642322661, guid: 54a8c8b12f0dfcf4aba9331bb13bd152, type: 3}
       propertyPath: m_Radius
       value: 0.7
