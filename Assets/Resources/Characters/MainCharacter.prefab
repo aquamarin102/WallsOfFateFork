@@ -731,14 +731,15 @@ MonoBehaviour:
   mouseRaycastDistance: 500
   navMeshSampleRadius: 2.5
   holdRetargetDistance: 0.35
+  holdRetargetDebounce: 0.5
   doubleClickThreshold: 0.3
   doubleClickMaxScreenDistance: 35
   interactionClickProbeRadius: 0.65
   clickMoveVfxPrefab: {fileID: 621558832711808307, guid: 79f7ce22c8b2b2d409036d7451ca8f5b, type: 3}
   clickMoveVfxGroundOffset: 0.03
   clickMoveVfxGroundProbeHeight: 2
-  clickMoveVfxLifetimeFallback: 5
-  clickMoveVfxMinInterval: 0.08
+  clickMoveVfxLifetimeFallback: 0
+  clickMoveVfxMinInterval: 0.2
   clickMoveVfxHoldInterval: 0.65
   keyboardInteractionRadius: 1.6
   walkingPitch: 1.4

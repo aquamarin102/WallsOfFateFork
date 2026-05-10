@@ -832,11 +832,11 @@ MonoBehaviour:
   doubleClickMaxScreenDistance: 35
   interactionClickProbeRadius: 0.65
   clickMoveVfxPrefab: {fileID: 621558832711808307, guid: 79f7ce22c8b2b2d409036d7451ca8f5b, type: 3}
-  clickMoveVfxGroundOffset: 0.03
+  clickMoveVfxGroundOffset: 0.5
   clickMoveVfxGroundProbeHeight: 2
-  clickMoveVfxLifetimeFallback: 5
-  clickMoveVfxMinInterval: 0.08
-  clickMoveVfxHoldInterval: 0.8
+  clickMoveVfxLifetimeFallback: 1
+  clickMoveVfxMinInterval: 0.5
+  clickMoveVfxHoldInterval: 1
   keyboardInteractionRadius: 1.6
   walkingPitch: 1.2
   runningPitch: 1.7

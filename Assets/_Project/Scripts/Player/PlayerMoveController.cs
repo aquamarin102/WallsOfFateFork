@@ -31,6 +31,7 @@ namespace Game
         [SerializeField] private float mouseRaycastDistance = 500f;
         [SerializeField] private float navMeshSampleRadius = 2.5f;
         [SerializeField] private float holdRetargetDistance = 0.35f;
+        [SerializeField] private float holdRetargetDebounce = 0.5f;
         [SerializeField] private float doubleClickThreshold = 0.3f;
         [SerializeField] private float doubleClickMaxScreenDistance = 35f;
         [SerializeField] private float interactionClickProbeRadius = 0.65f;
@@ -65,6 +66,7 @@ namespace Game
         private Vector2 lastClickPosition;
         private UnityEngine.Object lastClickInteractionTarget;
         private int lastProcessedInteractPressId;
+        private float lastHoldRetargetTime = float.NegativeInfinity;
 
         private Vector3 clickTarget;
         private Transform dynamicTarget;
@@ -229,10 +231,11 @@ namespace Game
         private void ProcessClick()
         {
             if (!TryCreatePointerRay(out Ray ray))
-                return;
+                return;        
 
             TryReadPointerPosition(out Vector2 clickPosition);
             RaycastHit[] hits = Physics.RaycastAll(ray, mouseRaycastDistance, ~0, QueryTriggerInteraction.Ignore);
+
             Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
 
             bool hasInteractionTarget = TryResolveInteractionTarget(hits, out InteractionTarget interactionTarget);
@@ -461,16 +464,18 @@ namespace Game
                 {
                     bool shouldRetarget = !agent.hasPath ||
                         agent.isStopped ||
-                        (clickTarget - destination).sqrMagnitude > holdRetargetDistance * holdRetargetDistance;
+                        (clickTarget - destination).sqrMagnitude > holdRetargetDistance * holdRetargetDistance
+                        || Time.time - lastHoldRetargetTime > holdRetargetDebounce;
 
                     if (shouldRetarget)
                     {
                         clickTarget = destination;
                         agent.SetDestination(clickTarget);
                         agent.isStopped = false;
+                        lastHoldRetargetTime = Time.time;
                     }
 
-                    SpawnHeldClickMoveVfx(destination);
+                    // SpawnHeldClickMoveVfx(destination);
                 }
 
                 if (agent.hasPath && !agent.isStopped)

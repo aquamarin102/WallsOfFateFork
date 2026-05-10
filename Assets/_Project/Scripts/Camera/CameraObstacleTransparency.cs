@@ -40,7 +40,7 @@ namespace Game
         private static readonly int OcclusionDitherStrengthId = Shader.PropertyToID("_OcclusionDitherStrength");
 
         [Header("Detection")]
-        [SerializeField] private OcclusionDetectionMode detectionMode = OcclusionDetectionMode.PhysicsCollidersAndRendererBounds;
+        [SerializeField] private OcclusionDetectionMode detectionMode = OcclusionDetectionMode.PhysicsColliders;
         [SerializeField] private LayerMask obstacleMask = Physics.DefaultRaycastLayers;
         [SerializeField, Min(0.01f)] private float probeRadius = 0.35f;
         [SerializeField, Min(0f)] private float distancePadding = 0.25f;
