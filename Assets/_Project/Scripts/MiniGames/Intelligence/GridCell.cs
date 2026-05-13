@@ -31,6 +31,7 @@ namespace Game
         private bool _argumentCollected;
         private bool _timedBarrierIsPassable;
         private bool _previewHighlighted;
+        private MaterialPropertyBlock _propertyBlock;
 
         public bool HasAvailableArgument => CellType == RouteCellType.Argument && !_argumentCollected;
         public bool IsArgumentCell => CellType == RouteCellType.Argument;
@@ -180,10 +181,11 @@ namespace Game
                     continue;
                 }
 
-                MaterialPropertyBlock propertyBlock = new();
-                targetRenderer.GetPropertyBlock(propertyBlock);
-                propertyBlock.SetColor("_Color", targetColor);
-                targetRenderer.SetPropertyBlock(propertyBlock);
+                _propertyBlock ??= new MaterialPropertyBlock();
+                _propertyBlock.Clear();
+                targetRenderer.GetPropertyBlock(_propertyBlock);
+                _propertyBlock.SetColor("_Color", targetColor);
+                targetRenderer.SetPropertyBlock(_propertyBlock);
             }
         }
 

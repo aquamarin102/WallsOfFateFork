@@ -21,7 +21,6 @@ namespace Game
 
         [Header("Warnings")]
         [SerializeField] private TextMeshPro remainingMovesText;
-        [SerializeField, Min(0.01f)] private float remainingMovesTextScale = 0.08f;
         [SerializeField] private Color remainingMovesWarningColor = new(1f, 0.88f, 0.42f, 1f);
         [SerializeField] private Color remainingMovesDangerColor = new(1f, 0.44f, 0.34f, 1f);
 
@@ -227,6 +226,11 @@ namespace Game
 
         private void LateUpdate()
         {
+            if (remainingMovesText == null)
+            {
+                return;
+            }
+
             UpdateRemainingMovesIndicatorTransform();
         }
 
@@ -272,11 +276,14 @@ namespace Game
 
         private void UpdateRemainingMovesIndicatorTransform()
         {
-            
+            if (remainingMovesText == null)
+            {
+                return;
+            }
 
             Transform indicatorTransform = remainingMovesText.transform;
 
-            if (_indicatorCamera == null)
+            if (_indicatorCamera == null || !_indicatorCamera.isActiveAndEnabled)
             {
                 _indicatorCamera = Camera.main;
             }
@@ -286,12 +293,15 @@ namespace Game
                 return;
             }
 
-            Vector3 toCamera = _indicatorCamera.transform.position - indicatorTransform.position;
+            Vector3 toCamera = indicatorTransform.position - _indicatorCamera.transform.position;
             if (toCamera.sqrMagnitude < 0.0001f)
             {
                 return;
             }
 
+            indicatorTransform.rotation = Quaternion.LookRotation(
+                toCamera.normalized,
+                _indicatorCamera.transform.up);
         }
 
         private Quaternion GetFacingRotation()

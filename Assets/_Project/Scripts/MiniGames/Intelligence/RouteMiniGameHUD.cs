@@ -79,12 +79,12 @@ namespace Game
 
         private void Update()
         {
-            if (_executor == null || _queue == null)
+            if (_executor == null)
             {
                 return;
             }
 
-            Refresh();
+            RefreshCandle();
         }
 
         private void OnDestroy()
@@ -128,10 +128,9 @@ namespace Game
             }
 
             int commandsUsed = _queue.Commands.Count;
-            int maxCommands = Mathf.Max(_queue.maxCommands, 1);
+            int maxCommands = _queue.EffectiveMaxCommands;
             int collectedArguments = _executor.CollectedArguments;
             int totalArguments = Mathf.Max(_executor.TotalArguments, 0);
-            float candleNormalized = _executor.CandleNormalized;
             bool canUndo =
                 !_executor.IsRunning &&
                 !_executor.IsResolved &&
@@ -149,6 +148,13 @@ namespace Game
 
             undoHintText.SetText("R - отмена");
             undoHintText.SetColor(canUndo ? accentTextColor : mutedTextColor);
+
+            RefreshCandle();
+        }
+
+        private void RefreshCandle()
+        {
+            float candleNormalized = _executor.CandleNormalized;
 
             if (candleSlider != null)
             {

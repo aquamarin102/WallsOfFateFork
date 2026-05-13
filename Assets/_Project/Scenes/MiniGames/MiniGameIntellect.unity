@@ -348,7 +348,6 @@ GameObject:
   - component: {fileID: 333072538}
   - component: {fileID: 333072541}
   - component: {fileID: 333072540}
-  - component: {fileID: 333072539}
   m_Layer: 0
   m_Name: RemainingMovesIndicator
   m_TagString: Untagged
@@ -375,14 +374,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0.078}
   m_SizeDelta: {x: 1000, y: 1100}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!222 &333072539
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 333072537}
-  m_CullTransparentMesh: 1
 --- !u!114 &333072540
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1668,6 +1659,8 @@ MonoBehaviour:
   swapVerticalControls: 0
   hud: {fileID: 503564359}
   resetHoldDuration: 0.45
+  enableMouseInput: 1
+  doubleClickInterval: 0.28
 --- !u!114 &978206508
 MonoBehaviour:
   m_ObjectHideFlags: 0

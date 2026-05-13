@@ -44,6 +44,7 @@ namespace Game
         private Coroutine _timedBarrierRoutine;
         private bool _timedBarrierPositionsInitialized;
         private bool _previewHighlighted;
+        private MaterialPropertyBlock _propertyBlock;
 
         public bool BlocksMovement => CellType == RouteCellType.Wall ||
                                       (CellType == RouteCellType.TimedBarrier && !_timedBarrierIsPassable);
@@ -217,10 +218,11 @@ namespace Game
                     continue;
                 }
 
-                MaterialPropertyBlock propertyBlock = new();
-                targetRenderer.GetPropertyBlock(propertyBlock);
-                propertyBlock.SetColor("_Color", targetColor);
-                targetRenderer.SetPropertyBlock(propertyBlock);
+                _propertyBlock ??= new MaterialPropertyBlock();
+                _propertyBlock.Clear();
+                targetRenderer.GetPropertyBlock(_propertyBlock);
+                _propertyBlock.SetColor("_Color", targetColor);
+                targetRenderer.SetPropertyBlock(_propertyBlock);
             }
         }
 

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+
 namespace Game
 {
     public class CommandQueue : MonoBehaviour
@@ -17,6 +18,9 @@ namespace Game
 
         public event Action Changed;
 
+        public int EffectiveMaxCommands => maxTurnCommands >= 0
+            ? Mathf.Max(1, maxTurnCommands)
+            : Mathf.Max(1, maxCommands);
         public int MaxWaitCommands => maxWaitCommands;
         public int MaxMoveCommands => maxMoveCommands;
         public RouteCommandType RequiredCommand => requiredCommand;
@@ -98,9 +102,10 @@ namespace Game
                 return false;
             }
 
-            if (Commands.Count > maxCommands)
+            int effectiveMaxCommands = EffectiveMaxCommands;
+            if (Commands.Count > effectiveMaxCommands)
             {
-                reason = $"Лимит команд превышен: {Commands.Count}/{maxCommands}.";
+                reason = $"Лимит команд превышен: {Commands.Count}/{effectiveMaxCommands}.";
                 return false;
             }
 
@@ -134,7 +139,7 @@ namespace Game
         {
             List<string> parts = new()
             {
-                $"Команды: {Commands.Count}/{maxCommands}"
+                $"Команды: {Commands.Count}/{EffectiveMaxCommands}"
             };
 
             if (maxWaitCommands >= 0)
@@ -156,7 +161,13 @@ namespace Game
             return string.Join("\n", parts);
         }
 
-        public void ApplyExternalLimits(int? newMaxCommands, int? newMaxTurns, int? newMaxWaits, int? newMaxMoves, RouteCommandType? required, int? requiredCountOverride)
+        public void ApplyExternalLimits(
+            int? newMaxCommands,
+            int? newMaxTurns,
+            int? newMaxWaits,
+            int? newMaxMoves,
+            RouteCommandType? required,
+            int? requiredCountOverride)
         {
             if (newMaxCommands.HasValue)
             {
@@ -165,7 +176,9 @@ namespace Game
 
             if (newMaxTurns.HasValue)
             {
-                maxTurnCommands = newMaxTurns.Value;
+                maxTurnCommands = newMaxTurns.Value >= 0
+                    ? Mathf.Max(1, newMaxTurns.Value)
+                    : -1;
             }
 
             if (newMaxWaits.HasValue)
@@ -193,9 +206,10 @@ namespace Game
 
         private bool CanAdd(RouteCommand command, out string reason)
         {
-            if (Commands.Count >= maxCommands)
+            int effectiveMaxCommands = EffectiveMaxCommands;
+            if (Commands.Count >= effectiveMaxCommands)
             {
-                reason = $"Очередь заполнена: {maxCommands} команд.";
+                reason = $"Очередь заполнена: {effectiveMaxCommands} команд.";
                 return false;
             }
 

@@ -22,13 +22,16 @@ namespace Game
         [Header("Game Rules")]
         [SerializeField, Min(5f)] private float candleDurationSeconds = 60f;
         [SerializeField] private float betweenCommandsDelay = 0.12f;
-        [SerializeField] private float postRunPause = 0.35f;
         [SerializeField] private bool requireExitToWin;
         [SerializeField] private bool requireOrderedArgumentCollection;
         [SerializeField] private RouteDirection startingDirection = RouteDirection.Up;
 
         [Header("Warnings")]
         [SerializeField, Min(1)] private int lowMovesWarningThreshold = 3;
+
+        [Header("Debug")]
+        [SerializeField] private bool logWarningsToConsole = true;
+        [SerializeField] private bool logInfoToConsole;
 
         [Header("Live Feel")]
         [SerializeField, Min(0f)] private float liveInputCooldown = 0.015f;
@@ -43,7 +46,6 @@ namespace Game
         public bool IsResolved { get; private set; }
         public string StatusMessage { get; private set; }
         public GridManager Grid => grid;
-        public RoutePlanPreview CurrentPreview { get; private set; } = new();
         public float RemainingCandleSeconds => Mathf.Max(0f, _remainingCandleSeconds);
         public float CandleNormalized => _resolvedCandleDuration > 0.0001f
             ? Mathf.Clamp01(RemainingCandleSeconds / _resolvedCandleDuration)
@@ -66,6 +68,8 @@ namespace Game
         private Coroutine _activeRunRoutine;
         private int _nextRequiredSequence = 1;
         private readonly Queue<RouteCommandType> _pendingImmediateCommands = new();
+        private int _lastRemainingMovesIndicatorValue = int.MinValue;
+        private bool _lastRemainingMovesIndicatorVisible;
 
         public void InitializeWithData(MiniGameData gameData)
         {
@@ -81,12 +85,6 @@ namespace Game
             {
                 MinigameManager.Instance.EndMinigame(playerWin);
             }
-        }
-
-        public bool TryStartRun()
-        {
-            SetStatus("Enter больше не используется: ходы выполняются сразу при нажатии.", true);
-            return true;
         }
 
         public void ResetSession(bool restoreAttempts, bool clearQueue)
@@ -110,9 +108,12 @@ namespace Game
 
             if (isWarning)
             {
-                Debug.LogWarning(message);
+                if (logWarningsToConsole)
+                {
+                    Debug.LogWarning(message);
+                }
             }
-            else
+            else if (logInfoToConsole)
             {
                 Debug.Log(message);
             }
@@ -144,33 +145,10 @@ namespace Game
 
         public void RefreshRoutePreview(bool notify = true)
         {
-            EnsureReferences();
-
-            if (grid == null || player == null || queue == null)
+            if (grid != null)
             {
-                CurrentPreview = new RoutePlanPreview
-                {
-                    IsPathValid = false,
-                    ValidationMessage = "Маршрут недоступен: сцена мини-игры настроена не полностью."
-                };
-
-                if (notify)
-                {
-                    StateChanged?.Invoke();
-                }
-
-                return;
+                grid.ApplyRoutePreviewHighlights(null);
             }
-
-            CurrentPreview = new RoutePlanPreview
-            {
-                IsPathValid = true,
-                UsesOrderedArguments = UsesOrderedArgumentCollection,
-                PlannedCollectedArguments = CollectedArguments,
-                TotalArguments = TotalArguments,
-                ValidationMessage = string.Empty
-            };
-            grid.ApplyRoutePreviewHighlights(null);
 
             if (notify)
             {
@@ -194,11 +172,7 @@ namespace Game
                 return false;
             }
 
-            if (_activeRunRoutine != null)
-            {
-                StopCoroutine(_activeRunRoutine);
-            }
-
+            StopActiveRoutine();
             _activeRunRoutine = StartCoroutine(ExecuteImmediateCommandRoutine(type, stepDirection));
             return true;
         }
@@ -221,12 +195,7 @@ namespace Game
             }
 
             int targetCommandCount = historySnapshot.Count - 1;
-
-            if (_activeRunRoutine != null)
-            {
-                StopCoroutine(_activeRunRoutine);
-            }
-
+            StopActiveRoutine();
             _activeRunRoutine = StartCoroutine(RollbackHistoryRoutine(
                 targetCommandCount,
                 historySnapshot,
@@ -247,12 +216,7 @@ namespace Game
             _pendingImmediateCommands.Clear();
 
             List<RouteCommandType> historySnapshot = CaptureHistoryTypes();
-
-            if (_activeRunRoutine != null)
-            {
-                StopCoroutine(_activeRunRoutine);
-            }
-
+            StopActiveRoutine();
             _activeRunRoutine = StartCoroutine(RollbackHistoryRoutine(
                 0,
                 historySnapshot,
@@ -322,6 +286,7 @@ namespace Game
             }
 
             RefreshRoutePreview(false);
+            RefreshRemainingMovesIndicator();
             IsRunning = false;
             _activeRunRoutine = null;
 
@@ -374,6 +339,7 @@ namespace Game
                 StateChanged?.Invoke();
             }
 
+            RefreshRemainingMovesIndicator();
             IsRunning = false;
             _activeRunRoutine = null;
 
@@ -526,15 +492,17 @@ namespace Game
             }
 
             _pendingImmediateCommands.Enqueue(type);
+            RefreshRemainingMovesIndicator();
             return true;
         }
 
         private bool CanReserveBufferedCommand(RouteCommandType type, out string reason)
         {
             int reservedCommands = queue.Commands.Count + _pendingImmediateCommands.Count;
-            if (reservedCommands >= Mathf.Max(queue.maxCommands, 1))
+            int maxCommands = queue.EffectiveMaxCommands;
+            if (reservedCommands >= maxCommands)
             {
-                reason = $"Очередь действий заполнена: {queue.maxCommands}.";
+                reason = $"Очередь действий заполнена: {maxCommands}.";
                 return false;
             }
 
@@ -569,11 +537,7 @@ namespace Game
                 RouteCommandType nextType = _pendingImmediateCommands.Dequeue();
                 if (CanProcessImmediateCommand(nextType, out RouteDirection? stepDirection, out string reason))
                 {
-                    if (_activeRunRoutine != null)
-                    {
-                        StopCoroutine(_activeRunRoutine);
-                    }
-
+                    StopActiveRoutine();
                     _activeRunRoutine = StartCoroutine(ExecuteImmediateCommandRoutine(nextType, stepDirection));
                     return true;
                 }
@@ -584,6 +548,7 @@ namespace Game
                 }
             }
 
+            RefreshRemainingMovesIndicator();
             return false;
         }
 
@@ -686,6 +651,7 @@ namespace Game
 
             grid.ResetBoardState();
             grid.ApplyRoutePreviewHighlights(null);
+
             if (preserveVisualPose)
             {
                 player.SetState(player.StartGridPosition, player.StartDirection, false);
@@ -696,7 +662,6 @@ namespace Game
             }
 
             _nextRequiredSequence = 1;
-            ClearFailureMarkers(false);
 
             if (!ValidateStartCell(out failureMessage))
             {
@@ -705,48 +670,44 @@ namespace Game
 
             for (int index = 0; index < queue.Commands.Count; index++)
             {
-                if (!ApplyHistoricalCommand(queue.Commands[index].Type, preserveVisualPose, out failureMessage))
+                RouteCommandType type = queue.Commands[index].Type;
+
+                if (RouteDirectionUtility.TryGetStepDirection(type, out RouteDirection direction))
                 {
-                    return false;
-                }
-            }
+                    Vector2Int nextPosition = player.PeekPosition(direction);
+                    if (!grid.IsInside(nextPosition))
+                    {
+                        failureMessage = "История маршрута выводит Магната за границы поля.";
+                        return false;
+                    }
 
-            RefreshRoutePreview(false);
-            StateChanged?.Invoke();
-            failureMessage = string.Empty;
-            return true;
-        }
+                    if (grid.IsBlocked(nextPosition))
+                    {
+                        failureMessage = "История маршрута упирается в препятствие.";
+                        return false;
+                    }
 
-        private bool ApplyHistoricalCommand(RouteCommandType type, out string failureMessage)
-        {
-            return ApplyHistoricalCommand(type, false, out failureMessage);
-        }
+                    if (grid.IsForbidden(nextPosition))
+                    {
+                        failureMessage = "История маршрута входит в запрещённую клетку.";
+                        return false;
+                    }
 
-        private bool ApplyHistoricalCommand(RouteCommandType type, bool preserveVisualPose, out string failureMessage)
-        {
-            if (RouteDirectionUtility.TryGetStepDirection(type, out RouteDirection direction))
-            {
-                if (!TryValidateImmediateMove(direction, out Vector2Int nextPosition, out failureMessage))
-                {
-                    return false;
-                }
-
-                if (preserveVisualPose)
-                {
                     player.SetState(nextPosition, direction, false);
+                    grid.CollectArguments(nextPosition, UsesOrderedArgumentCollection, ref _nextRequiredSequence);
+
+                    if (!TryAdvanceTurnState(true, out failureMessage))
+                    {
+                        return false;
+                    }
+
+                    continue;
                 }
-                else
+
+                if (type == RouteCommandType.Wait && !TryAdvanceTurnState(false, out failureMessage))
                 {
-                    player.SnapTo(nextPosition, direction);
+                    return false;
                 }
-
-                grid.CollectArguments(nextPosition, UsesOrderedArgumentCollection, ref _nextRequiredSequence);
-                return TryAdvanceTurnState(true, out failureMessage);
-            }
-
-            if (type == RouteCommandType.Wait)
-            {
-                return TryAdvanceTurnState(false, out failureMessage);
             }
 
             failureMessage = string.Empty;
@@ -764,7 +725,7 @@ namespace Game
 
             if (requireExitToWin && grid.HasExitCell && !grid.IsExit(player.gridPosition))
             {
-                completionHint = "Все доводы собраны. Доберитесь до выхода, пока горит свеча.";
+                completionHint = "Все доводы собраны. Теперь дойдите до выхода.";
                 return false;
             }
 
@@ -791,12 +752,7 @@ namespace Game
 
         private void ResetProgressInternal(bool clearQueue)
         {
-            if (_activeRunRoutine != null)
-            {
-                StopCoroutine(_activeRunRoutine);
-                _activeRunRoutine = null;
-            }
-
+            StopActiveRoutine();
             _pendingImmediateCommands.Clear();
 
             if (clearQueue && queue != null)
@@ -816,9 +772,11 @@ namespace Game
             }
 
             _nextRequiredSequence = 1;
+            _lastRemainingMovesIndicatorValue = int.MinValue;
+            _lastRemainingMovesIndicatorVisible = false;
             IsRunning = false;
             ClearFailureMarkers(false);
-            RefreshRoutePreview(false);
+            RefreshRemainingMovesIndicator();
             StateChanged?.Invoke();
         }
 
@@ -826,9 +784,7 @@ namespace Game
         {
             EnsureReferences();
             BindQueue();
-            EnsureBoardPreview();
             EnsureMinimalHud();
-            EnsureLegacyUiHider();
             BindEndGameScreen();
         }
 
@@ -889,176 +845,10 @@ namespace Game
 
             EnsureReferences();
             BindQueue();
-            EnsureBoardPreview();
             EnsureMinimalHud();
-            EnsureLegacyUiHider();
             BindEndGameScreen();
             ApplyGameData();
             InitializeSession();
-        }
-
-        private IEnumerator RunRoutine()
-        {
-            IsRunning = true;
-            ClearFailureMarkers(false);
-            SetStatus("Прогон запущен. Магнат выполняет маршрут...", false);
-
-            grid.ResetBoardState();
-            player.ResetToStart();
-
-            if (!ValidateStartCell(out string startFailure))
-            {
-                yield return StartCoroutine(HandleUnexpectedRuntimeFailure(startFailure));
-                yield break;
-            }
-
-            int nextRequiredSequence = 1;
-
-            for (int commandIndex = 0; commandIndex < queue.Commands.Count; commandIndex++)
-            {
-                if (IsResolved)
-                {
-                    yield break;
-                }
-
-                RouteCommand command = queue.Commands[commandIndex];
-
-                if (RouteDirectionUtility.TryGetStepDirection(command.Type, out RouteDirection stepDirection))
-                {
-                    for (int step = 0; step < command.Value; step++)
-                    {
-                        if (player.FacingDirection != stepDirection)
-                        {
-                            yield return player.AnimateTurn(stepDirection);
-                        }
-
-                        Vector2Int nextPosition = player.PeekPosition(stepDirection);
-
-                        if (!grid.IsInside(nextPosition))
-                        {
-                            yield return StartCoroutine(HandleUnexpectedRuntimeFailure("Магнат вышел за границы поля.", commandIndex));
-                            yield break;
-                        }
-
-                        if (grid.IsBlocked(nextPosition))
-                        {
-                            yield return StartCoroutine(HandleUnexpectedRuntimeFailure("Маршрут упирается в препятствие.", commandIndex));
-                            yield break;
-                        }
-
-                        yield return player.AnimateMoveTo(nextPosition);
-
-                        int collected = grid.CollectArguments(nextPosition, UsesOrderedArgumentCollection, ref nextRequiredSequence);
-                        if (collected > 0)
-                        {
-                            SetStatus(collected > 1
-                                ? $"Собрано доводов: +{collected}. Осталось {grid.RemainingArguments}."
-                                : $"Довод собран. Осталось {grid.RemainingArguments}.", false);
-                        }
-
-                        if (grid.IsForbidden(nextPosition))
-                        {
-                            yield return StartCoroutine(HandleUnexpectedRuntimeFailure("Маршрут входит в запрещённую клетку.", commandIndex));
-                            yield break;
-                        }
-
-                        yield return new WaitForSeconds(betweenCommandsDelay);
-
-                        if (IsResolved)
-                        {
-                            yield break;
-                        }
-
-                        if (!TryAdvanceTurnState(true, out string dynamicFailureMessage))
-                        {
-                            yield return StartCoroutine(HandleUnexpectedRuntimeFailure(dynamicFailureMessage, commandIndex));
-                            yield break;
-                        }
-                    }
-
-                    continue;
-                }
-
-                if (command.Type != RouteCommandType.Wait)
-                {
-                    continue;
-                }
-
-                SetStatus("Пауза.", false);
-                for (int waitStep = 0; waitStep < command.Value; waitStep++)
-                {
-                    yield return new WaitForSeconds(Mathf.Max(betweenCommandsDelay, 0.18f));
-
-                    if (IsResolved)
-                    {
-                        yield break;
-                    }
-
-                    if (!TryAdvanceTurnState(false, out string dynamicFailureMessage))
-                    {
-                        yield return StartCoroutine(HandleUnexpectedRuntimeFailure(dynamicFailureMessage, commandIndex));
-                        yield break;
-                    }
-                }
-            }
-
-            if (grid.RemainingArguments > 0)
-            {
-                yield return StartCoroutine(HandleUnsuccessfulRun($"Не все доводы собраны. Осталось {grid.RemainingArguments}."));
-                yield break;
-            }
-
-            if (requireExitToWin && grid.HasExitCell && !grid.IsExit(player.gridPosition))
-            {
-                yield return StartCoroutine(HandleUnsuccessfulRun("Все доводы собраны, но Магнат не завершил маршрут в выходной клетке."));
-                yield break;
-            }
-
-            yield return new WaitForSeconds(postRunPause);
-
-            if (!IsResolved)
-            {
-                HandleVictory();
-            }
-        }
-
-        private IEnumerator HandleUnsuccessfulRun(string message)
-        {
-            IsRunning = false;
-            _activeRunRoutine = null;
-
-            SetStatus($"{message} Магнат возвращается в начало, свеча продолжает гореть.", true);
-            yield return new WaitForSeconds(postRunPause);
-
-            if (IsResolved)
-            {
-                yield break;
-            }
-
-            grid.ResetBoardState();
-            player.ResetToStart();
-            RefreshRoutePreview(false);
-            StateChanged?.Invoke();
-        }
-
-        private IEnumerator HandleUnexpectedRuntimeFailure(string message, int failedCommandIndex = -1)
-        {
-            _lastFailedCommandIndex = failedCommandIndex;
-            IsRunning = false;
-            _activeRunRoutine = null;
-
-            SetStatus($"{message} Исправьте маршрут и попробуйте снова, пока не догорела свеча.", true);
-            yield return new WaitForSeconds(postRunPause);
-
-            if (IsResolved)
-            {
-                yield break;
-            }
-
-            grid.ResetBoardState();
-            player.ResetToStart();
-            RefreshRoutePreview(false);
-            StateChanged?.Invoke();
         }
 
         private void HandleVictory()
@@ -1067,8 +857,7 @@ namespace Game
             IsResolved = true;
             _activeRunRoutine = null;
             ClearFailureMarkers(false);
-            SetStatus("Все доводы собраны. Прогон успешен.", false);
-
+            SetStatus("Все доводы собраны. Мини-игра пройдена.", false);
             FinishMiniGame(true);
         }
 
@@ -1079,12 +868,8 @@ namespace Game
 
             if (grid == null || player == null || queue == null)
             {
-                CurrentPreview = new RoutePlanPreview
-                {
-                    IsPathValid = false,
-                    ValidationMessage = "Сцена мини-игры настроена не полностью: не хватает ссылок на grid, player или queue."
-                };
-                SetStatus(CurrentPreview.ValidationMessage, true);
+                _initialized = false;
+                SetStatus("Сцена мини-игры настроена не полностью: не хватает ссылок на grid, player или queue.", true);
                 return;
             }
 
@@ -1103,13 +888,15 @@ namespace Game
             StatusMessage = string.Empty;
             _nextRequiredSequence = 1;
             _pendingImmediateCommands.Clear();
+            _lastRemainingMovesIndicatorValue = int.MinValue;
+            _lastRemainingMovesIndicatorVisible = false;
 
             grid.ResetBoardState();
             grid.ApplyRoutePreviewHighlights(null);
             player.ResetToStart();
             ClearFailureMarkers(false);
-            RefreshRoutePreview(false);
             RefreshRemainingMovesIndicator();
+            StateChanged?.Invoke();
             SetStatus("Ходите по полю сразу, собирайте доводы и следите за свечой.", false);
         }
 
@@ -1120,8 +907,9 @@ namespace Game
                 return;
             }
 
-            int maxCommands = Mathf.Max(queue.maxCommands, 1);
-            int remainingMoves = Mathf.Max(0, maxCommands - queue.Commands.Count);
+            int maxCommands = queue.EffectiveMaxCommands;
+            int reservedCommands = queue.Commands.Count + _pendingImmediateCommands.Count;
+            int remainingMoves = Mathf.Max(0, maxCommands - reservedCommands);
             bool shouldShow =
                 _initialized &&
                 !IsResolved &&
@@ -1129,6 +917,14 @@ namespace Game
                 remainingMoves > 0 &&
                 remainingMoves <= Mathf.Max(1, lowMovesWarningThreshold);
 
+            if (_lastRemainingMovesIndicatorValue == remainingMoves &&
+                _lastRemainingMovesIndicatorVisible == shouldShow)
+            {
+                return;
+            }
+
+            _lastRemainingMovesIndicatorValue = remainingMoves;
+            _lastRemainingMovesIndicatorVisible = shouldShow;
             player.SetRemainingMovesIndicator(remainingMoves, shouldShow);
         }
 
@@ -1189,15 +985,7 @@ namespace Game
             }
 
             RefreshRoutePreview();
-        }
-
-        private void EnsureBoardPreview()
-        {
-            RouteBoardPreview preview = GetComponent<RouteBoardPreview>();
-            if (preview != null)
-            {
-                preview.enabled = false;
-            }
+            RefreshRemainingMovesIndicator();
         }
 
         private void EnsureMinimalHud()
@@ -1206,15 +994,6 @@ namespace Game
             if (existingHud != null)
             {
                 existingHud.Initialize(queue, this);
-            }
-        }
-
-        private void EnsureLegacyUiHider()
-        {
-            RouteLegacyUiHider legacyUiHider = GetComponent<RouteLegacyUiHider>();
-            if (legacyUiHider != null)
-            {
-                legacyUiHider.enabled = false;
             }
         }
 
@@ -1314,12 +1093,7 @@ namespace Game
             IsRunning = false;
             IsResolved = true;
             _pendingImmediateCommands.Clear();
-
-            if (_activeRunRoutine != null)
-            {
-                StopCoroutine(_activeRunRoutine);
-                _activeRunRoutine = null;
-            }
+            StopActiveRoutine();
 
             SetStatus("Свеча догорела. Мини-игра провалена.", true);
             FinishMiniGame(false);
@@ -1575,6 +1349,17 @@ namespace Game
             return _gameData != null &&
                    _gameData.customParameters != null &&
                    _gameData.customParameters.TryGetValue(key, out rawValue);
+        }
+
+        private void StopActiveRoutine()
+        {
+            if (_activeRunRoutine == null)
+            {
+                return;
+            }
+
+            StopCoroutine(_activeRunRoutine);
+            _activeRunRoutine = null;
         }
 
         private void OnDestroy()
