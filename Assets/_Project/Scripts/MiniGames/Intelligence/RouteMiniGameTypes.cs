@@ -3,7 +3,6 @@ using UnityEngine;
 
 namespace Game
 {
-
     public enum RouteDirection
     {
         Up,
@@ -110,6 +109,18 @@ namespace Game
                 RouteDirection.Right => RouteDirection.Down,
                 RouteDirection.Down => RouteDirection.Left,
                 RouteDirection.Left => RouteDirection.Up,
+                _ => direction
+            };
+        }
+
+        public static RouteDirection Opposite(RouteDirection direction)
+        {
+            return direction switch
+            {
+                RouteDirection.Up => RouteDirection.Down,
+                RouteDirection.Right => RouteDirection.Left,
+                RouteDirection.Down => RouteDirection.Up,
+                RouteDirection.Left => RouteDirection.Right,
                 _ => direction
             };
         }
@@ -236,5 +247,18 @@ namespace Game
                 _ => string.Empty
             };
         }
+    }
+
+    // Compatibility shell kept for scene/runtime code that still expects a preview object.
+    public sealed class RoutePlanPreview
+    {
+        public bool HasCommands { get; set; }
+        public bool IsPathValid { get; set; } = true;
+        public bool UsesOrderedArguments { get; set; }
+        public int PlannedCollectedArguments { get; set; }
+        public int TotalArguments { get; set; }
+        public string ValidationMessage { get; set; } = string.Empty;
+
+        public bool WillCollectAllArguments => TotalArguments <= 0 || PlannedCollectedArguments >= TotalArguments;
     }
 }

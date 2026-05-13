@@ -36,6 +36,11 @@ namespace Game
             return true;
         }
 
+        public bool CanAddCommand(RouteCommandType type, out string reason)
+        {
+            return CanAdd(new RouteCommand(type), out reason);
+        }
+
         public bool RemoveLast(out string reason)
         {
             if (Commands.Count == 0)

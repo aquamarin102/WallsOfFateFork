@@ -1,4 +1,5 @@
 using System.Collections;
+using TMPro;
 using UnityEngine;
 
 namespace Game
@@ -18,9 +19,16 @@ namespace Game
         [SerializeField] private Vector3 visualRotationOffset;
         [SerializeField] private bool deriveGridPositionFromTransform = true;
 
+        [Header("Warnings")]
+        [SerializeField] private TextMeshPro remainingMovesText;
+        [SerializeField, Min(0.01f)] private float remainingMovesTextScale = 0.08f;
+        [SerializeField] private Color remainingMovesWarningColor = new(1f, 0.88f, 0.42f, 1f);
+        [SerializeField] private Color remainingMovesDangerColor = new(1f, 0.44f, 0.34f, 1f);
+
         private Vector2Int _startGridPosition;
         private RouteDirection _startDirection;
         private bool _startCaptured;
+        private Camera _indicatorCamera;
 
         public RouteDirection FacingDirection { get; private set; }
         public Vector2Int StartGridPosition => _startGridPosition;
@@ -32,7 +40,7 @@ namespace Game
 
             if (grid == null)
             {
-                grid = FindObjectOfType<GridManager>();
+                grid = FindAnyObjectByType<GridManager>();
             }
 
             if (visualRoot == null)
@@ -51,6 +59,7 @@ namespace Game
 
             FacingDirection = startingDirection;
             SnapToGrid();
+            SetRemainingMovesIndicator(0, false);
         }
 
         public void SetStartingDirection(RouteDirection direction, bool snapImmediately)
@@ -71,6 +80,62 @@ namespace Game
             gridPosition = _startGridPosition;
             FacingDirection = _startDirection;
             SnapToGrid();
+        }
+
+        public void SnapTo(Vector2Int targetPosition, RouteDirection direction)
+        {
+            StopAllCoroutines();
+            gridPosition = targetPosition;
+            FacingDirection = direction;
+            SnapToGrid();
+        }
+
+        public void SetState(Vector2Int targetPosition, RouteDirection direction, bool snapVisual)
+        {
+            if (snapVisual)
+            {
+                StopAllCoroutines();
+            }
+
+            gridPosition = targetPosition;
+            FacingDirection = direction;
+
+            if (snapVisual)
+            {
+                SnapToGrid();
+            }
+        }
+
+        public void ClampMotionTimings(float maxMoveDuration, float maxTurnDuration)
+        {
+            if (maxMoveDuration > 0f)
+            {
+                moveTime = Mathf.Min(moveTime, maxMoveDuration);
+            }
+
+            if (maxTurnDuration > 0f)
+            {
+                turnTime = Mathf.Min(turnTime, maxTurnDuration);
+            }
+        }
+
+        public void SetRemainingMovesIndicator(int remainingMoves, bool isVisible)
+        {
+
+            if (remainingMovesText == null)
+            {
+                return;
+            }
+
+            remainingMovesText.gameObject.SetActive(isVisible);
+            if (!isVisible)
+            {
+                return;
+            }
+
+            remainingMovesText.text = remainingMoves.ToString();
+            remainingMovesText.color = remainingMoves <= 1 ? remainingMovesDangerColor : remainingMovesWarningColor;
+            UpdateRemainingMovesIndicatorTransform();
         }
 
         public IEnumerator AnimateTurn(RouteDirection newDirection)
@@ -160,6 +225,11 @@ namespace Game
             }
         }
 
+        private void LateUpdate()
+        {
+            UpdateRemainingMovesIndicatorTransform();
+        }
+
         private void SnapToGrid()
         {
             if (grid == null)
@@ -189,13 +259,39 @@ namespace Game
 
             if (grid == null)
             {
-                grid = FindObjectOfType<GridManager>();
+                grid = FindAnyObjectByType<GridManager>();
             }
 
             if (grid != null && grid.TryGetGridPositionFromWorld(transform.position, out Vector2Int resolvedPosition))
             {
                 gridPosition = resolvedPosition;
             }
+        }
+
+       
+
+        private void UpdateRemainingMovesIndicatorTransform()
+        {
+            
+
+            Transform indicatorTransform = remainingMovesText.transform;
+
+            if (_indicatorCamera == null)
+            {
+                _indicatorCamera = Camera.main;
+            }
+
+            if (_indicatorCamera == null)
+            {
+                return;
+            }
+
+            Vector3 toCamera = _indicatorCamera.transform.position - indicatorTransform.position;
+            if (toCamera.sqrMagnitude < 0.0001f)
+            {
+                return;
+            }
+
         }
 
         private Quaternion GetFacingRotation()
