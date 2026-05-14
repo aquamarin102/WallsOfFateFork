@@ -1,5 +1,6 @@
-﻿using System.Collections;
+using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -15,44 +16,59 @@ namespace Game.MiniGame.PowerCheck
         private bool IsDebuff;
 
         // Словарь для отслеживания активных баффов
-        private Dictionary<MiniGamePlayer, bool> activeBuffs = new Dictionary<MiniGamePlayer, bool>();
+        private readonly Dictionary<MiniGamePlayer, bool> activeBuffs = new Dictionary<MiniGamePlayer, bool>();
 
         public BuffSpeedMine(uint number, float cooldown, GameObject mine, float speedbuff, float buffcooldown, int timebeforeexplosion, float radius, uint damage, bool isDebuff)
             : base(number, cooldown, mine)
         {
-            this.SpeedBuff = speedbuff;
-            this.BuffCooldown = buffcooldown;
-            this.TimeBeforeExplosion = timebeforeexplosion;
-            this.MaxRadius = radius;
-            this.Damage = damage;
-            this.IsDebuff = isDebuff;
+            SpeedBuff = speedbuff;
+            BuffCooldown = buffcooldown;
+            TimeBeforeExplosion = timebeforeexplosion;
+            MaxRadius = radius;
+            Damage = damage;
+            IsDebuff = isDebuff;
         }
 
-        public float GetSpeedBuff() => this.SpeedBuff;
-        public float GetBuffCooldown() => this.BuffCooldown;
-        public int GetTimeBeforeExplosion() => this.TimeBeforeExplosion;
+        public float GetSpeedBuff() => SpeedBuff;
+        public float GetBuffCooldown() => BuffCooldown;
+        public int GetTimeBeforeExplosion() => TimeBeforeExplosion;
 
-        public async Task BuffSpeed(MiniGamePlayer player)
+        public async Task BuffSpeed(MiniGamePlayer player, CancellationToken cancellationToken = default)
         {
-            // Проверяем, есть ли активный бафф на данном объекте
-            if (activeBuffs.ContainsKey(player) && activeBuffs[player])
+            if (player == null || player.isDead)
             {
-                //Debug.LogWarning($"Buff is already active for {player.name}");
-                return; // Не применяем бафф повторно
+                return;
+            }
+
+            if (activeBuffs.TryGetValue(player, out bool isActive) && isActive)
+            {
+                return;
             }
 
             activeBuffs[player] = true;
+            bool buffApplied = false;
 
             try
             {
-                // Применяем начальный бафф
-                player.TakeSpeedboost(this.SpeedBuff, IsDebuff);
-                player.TakeDamage(this.Damage);
+                player.ApplySpeedEffect(this, SpeedBuff, IsDebuff);
+                player.TakeDamage(Damage);
+                buffApplied = true;
 
-                await Task.Delay((int)(this.BuffCooldown * 1000));
+                await Task.Delay((int)(BuffCooldown * 1000f), cancellationToken);
 
-                // Убираем бафф
-                player.TakeSpeedboost(1f, IsDebuff);
+                if (player != null && !player.isDead)
+                {
+                    player.ClearSpeedEffect(this, IsDebuff);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                if (buffApplied && player != null)
+                {
+                    player.ClearSpeedEffect(this, IsDebuff);
+                }
+
+                throw;
             }
             finally
             {
@@ -60,35 +76,43 @@ namespace Game.MiniGame.PowerCheck
             }
         }
 
-        public async Task BuffSpeedList(List<MiniGamePlayer> players)
+        public Task BuffSpeedList(IReadOnlyList<MiniGamePlayer> players, CancellationToken cancellationToken = default)
         {
-            foreach (var player in players)
+            if (players == null || players.Count == 0)
             {
+                return Task.CompletedTask;
+            }
+
+            List<Task> tasks = null;
+            for (int i = 0; i < players.Count; i++)
+            {
+                MiniGamePlayer player = players[i];
                 if (player != null)
                 {
-                    await BuffSpeed(player);
+                    tasks ??= new List<Task>(players.Count);
+                    tasks.Add(BuffSpeed(player, cancellationToken));
                 }
             }
+
+            return tasks == null || tasks.Count == 0 ? Task.CompletedTask : Task.WhenAll(tasks);
         }
 
-        public List<MiniGamePlayer> FindDistanceToMine(Vector3 minePosition, params GameObject[] playerspositions)
+        public List<MiniGamePlayer> FindDistanceToMine(Vector3 minePosition, params MiniGamePlayer[] players)
         {
-            List<MiniGamePlayer> closeObjects = new List<MiniGamePlayer>();
+            List<MiniGamePlayer> closeObjects = new List<MiniGamePlayer>(players.Length);
 
-            foreach (var obj in playerspositions)
+            for (int i = 0; i < players.Length; i++)
             {
-                if (obj != null) // Проверяем, что объект не null
+                MiniGamePlayer player = players[i];
+                if (player == null || player.isDead)
                 {
-                    float distance = Vector3.Distance(minePosition, obj.transform.position);
-                    if (distance <= this.MaxRadius)
-                    {
-                        MiniGamePlayer objChar = obj.GetComponent<MiniGamePlayer>();
-                        if (objChar != null) closeObjects.Add(objChar);
-                    }
+                    continue;
                 }
-                else
+
+                float distance = Vector3.Distance(minePosition, player.transform.position);
+                if (distance <= MaxRadius)
                 {
-                    //Debug.LogWarning("One of the passed GameObjects is null.");
+                    closeObjects.Add(player);
                 }
             }
 

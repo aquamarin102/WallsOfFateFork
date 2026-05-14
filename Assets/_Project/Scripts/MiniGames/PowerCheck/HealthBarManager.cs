@@ -1,6 +1,5 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
-using Zenject.SpaceFighter;
 
 namespace Game.MiniGame.PowerCheck
 {
@@ -14,6 +13,9 @@ namespace Game.MiniGame.PowerCheck
 
         private Slider _healthBar;
         private MiniGamePlayer _player;
+        private Text _healthBarText;
+        private Image _portraitImage;
+        private bool _isSubscribed;
 
         /// <summary>
         /// Назначает полоску здоровья (вызывается из MiniGameInstaller).
@@ -22,91 +24,112 @@ namespace Game.MiniGame.PowerCheck
         public void SetHealthBar(Slider healthBar)
         {
             _healthBar = healthBar;
+            TryInitialize();
         }
 
-        void Start()
+        private void Start()
         {
-            // Активируем полоску здоровья, если объект активен и _healthBar назначен
-            if (this.gameObject.activeSelf && _healthBar != null)
-            {
-                _healthBar.gameObject.SetActive(true);
-            }
+            TryInitialize();
+        }
 
-            // Получаем компонент MiniGamePlayer
-            _player = GetComponent<MiniGamePlayer>();
+        private void OnDestroy()
+        {
+            if (_player != null && _isSubscribed)
+            {
+                _player.OnHealthChanged -= HandleHealthChanged;
+            }
+        }
+
+        private void TryInitialize()
+        {
+            _player ??= GetComponent<MiniGamePlayer>();
             if (_player == null)
             {
                 Debug.LogError("Компонент MiniGamePlayer не найден!", this);
                 return;
             }
 
-            // Проверяем, назначена ли полоска здоровья
             if (_healthBar == null)
             {
-                Debug.LogError("Полоска здоровья не назначена!", this);
                 return;
             }
 
-            // Обновляем здоровье и портрет при старте
-            UpdateHealthBar();
+            if (gameObject.activeSelf)
+            {
+                _healthBar.gameObject.SetActive(true);
+            }
+
+            CacheHealthBarReferences();
+
+            if (!_isSubscribed)
+            {
+                _player.OnHealthChanged += HandleHealthChanged;
+                _isSubscribed = true;
+            }
+
+            UpdateHealthBar(_player.Health, _player.MaxHealth);
             UpdatePortrait();
         }
 
-        void Update()
+        private void CacheHealthBarReferences()
         {
-            // Обновляем здоровье, если player и _healthBar не null
-            if (_player != null && _healthBar != null)
+            if (_healthBar == null)
             {
-                UpdateHealthBar();
+                return;
             }
+
+            _healthBarText ??= _healthBar.GetComponentInChildren<Text>(true);
+            if (_portraitImage != null)
+            {
+                return;
+            }
+
+            Transform imageTransform = _healthBar.transform.Find("Image");
+            if (imageTransform == null)
+            {
+                Debug.LogWarning("Объект с именем 'Image' не найден под полоской здоровья!", _healthBar);
+                return;
+            }
+
+            _portraitImage = imageTransform.GetComponent<Image>();
+            if (_portraitImage == null)
+            {
+                Debug.LogWarning("Компонент Image не найден на объекте 'Image' под полоской здоровья!", imageTransform);
+            }
+        }
+
+        private void HandleHealthChanged(uint currentHealth, uint maxHealth)
+        {
+            UpdateHealthBar(currentHealth, maxHealth);
         }
 
         /// <summary>
         /// Обновляет значение полоски здоровья и текст.
         /// </summary>
-        private void UpdateHealthBar()
+        private void UpdateHealthBar(uint currentHealth, uint maxHealth)
         {
-            // Вычисляем отношение текущего здоровья к максимальному
-            float currentHealth = _player.Health;
-            float maxHealth = _player.MaxHealth;
-            _healthBar.value = currentHealth / maxHealth;
-
-            // Обновляем текст здоровья (например, "50 / 100")
-            Text healthBarText = _healthBar.GetComponentInChildren<Text>();
-            if (healthBarText != null)
+            if (_healthBar == null)
             {
-                healthBarText.text = $"{Mathf.Ceil(currentHealth)} / {Mathf.Ceil(maxHealth)}";
+                return;
+            }
+
+            _healthBar.value = maxHealth == 0 ? 0f : (float)currentHealth / maxHealth;
+            if (_healthBarText != null)
+            {
+                _healthBarText.text = $"{currentHealth} / {maxHealth}";
             }
         }
 
         /// <summary>
-        /// Проверяет и обновляет спрайт портрета в дочернем Image с именем "image".
+        /// Проверяет и обновляет спрайт портрета в дочернем Image с именем "Image".
         /// </summary>
         private void UpdatePortrait()
         {
-            // Проверяем, что player и _healthBar не null
-            if (_player == null || _healthBar == null)
+            if (_player == null || _healthBar == null || _portraitImage == null)
             {
                 return;
             }
 
-            // Ищем дочерний объект с именем "image" в иерархии _healthBar.transform
-            Transform imageTransform = _healthBar.transform.Find("Image");
-            if (imageTransform == null)
-            {
-                Debug.LogWarning("Объект с именем 'image' не найден под полоской здоровья!", _healthBar);
-                return;
-            }
-
-            // Получаем компонент Image у найденного объекта
-            Image portraitImage = imageTransform.GetComponent<Image>();
-            if (portraitImage == null)
-            {
-                Debug.LogWarning("Компонент Image не найден на объекте 'image' под полоской здоровья!", imageTransform);
-                return;
-            }
-
-            // Проверяем, указан ли путь к портрету
             if (string.IsNullOrEmpty(_player.Portrait))
             {
                 Debug.LogWarning("player.Portrait пуст или null!", this);
@@ -122,10 +145,9 @@ namespace Game.MiniGame.PowerCheck
                 return;
             }
 
-            // Обновляем спрайт, если текущий отличается
-            if (portraitImage.sprite != portraitSprite)
+            if (_portraitImage.sprite != portraitSprite)
             {
-                portraitImage.sprite = portraitSprite;
+                _portraitImage.sprite = portraitSprite;
             }
         }
 

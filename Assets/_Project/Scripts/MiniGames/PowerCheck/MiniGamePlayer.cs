@@ -1,6 +1,6 @@
 ﻿using Game.Data;
 using System;
-using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using Zenject;
 
@@ -40,6 +40,14 @@ namespace Game.MiniGame.PowerCheck
 
         private bool underDebuff;
         private Coroutine pulseCoroutine;
+        private uint baseMinDamage;
+        private uint baseDamage;
+        private uint baseMinHealingAmount;
+        private uint baseHealingAmount;
+        private float baseSpeed;
+        private bool baseStatsCaptured;
+        private readonly Dictionary<object, float> activeBuffSpeedEffects = new Dictionary<object, float>();
+        private readonly Dictionary<object, float> activeDebuffSpeedEffects = new Dictionary<object, float>();
 
         public string Name
         {
@@ -51,7 +59,17 @@ namespace Game.MiniGame.PowerCheck
         public uint Health
         {
             get => health;
-            set => health = value;
+            set
+            {
+                uint clampedHealth = value > maxHealth ? maxHealth : value;
+                if (health == clampedHealth)
+                {
+                    return;
+                }
+
+                health = clampedHealth;
+                OnHealthChanged?.Invoke(health, maxHealth);
+            }
         }
 
         // Теперь свойство Damage возвращает случайное значение в заданном диапазоне [minDamage; damage]
@@ -82,8 +100,11 @@ namespace Game.MiniGame.PowerCheck
         // HealingAmount теперь хранит верхнюю границу,
         // реальное лечение считается внутри метода TakeHeal
         public uint HealingAmount => healingAmount;
+        public float AverageDamage => damage <= minDamage ? damage : (minDamage + damage) * 0.5f;
+        public float AverageHealingAmount => healingAmount <= minHealingAmount ? healingAmount : (minHealingAmount + healingAmount) * 0.5f;
 
         public event Action<float, bool> OnSpeedChanged;
+        public event Action<uint, uint> OnHealthChanged;
 
         private PlayerManager playerManager;
 
@@ -95,24 +116,63 @@ namespace Game.MiniGame.PowerCheck
 
         private void Awake()
         {
+            CacheBaseStats();
             ResolveDependencies();
         }
 
         private void OnEnable()
         {
             ResolveDependencies();
+            ApplyProgressionStats();
             ResetHealth();
-            if (playerManager != null)
-            {
-                speedModifier += playerManager.PlayerData.GetStat(StatType.Dex);
-                damage += Convert.ToUInt32(playerManager.PlayerData.GetStat(StatType.Strength));
-                minDamage += Convert.ToUInt32(playerManager.PlayerData.GetStat(StatType.Strength));
-            }
         }
 
         private void ResolveDependencies()
         {
             playerManager ??= PlayerManager.Instance;
+        }
+
+        private void CacheBaseStats()
+        {
+            if (baseStatsCaptured)
+            {
+                return;
+            }
+
+            baseSpeed = speed;
+            baseMinDamage = minDamage;
+            baseDamage = damage;
+            baseMinHealingAmount = minHealingAmount;
+            baseHealingAmount = healingAmount;
+            baseStatsCaptured = true;
+        }
+
+        private void ApplyProgressionStats()
+        {
+            CacheBaseStats();
+
+            speed = baseSpeed;
+            minDamage = baseMinDamage;
+            damage = baseDamage;
+            minHealingAmount = baseMinHealingAmount;
+            healingAmount = baseHealingAmount;
+
+            activeBuffSpeedEffects.Clear();
+            activeDebuffSpeedEffects.Clear();
+            underDebuff = false;
+            speedModifier = 1f;
+
+            if (playerManager == null)
+            {
+                return;
+            }
+
+            int dexterity = Mathf.Max(0, playerManager.PlayerData.GetStat(StatType.Dex));
+            int strength = Mathf.Max(0, playerManager.PlayerData.GetStat(StatType.Strength));
+
+            speed += dexterity;
+            damage += Convert.ToUInt32(strength);
+            minDamage += Convert.ToUInt32(strength);
         }
 
         public string GetName()
@@ -122,7 +182,7 @@ namespace Game.MiniGame.PowerCheck
 
         public void TakeDamage(uint dmg)
         {
-            health = health >= dmg ? health - dmg : 0;
+            Health = health >= dmg ? health - dmg : 0;
         }
 
         public void TakeHeal()
@@ -140,15 +200,69 @@ namespace Game.MiniGame.PowerCheck
                 healValue = (uint)UnityEngine.Random.Range(min, maxExc);
             }
 
-            health += healValue;
-            if (health > maxHealth)
-                health = maxHealth;
+            Health = health + healValue;
         }
 
         public void TakeSpeedboost(float speedMultiplier, bool isDebuff)
         {
-            underDebuff = isDebuff;
+            underDebuff = isDebuff && !Mathf.Approximately(speedMultiplier, 1f);
             SpeedModifier = speedMultiplier;
+
+            if (pulseCoroutine != null)
+            {
+                StopCoroutine(pulseCoroutine);
+                pulseCoroutine = null;
+            }
+        }
+
+        public void ApplySpeedEffect(object source, float speedMultiplier, bool isDebuff)
+        {
+            if (source == null)
+            {
+                return;
+            }
+
+            Dictionary<object, float> targetEffects = isDebuff ? activeDebuffSpeedEffects : activeBuffSpeedEffects;
+            targetEffects[source] = speedMultiplier;
+            RefreshSpeedEffects();
+        }
+
+        public void ClearSpeedEffect(object source, bool isDebuff)
+        {
+            if (source == null)
+            {
+                return;
+            }
+
+            Dictionary<object, float> targetEffects = isDebuff ? activeDebuffSpeedEffects : activeBuffSpeedEffects;
+            if (targetEffects.Remove(source))
+            {
+                RefreshSpeedEffects();
+            }
+        }
+
+        private void RefreshSpeedEffects()
+        {
+            float resultingSpeedModifier = 1f;
+            bool hasDebuffEffect = activeDebuffSpeedEffects.Count > 0;
+
+            if (hasDebuffEffect)
+            {
+                foreach (float debuffMultiplier in activeDebuffSpeedEffects.Values)
+                {
+                    resultingSpeedModifier = Mathf.Min(resultingSpeedModifier, debuffMultiplier);
+                }
+            }
+            else if (activeBuffSpeedEffects.Count > 0)
+            {
+                foreach (float buffMultiplier in activeBuffSpeedEffects.Values)
+                {
+                    resultingSpeedModifier = Mathf.Max(resultingSpeedModifier, buffMultiplier);
+                }
+            }
+
+            underDebuff = hasDebuffEffect && !Mathf.Approximately(resultingSpeedModifier, 1f);
+            SpeedModifier = resultingSpeedModifier;
 
             if (pulseCoroutine != null)
             {
@@ -159,7 +273,7 @@ namespace Game.MiniGame.PowerCheck
 
         private void ResetHealth()
         {
-            health = maxHealth;
+            Health = maxHealth;
             isDead = false;
         }
 

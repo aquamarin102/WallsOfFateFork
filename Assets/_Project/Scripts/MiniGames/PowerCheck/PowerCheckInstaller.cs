@@ -130,7 +130,7 @@ namespace Game.MiniGame.PowerCheck
         {
             if (MineSpawnerObject == null)
             {
-                MineSpawnerObject = FindObjectOfType<MineSpawner>();
+                MineSpawnerObject = FindAnyObjectByType<MineSpawner>();
             }
         }
 
@@ -138,7 +138,7 @@ namespace Game.MiniGame.PowerCheck
         {
             if (GameProcessObject == null)
             {
-                GameProcessObject = FindObjectOfType<GameProcess>();
+                GameProcessObject = FindAnyObjectByType<GameProcess>();
             }
         }
 

@@ -57,7 +57,9 @@ namespace Game.MiniGame.PowerCheck
             candidates.AddRange(_mineSpawner.DebuffMines.Where(m => m.MineGameObject.activeSelf));
 
             Vector3 selfPos = transform.position;
-            float currentHealthPct = _characteristics.Health / _characteristics.MaxHealth;
+            float currentHealthPct = _characteristics.MaxHealth == 0
+                ? 0f
+                : (float)_characteristics.Health / _characteristics.MaxHealth;
 
             // Compute weighted score for each mine
             var scored = candidates.Select(mine => {

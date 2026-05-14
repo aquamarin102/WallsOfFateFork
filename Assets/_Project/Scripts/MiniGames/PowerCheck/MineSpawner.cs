@@ -67,6 +67,14 @@ namespace Game.MiniGame.PowerCheck
         [Header("Trap (debuff) mines rules")]
         [SerializeField] private MineSpawnConfig debuffConfig = new MineSpawnConfig { initialCount = 10, maxCount = 30, spawnIntervalRange = new Vector2(1f, 4f) };
 
+        [Header("Low Population Recovery")]
+        [SerializeField, Tooltip("Если активных фишек на поле меньше этого числа, спавнер начнёт добирать их быстрее.")]
+        private int minimumTotalActiveMines = 12;
+        [SerializeField, Tooltip("Сколько фишек максимум добавить за одну проверку восстановления.")]
+        private int recoverySpawnBatchSize = 3;
+        [SerializeField, Tooltip("Как часто проверять, не стало ли фишек слишком мало.")]
+        private float recoveryCheckInterval = 0.75f;
+
         // =====================================================================
         // Specific parameters
         // =====================================================================
@@ -181,6 +189,7 @@ namespace Game.MiniGame.PowerCheck
             StartCoroutine(SpawnRoutine(damageMineList, 1, damageConfig));
             StartCoroutine(SpawnRoutine(buffMineList, 2, buffConfig));
             StartCoroutine(SpawnRoutine(debuffMineList, 3, debuffConfig));
+            StartCoroutine(RecoveryRoutine());
         }
 
         private IEnumerator SpawnRoutine(MineList list, uint typeId, MineSpawnConfig cfg)
@@ -204,16 +213,44 @@ namespace Game.MiniGame.PowerCheck
                     continue;
                 }
 
-                Mine candidate = FindInactiveMine(list);
-                if (candidate == null && list.Minelist.Count < cfg.maxCount)
+                TrySpawnMine(list, typeId);
+            }
+        }
+
+        private IEnumerator RecoveryRoutine()
+        {
+            if (minimumTotalActiveMines <= 0)
+            {
+                yield break;
+            }
+
+            yield return null;
+            while (true)
+            {
+                yield return new WaitForSeconds(recoveryCheckInterval);
+
+                int totalDeficit = Mathf.Max(0, minimumTotalActiveMines - CountAllActiveMines());
+                int positiveDeficit = CountPositiveMineDeficit();
+                int remainingToSpawn = Mathf.Min(recoverySpawnBatchSize, Mathf.Max(totalDeficit, positiveDeficit));
+                if (remainingToSpawn <= 0)
                 {
-                    AddMineByType(typeId);
-                    candidate = list.Minelist[^1];
+                    continue;
                 }
-                if (candidate != null && !candidate.MineGameObject.activeSelf)
+
+                // Сначала стараемся вернуть поле к стартовому балансу, а уже потом просто добираем общее количество.
+                TrySpawnRecoveryMine(healMineList, 0, healConfig.initialCount, ref remainingToSpawn);
+                TrySpawnRecoveryMine(damageMineList, 1, damageConfig.initialCount, ref remainingToSpawn);
+                TrySpawnRecoveryMine(buffMineList, 2, buffConfig.initialCount, ref remainingToSpawn);
+
+                if (remainingToSpawn <= 0)
                 {
-                    SpawnMineAnimated(candidate);
+                    continue;
                 }
+
+                TrySpawnRecoveryMine(healMineList, 0, healConfig.maxCount, ref remainingToSpawn);
+                TrySpawnRecoveryMine(damageMineList, 1, damageConfig.maxCount, ref remainingToSpawn);
+                TrySpawnRecoveryMine(buffMineList, 2, buffConfig.maxCount, ref remainingToSpawn);
+                TrySpawnRecoveryMine(debuffMineList, 3, debuffConfig.maxCount, ref remainingToSpawn);
             }
         }
 
@@ -221,19 +258,17 @@ namespace Game.MiniGame.PowerCheck
         {
             for (int i = 0; i < amount; i++)
             {
-                Mine m = FindInactiveMine(list);
-                if (m == null)
-                {
-                    AddMineByType(typeId);
-                    m = list.Minelist[^1];
-                }
-                if (m != null) SpawnMineAnimated(m);
+                TrySpawnMine(list, typeId);
             }
         }
 
-        private void SpawnMineAnimated(Mine mine)
+        private bool SpawnMineAnimated(Mine mine)
         {
-            Vector3 pos = FindValidPosition();
+            if (!TryFindValidPosition(out Vector3 pos))
+            {
+                return false;
+            }
+
             mine.MineGameObject.transform.position = pos;
             if (parentTransform != null) mine.MineGameObject.transform.SetParent(parentTransform);
 
@@ -248,6 +283,7 @@ namespace Game.MiniGame.PowerCheck
 
             mine.SetActive(true);
             StartCoroutine(AnimateScale(mine.MineGameObject.transform, targetScale));
+            return true;
         }
 
         private IEnumerator AnimateScale(Transform t, Vector3 to)
@@ -283,9 +319,9 @@ namespace Game.MiniGame.PowerCheck
             return null;
         }
 
-        private Vector3 FindValidPosition()
+        private bool TryFindValidPosition(out Vector3 position)
         {
-            Vector3 cand;
+            Vector3 cand = default;
             int safe = 0;
             do
             {
@@ -295,7 +331,9 @@ namespace Game.MiniGame.PowerCheck
                 safe++;
             }
             while (!IsPositionFree(cand) && safe < 1000);
-            return cand;
+
+            position = cand;
+            return safe < 1000 || IsPositionFree(cand);
         }
 
         private bool IsPositionFree(Vector3 pos)
@@ -329,10 +367,67 @@ namespace Game.MiniGame.PowerCheck
             return c;
         }
 
+        private int CountAllActiveMines()
+        {
+            return CountActiveMines(healMineList) +
+                   CountActiveMines(damageMineList) +
+                   CountActiveMines(buffMineList) +
+                   CountActiveMines(debuffMineList);
+        }
+
+        private int CountPositiveMineDeficit()
+        {
+            return Mathf.Max(0, healConfig.initialCount - CountActiveMines(healMineList)) +
+                   Mathf.Max(0, damageConfig.initialCount - CountActiveMines(damageMineList)) +
+                   Mathf.Max(0, buffConfig.initialCount - CountActiveMines(buffMineList));
+        }
+
         private Mine FindInactiveMine(MineList list)
         {
             foreach (var m in list.Minelist) if (!m.MineGameObject.activeSelf) return m;
             return null;
+        }
+
+        private void TrySpawnRecoveryMine(MineList list, uint typeId, int desiredActiveCount, ref int remainingToSpawn)
+        {
+            if (remainingToSpawn <= 0 || CountActiveMines(list) >= desiredActiveCount)
+            {
+                return;
+            }
+
+            if (TrySpawnMine(list, typeId))
+            {
+                remainingToSpawn--;
+            }
+        }
+
+        private bool TrySpawnMine(MineList list, uint typeId)
+        {
+            Mine candidate = FindInactiveMine(list);
+            if (candidate == null && list.Minelist.Count < GetMaxCount(typeId))
+            {
+                AddMineByType(typeId);
+                candidate = list.Minelist[^1];
+            }
+
+            if (candidate == null || candidate.MineGameObject.activeSelf)
+            {
+                return false;
+            }
+
+            return SpawnMineAnimated(candidate);
+        }
+
+        private int GetMaxCount(uint typeId)
+        {
+            return typeId switch
+            {
+                0 => healConfig.maxCount,
+                1 => damageConfig.maxCount,
+                2 => buffConfig.maxCount,
+                3 => debuffConfig.maxCount,
+                _ => 0
+            };
         }
 
         private void AddMineByType(uint type)

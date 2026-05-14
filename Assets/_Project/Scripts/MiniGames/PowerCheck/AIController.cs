@@ -1,9 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.AI;
-using Zenject;
 
 namespace Game.MiniGame.PowerCheck
 {
@@ -44,9 +42,11 @@ namespace Game.MiniGame.PowerCheck
         private float _targetSpeed;
         private Vector3 _currentTarget;
         private float _stuckTimer;
+        private Coroutine _buildTargetsCoroutine;
+        private bool _movementLockedByDebuff;
 
         // counts to detect spawn/despawn
-        private int _countDam, _countHeal, _countBuff;
+        private int _countDam, _countHeal, _countBuff, _countDebuff;
         private bool _initialized = false;
 
         // ───────────────────────── LIFECYCLE ─────────────────────────
@@ -57,13 +57,13 @@ namespace Game.MiniGame.PowerCheck
 
         private void RefreshFields()
         {
-            if (!_mineSpawner) _mineSpawner = FindFirstObjectByType<MineSpawner>();
+            if (!_mineSpawner) _mineSpawner = FindAnyObjectByType<MineSpawner>();
             if (!_thisStats) _thisStats = GetComponent<MiniGamePlayer>();
             if (!_agent) _agent = GetComponent<NavMeshAgent>();
 
             if (!_playerStats || !_playerTf)
             {
-                PlayerMove player = FindFirstObjectByType<PlayerMove>();
+                PlayerMove player = FindAnyObjectByType<PlayerMove>();
                 if (player != null)
                 {
                     _playerTf = player.transform;
@@ -93,12 +93,32 @@ namespace Game.MiniGame.PowerCheck
             if (!_initialized)
             {
                 RefreshFields();
-                _initialized = true;
+                _initialized = _mineSpawner != null && _thisStats != null && _agent != null && _playerStats != null && _playerTf != null;
+                if (!_initialized)
+                {
+                    return;
+                }
             }
+
+            if (_movementLockedByDebuff)
+            {
+                _agent.speed = 0f;
+                return;
+            }
+
             _agent.speed = Mathf.Lerp(_agent.speed, _targetSpeed, Time.deltaTime / _speedSmoothTime);
 
-            if (!_agent.pathPending && (_targets.Count == 0 || PickUpsChanged()))
-                RebuildTargets();
+            if (!_agent.pathPending)
+            {
+                if (_targets.Count == 0)
+                {
+                    RebuildTargets();
+                }
+                else if (PickUpsChanged())
+                {
+                    RebuildTargets(force: true);
+                }
+            }
 
             if (!_agent.pathPending && _targets.Count > 0 &&
                 (!_agent.hasPath || _agent.remainingDistance <= _agent.stoppingDistance || !MineExists(_currentTarget)))
@@ -110,22 +130,37 @@ namespace Game.MiniGame.PowerCheck
                 if (_stuckTimer > _stuckTimeThreshold)
                 {
                     _stuckTimer = 0f;
-                    RebuildTargets();
+                    RebuildTargets(force: true);
                 }
             }
             else _stuckTimer = 0f;
         }
 
         // ───────────────────────── TARGETING ─────────────────────────
-        private void RebuildTargets()
+        private void RebuildTargets(bool force = false)
         {
+            if (_buildTargetsCoroutine != null)
+            {
+                if (!force)
+                {
+                    return;
+                }
+
+                StopCoroutine(_buildTargetsCoroutine);
+            }
+
             _targets.Clear();
-            StartCoroutine(BuildTargets());
+            _buildTargetsCoroutine = StartCoroutine(BuildTargets());
         }
 
         private IEnumerator BuildTargets()
         {
             yield return null;                         // frame delay
+            if (_mineSpawner == null)
+            {
+                _buildTargetsCoroutine = null;
+                yield break;
+            }
 
             _buffer.Clear();
             AddBest(_mineSpawner.DamageMines);
@@ -137,6 +172,7 @@ namespace Game.MiniGame.PowerCheck
                 _targets.Enqueue(m.MineGameObject.transform.position);
 
             SetNextDestination();
+            _buildTargetsCoroutine = null;
         }
 
         private void AddBest(IReadOnlyList<Mine> mines)
@@ -185,14 +221,14 @@ namespace Game.MiniGame.PowerCheck
                     Debug.LogWarning($"Target not on NavMesh: {_currentTarget}");
                 }
             }
-            RebuildTargets();
+            RebuildTargets(force: true);
         }
 
         // ───────────────────────── EVALUATION ─────────────────────────
         private float EvaluateMine(Mine mine)
         {
-            float playerHP = _playerStats.Health / _playerStats.MaxHealth;
-            float thisHP = _thisStats.Health / _thisStats.MaxHealth;
+            float playerHP = _playerStats.MaxHealth == 0 ? 0f : (float)_playerStats.Health / _playerStats.MaxHealth;
+            float thisHP = _thisStats.MaxHealth == 0 ? 0f : (float)_thisStats.Health / _thisStats.MaxHealth;
 
             float value = mine switch
             {
@@ -204,7 +240,7 @@ namespace Game.MiniGame.PowerCheck
 
             float dist = Vector3.Distance(transform.position, mine.MineGameObject.transform.position) + 0.1f;
             float risk = CalcRisk(mine);
-            return (value - risk) * dist;              // lower → higher priority
+            return dist / Mathf.Max(value, 0.1f) + risk; // lower → higher priority
         }
 
         private float EvalBuff(BuffSpeedMine m)
@@ -212,7 +248,7 @@ namespace Game.MiniGame.PowerCheck
             float area = _mineSpawner.spawnAreaSize.x * _mineSpawner.spawnAreaSize.y;
             float mineArea = m.MineGameObject.transform.localScale.x *
                               m.MineGameObject.transform.localScale.z;
-            float density = (_mineSpawner.DebuffMines.Count * mineArea) / area;
+            float density = area <= 0f ? 0f : (CountActiveMines(_mineSpawner.DebuffMines) * mineArea) / area;
 
             float mod = density switch { < 0.3f => 1.5f, < 0.7f => 1f, _ => 0.1f };
             return 5f * m.GetSpeedBuff() * mod * _buffGlobalModifier;
@@ -221,7 +257,7 @@ namespace Game.MiniGame.PowerCheck
         private float EvalHeal(float hp)
         {
             float mod = hp switch { < 0.3f => 2f, < 0.7f => 1f, _ => 0.5f };
-            return 10f * _thisStats.HealingAmount * mod * _healGlobalModifier;
+            return 10f * _thisStats.AverageHealingAmount * mod * _healGlobalModifier;
         }
 
         private float EvalDamage(float playerHP, float thisHP)
@@ -230,18 +266,28 @@ namespace Game.MiniGame.PowerCheck
             if (playerHP < 0.3f) mod *= 1.5f;
             if (playerHP > 0.7f) mod *= 0.8f;
             if (thisHP < 0.2f) mod *= 0.5f;
-            return 10f * _thisStats.Damage * mod * _damageGlobalModifier;
+            return 10f * _thisStats.AverageDamage * mod * _damageGlobalModifier;
         }
 
         private float CalcRisk(Mine mine)
         {
+            if (_playerTf == null)
+            {
+                return 0f;
+            }
+
             float p = _playerRiskFactor /
                       (Vector3.Distance(mine.MineGameObject.transform.position, _playerTf.position) + 0.1f);
 
             foreach (var d in _mineSpawner.DebuffMines)
             {
+                if (!d.Active)
+                {
+                    continue;
+                }
+
                 float dist = Vector3.Distance(mine.MineGameObject.transform.position, d.MineGameObject.transform.position);
-                if (dist < _riskDistanceThreshold) p += _mineRiskFactor / dist;
+                if (dist < _riskDistanceThreshold) p += _mineRiskFactor / Mathf.Max(dist, 0.1f);
             }
             return p;
         }
@@ -249,28 +295,100 @@ namespace Game.MiniGame.PowerCheck
         // ───────────────────────── HELPERS ─────────────────────────
         private bool MineExists(Vector3 pos)
         {
-            const float eps = 0.1f;
-            return _mineSpawner.HealMines.Any(m => Vector3.Distance(m.MineGameObject.transform.position, pos) <= eps) ||
-                   _mineSpawner.DamageMines.Any(m => Vector3.Distance(m.MineGameObject.transform.position, pos) <= eps) ||
-                   _mineSpawner.BuffMines.Any(m => Vector3.Distance(m.MineGameObject.transform.position, pos) <= eps);
+            return ActiveMineExistsAt(_mineSpawner.HealMines, pos) ||
+                   ActiveMineExistsAt(_mineSpawner.DamageMines, pos) ||
+                   ActiveMineExistsAt(_mineSpawner.BuffMines, pos);
         }
 
         private bool PickUpsChanged()
         {
-            int dam = _mineSpawner.DamageMines.Count(m => m.Active);
-            int heal = _mineSpawner.HealMines.Count(m => m.Active);
-            int buff = _mineSpawner.BuffMines.Count(m => m.Active);
+            int dam = CountActiveMines(_mineSpawner.DamageMines);
+            int heal = CountActiveMines(_mineSpawner.HealMines);
+            int buff = CountActiveMines(_mineSpawner.BuffMines);
+            int debuff = CountActiveMines(_mineSpawner.DebuffMines);
 
-            bool changed = dam != _countDam || heal != _countHeal || buff != _countBuff;
-            _countDam = dam; _countHeal = heal; _countBuff = buff;
+            bool changed = dam != _countDam || heal != _countHeal || buff != _countBuff || debuff != _countDebuff;
+            _countDam = dam; _countHeal = heal; _countBuff = buff; _countDebuff = debuff;
             return changed;
+        }
+
+        private static int CountActiveMines(IReadOnlyList<Mine> mines)
+        {
+            int count = 0;
+            for (int i = 0; i < mines.Count; i++)
+            {
+                if (mines[i].Active)
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        private static bool ActiveMineExistsAt(IReadOnlyList<Mine> mines, Vector3 pos)
+        {
+            const float epsSqr = 0.01f;
+            for (int i = 0; i < mines.Count; i++)
+            {
+                Mine mine = mines[i];
+                if (!mine.Active)
+                {
+                    continue;
+                }
+
+                if ((mine.MineGameObject.transform.position - pos).sqrMagnitude <= epsSqr)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private void OnDisable()
+        {
+            if (_buildTargetsCoroutine != null)
+            {
+                StopCoroutine(_buildTargetsCoroutine);
+                _buildTargetsCoroutine = null;
+            }
         }
 
         /// <summary>Внешний вызов: сменить скорость (дебафф / бафф).</summary>
         public void ChangeSpeed(float multiplier, bool isDebuff)
         {
             _targetSpeed = _baseSpeed * multiplier;
-            if (isDebuff) _slowness = multiplier;      // сохраняем текущее значение
+            _slowness = isDebuff ? multiplier : 1f;
+
+            bool shouldLockMovement = isDebuff && multiplier <= 0.01f;
+            if (shouldLockMovement)
+            {
+                _movementLockedByDebuff = true;
+
+                if (_agent != null)
+                {
+                    _targetSpeed = 0f;
+                    _agent.isStopped = true;
+                    _agent.ResetPath();
+                    _agent.velocity = Vector3.zero;
+                    _agent.speed = 0f;
+                }
+
+                return;
+            }
+
+            if (_movementLockedByDebuff)
+            {
+                _movementLockedByDebuff = false;
+
+                if (_agent != null)
+                {
+                    _agent.isStopped = false;
+                }
+
+                RebuildTargets(force: true);
+            }
         }
     }
 
