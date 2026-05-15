@@ -1,11 +1,14 @@
-﻿using System;
+using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace Game
 {
     public class LoadingScreenController : MonoBehaviour
     {
+        private static bool suppressNextGameplayPointerSequence;
+
         public event Action<float> LoadingProgressUpdated;
         public event Action WaitingForInputStarted;
         public event Action WaitingForInputEnded;
@@ -60,14 +63,45 @@ namespace Game
                 yield return null;
             }
 
-            while (!Input.anyKeyDown) yield return null;
+            while (!Input.anyKeyDown)
+                yield return null;
 
             if (_fadeCoroutine != null)
                 StopCoroutine(_fadeCoroutine);
 
+            SuppressGameplayPointerInputIfNeeded();
             WaitingForInputEnded?.Invoke();
         }
+
+        public static bool ConsumeGameplayPointerSuppression()
+        {
+            if (!suppressNextGameplayPointerSequence)
+                return false;
+
+            if (IsPrimaryPointerPressed())
+                return true;
+
+            suppressNextGameplayPointerSequence = false;
+            return true;
+        }
+
+        private static void SuppressGameplayPointerInputIfNeeded()
+        {
+            if (IsPrimaryPointerPressed())
+                suppressNextGameplayPointerSequence = true;
+        }
+
+        private static bool IsPrimaryPointerPressed()
+        {
+            Mouse mouse = Mouse.current;
+            if (mouse != null)
+                return mouse.leftButton.isPressed;
+
+            Pointer pointer = Pointer.current;
+            if (pointer != null)
+                return pointer.press.isPressed;
+
+            return Input.GetMouseButton(0);
+        }
     }
-
 }
-

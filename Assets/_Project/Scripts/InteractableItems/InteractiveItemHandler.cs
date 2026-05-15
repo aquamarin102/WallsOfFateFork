@@ -82,7 +82,7 @@ namespace Game
             chestAnimaton?.Triggered(eventData);
 
             PlayerAnimationController playerAnimator = eventData.PlayerObj.GetComponent<PlayerAnimationController>();
-            playerAnimator?.InteractWith(eventData, false);
+            playerAnimator?.InteractWith(eventData);
 
             ShowFloatingText(eventData.PlayerObj, itemParameters);
             HandlePostUseBehavior(eventData.TriggerObj, itemParameters);

@@ -5,14 +5,11 @@ using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
-using UnityEngine.SceneManagement;
 using Zenject;
 
 namespace Game
 {
     [RequireComponent(typeof(CharacterController))]
-    [RequireComponent(typeof(Animator))]
-    [RequireComponent(typeof(AudioSource))]
     [RequireComponent(typeof(NavMeshAgent))]
     public class PlayerMoveController : MonoBehaviour
     {
@@ -47,14 +44,10 @@ namespace Game
         [Header("Interaction Settings")]
         [SerializeField] private float keyboardInteractionRadius = 1.6f;
 
-        [Header("Pitch Settings")]
-        [SerializeField] private float walkingPitch = 1f;
-        [SerializeField] private float runningPitch = 1.5f;
-
         private Vector3 grabDirection;
-        private bool isBoxGrabMode = false;
         private BoxMover heldBoxMover;
         private Vector3 heldBoxPlayerOffset;
+        private bool IsInBoxGrabMode => heldBoxMover != null;
 
         private bool isHoldMove;
         private bool isWalkingMode;
@@ -75,90 +68,59 @@ namespace Game
         private Action _onArriveAction;
         private Func<bool> _canInvokeArriveAction;
 
-        [Header("Footstep Settings")]
-        [SerializeField] private float walkingStepInterval = 0.48f;
-        [SerializeField] private float runningStepInterval = 0.32f;
-        [SerializeField] private float footstepMinSpeed = 0.15f;
-        private readonly Dictionary<string, List<AudioClip>> sceneFootstepSounds = new();
-        private AudioClip leftClip, rightClip;
-
-
         private CharacterController characterController;
         private NavMeshAgent agent;
-        private AudioSource footstepSource;
         private NavMeshPath navMeshPath;
 
         private Vector3 moveDirection;
         private float verticalVelocity;
-        private bool isLeftFoot = true;
         private float currentPlanarSpeed;
         private bool isRunning;
-        private float footstepTimer;
+        private bool isBoxPushCommandActive;
+        private float boxPushAnimationSpeed = 1f;
 
-        private PlayerAnimationController interactManager;   // ссылка на менеджер взаимодействия
+        private PlayerAnimationController animationController;
 
         // --------------------------------------------------
         [Inject] private void Construct(Transform camTransform) => cameraTransform = camTransform;
 
         private void Awake()
         {
-            interactManager = GetComponent<PlayerAnimationController>();
-            //if (!interactManager) Debug.LogError("PlayerMoveController: InteractManager missing!");
+            animationController = GetComponent<PlayerAnimationController>();
         }
 
         private void Start()
         {
             characterController = GetComponent<CharacterController>();
             agent = GetComponent<NavMeshAgent>();
-            footstepSource = GetComponent<AudioSource>();
             navMeshPath = new NavMeshPath();
 
             agent.updatePosition = false;     // Agent используется только как path‑finder
             agent.updateRotation = false;
             agent.stoppingDistance = stopThreshold;
-
-            // пример инициализации звуков
-            sceneFootstepSounds.Add("MainRoom", new()
-        {
-            Resources.Load<AudioClip>("Footsteps/wood1"),
-            Resources.Load<AudioClip>("Footsteps/wood2")
-        });
-            sceneFootstepSounds.Add("Forge", new()
-        {
-            Resources.Load<AudioClip>("Footsteps/gravel1"),
-            Resources.Load<AudioClip>("Footsteps/gravel2")
-        });
-            sceneFootstepSounds.Add("Storage", new()
-        {
-            Resources.Load<AudioClip>("Footsteps/stone1"),
-            Resources.Load<AudioClip>("Footsteps/stone2")
-        });
-
-            SceneManager.sceneLoaded += OnSceneLoaded;
-            UpdateFootstepSounds(SceneManager.GetActiveScene().name);
         }
 
         public void InBoxGrabMode(BoxMover boxMover, Vector3 axis, Vector3 playerOffset)
         {
-            isBoxGrabMode = true;
             grabDirection = axis.normalized;
             heldBoxMover = boxMover;
             heldBoxPlayerOffset = new Vector3(playerOffset.x, 0f, playerOffset.z);
+            animationController?.SetBoxPushState(true);
             StopMovement();
             AlignToHeldBoxFace(true);
         }
 
         public void StopBoxGrabMode()
         {
-            isBoxGrabMode = false;
+            animationController?.SetBoxPushState(false);
             heldBoxMover = null;
             heldBoxPlayerOffset = Vector3.zero;
         }
 
-        private void OnDestroy() => SceneManager.sceneLoaded -= OnSceneLoaded;
-
         public float CurrentPlanarSpeed => currentPlanarSpeed;
         public bool IsRunning => isRunning;
+        public bool IsBoxPushCommandActive => isBoxPushCommandActive;
+        public float BoxPushAnimationSpeed => boxPushAnimationSpeed;
         public float InteractionRadius => keyboardInteractionRadius;
 
         private void Update()
@@ -167,7 +129,6 @@ namespace Game
             HandleInteractionInput();
             HandleMouseInput();
             HandleMovement();
-            UpdateFootstep();
         }
 
         private void LateUpdate()
@@ -186,14 +147,20 @@ namespace Game
 
             if (DialogManager.Instance.Active == true) return;
 
-            if (IsPointerOverUi())
+            if (LoadingScreenController.ConsumeGameplayPointerSuppression())
+            {
+                isHoldMove = false;
+                return;
+            }
+
+            if (IsPointerOverBlockingUi())
             {
                 if (pointerUp)
                     isHoldMove = false;
                 return;
             }
 
-            if (isBoxGrabMode)
+            if (IsInBoxGrabMode)
             {
                 if (pointerDown)
                     mouseDownTime = Time.time;
@@ -239,7 +206,7 @@ namespace Game
             Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
 
             bool hasInteractionTarget = TryResolveInteractionTarget(hits, out InteractionTarget interactionTarget);
-            if (!isBoxGrabMode &&
+            if (!IsInBoxGrabMode &&
                 (!hasInteractionTarget || interactionTarget.Kind != InteractionTargetKind.Item) &&
                 TryResolveItemTargetNearPointer(ray, hits, out InteractionTarget pointerItemTarget))
             {
@@ -247,7 +214,8 @@ namespace Game
                 hasInteractionTarget = true;
             }
 
-            bool isHeldBoxReleaseDoubleClick = isBoxGrabMode &&
+            bool hasMovementDestination = TryResolveMovementDestination(ray, hits, out Vector3 destination);
+            bool isHeldBoxReleaseDoubleClick = IsInBoxGrabMode &&
                 IsPointerDoubleClick(clickPosition) &&
                 IsPointerOverHeldBox(hits);
             bool isInteractionDoubleClick = hasInteractionTarget &&
@@ -261,30 +229,33 @@ namespace Game
                 return;
             }
 
-            if (isInteractionDoubleClick)
+            if (!IsInBoxGrabMode && isInteractionDoubleClick)
             {
-                if (!isBoxGrabMode)
-                {
-                    MoveToInteractionTarget(interactionTarget);
-                    return;
-                }
+                MoveToInteractionTarget(interactionTarget);
+                return;
             }
 
-            if (isBoxGrabMode)
+            if (IsInBoxGrabMode)
             {
-                if (TryResolveMovementDestination(ray, hits, out Vector3 boxDestination))
+                if (hasMovementDestination)
                 {
-                    MoveToAndCallback(boxDestination, IsRunModeActive(), null);
-                    SpawnClickMoveVfx(boxDestination);
+                    MoveToAndCallback(destination, IsRunModeActive(), null);
+                    SpawnClickMoveVfx(destination);
                 }
 
                 return;
             }
 
-            if (TryResolveMovementDestination(ray, hits, out Vector3 destination))
+            if (hasMovementDestination)
             {
                 MoveToAndCallback(destination, IsRunModeActive(), null);
                 SpawnClickMoveVfx(destination);
+                return;
+            }
+
+            if (hasInteractionTarget)
+            {
+                MoveToInteractionTarget(interactionTarget);
             }
         }
 
@@ -410,6 +381,8 @@ namespace Game
                 agent.isStopped = true;
                 currentPlanarSpeed = 0f;
                 isRunning = false;
+                isBoxPushCommandActive = false;
+                boxPushAnimationSpeed = 1f;
                 return;
             }
 
@@ -454,7 +427,7 @@ namespace Game
                 }
             }
             // B) Follow‑режим (удержание)
-            else if (isHoldMove && !IsPointerOverUi())
+            else if (isHoldMove && !IsPointerOverBlockingUi())
             {
                 usesNavigationPath = true;
                 isPathRunRequested = IsRunModeActive();
@@ -475,7 +448,7 @@ namespace Game
                         lastHoldRetargetTime = Time.time;
                     }
 
-                    // SpawnHeldClickMoveVfx(destination);
+                    SpawnHeldClickMoveVfx(destination);
                 }
 
                 if (agent.hasPath && !agent.isStopped)
@@ -503,7 +476,7 @@ namespace Game
             {
                 Vector3 f = cameraTransform.forward; f.y = 0; f.Normalize();
                 Vector3 r = cameraTransform.right; r.y = 0; r.Normalize();
-                if (isBoxGrabMode)
+                if (IsInBoxGrabMode)
                 {
                     Vector3 moveInput = (f * v + r * h).normalized;
                     if (moveInput.sqrMagnitude < 0.01f)
@@ -537,16 +510,20 @@ namespace Game
 
             // Поворот
             if (desired != Vector3.zero)
-                if (!isBoxGrabMode) transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(desired), rotationSpeed * Time.deltaTime);
+                if (!IsInBoxGrabMode) transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(desired), rotationSpeed * Time.deltaTime);
 
             // Скорость + гравитация
             bool hasPlanarInput = desired.sqrMagnitude > 0.0001f;
-            bool running = !isBoxGrabMode && hasPlanarInput &&
+            bool running = !IsInBoxGrabMode && hasPlanarInput &&
                 (usesNavigationPath ? isPathRunRequested : IsRunModeActive());
             float speed = moveSpeed * (running ? runMultiplier : 1f);
             Vector3 planarMoveDirection = desired * speed;
+            isBoxPushCommandActive = IsInBoxGrabMode && planarMoveDirection.sqrMagnitude > 0.0001f;
+            boxPushAnimationSpeed = isBoxPushCommandActive
+                ? ResolveBoxPushAnimationSpeed(planarMoveDirection)
+                : 1f;
 
-            if (isBoxGrabMode && heldBoxMover != null)
+            if (IsInBoxGrabMode && heldBoxMover != null)
             {
                 heldBoxMover.SetDesiredPlanarVelocity(planarMoveDirection);
                 moveDirection = Vector3.zero;
@@ -562,7 +539,7 @@ namespace Game
             characterController.Move(moveDirection * Time.deltaTime);
             agent.nextPosition = transform.position;
 
-            if (isBoxGrabMode && heldBoxMover != null)
+            if (IsInBoxGrabMode && heldBoxMover != null)
             {
                 currentPlanarSpeed = heldBoxMover.CurrentPlanarSpeed;
                 isRunning = false;
@@ -600,6 +577,16 @@ namespace Game
             agent.isStopped = true; agent.ResetPath(); isHoldMove = false; clickTarget = Vector3.zero; ClearDynamic();
             currentPlanarSpeed = 0f;
             isRunning = false;
+            isBoxPushCommandActive = false;
+            boxPushAnimationSpeed = 1f;
+        }
+
+        public void HandleBoxInteraction(BoxMover boxMover)
+        {
+            if (boxMover == null)
+                return;
+
+            ToggleBoxInteraction(boxMover, boxMover.gameObject);
         }
         #endregion
 
@@ -742,7 +729,7 @@ namespace Game
 
         private void ApplyHeldBoxCorrection()
         {
-            if (!isBoxGrabMode || heldBoxMover == null)
+            if (!IsInBoxGrabMode || heldBoxMover == null)
                 return;
 
             Vector3 targetPlayerPosition = heldBoxMover.Position + heldBoxPlayerOffset;
@@ -758,9 +745,21 @@ namespace Game
             AlignToHeldBoxFace(false);
         }
 
+        private float ResolveBoxPushAnimationSpeed(Vector3 planarMoveDirection)
+        {
+            Vector3 directionToBox = -heldBoxPlayerOffset;
+            directionToBox.y = 0f;
+            if (planarMoveDirection.sqrMagnitude <= 0.0001f || directionToBox.sqrMagnitude <= 0.0001f)
+                return 1f;
+
+            return Vector3.Dot(planarMoveDirection.normalized, directionToBox.normalized) >= 0f
+                ? 1f
+                : -1f;
+        }
+
         private void AlignToHeldBoxFace(bool instant)
         {
-            if (!isBoxGrabMode)
+            if (!IsInBoxGrabMode)
                 return;
 
             Vector3 lookDirection = -heldBoxPlayerOffset;
@@ -774,9 +773,57 @@ namespace Game
                 : Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
         }
 
-        private static bool IsPointerOverUi()
+        private static bool IsPointerOverBlockingUi()
         {
-            return EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+            EventSystem eventSystem = EventSystem.current;
+            if (eventSystem == null || !TryReadPointerPosition(out Vector2 pointerPosition))
+                return false;
+
+            PointerEventData pointerData = new(eventSystem)
+            {
+                position = pointerPosition
+            };
+            List<RaycastResult> results = new();
+            eventSystem.RaycastAll(pointerData, results);
+
+            foreach (RaycastResult result in results)
+            {
+                if (result.gameObject != null && IsBlockingUiRaycastTarget(result.gameObject))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private static bool IsBlockingUiRaycastTarget(GameObject uiObject)
+        {
+            for (Transform current = uiObject.transform; current != null; current = current.parent)
+            {
+                if (HasBlockingUiHandler(current.gameObject))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private static bool HasBlockingUiHandler(GameObject gameObject)
+        {
+            foreach (Component component in gameObject.GetComponents<Component>())
+            {
+                if (component is IPointerClickHandler ||
+                    component is IPointerDownHandler ||
+                    component is IPointerUpHandler ||
+                    component is IBeginDragHandler ||
+                    component is IDragHandler ||
+                    component is IEndDragHandler ||
+                    component is IScrollHandler ||
+                    component is ISubmitHandler)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void HandleMovementModeInput()
@@ -804,7 +851,7 @@ namespace Game
             if (!ConsumeInteractInput())
                 return;
 
-            if (isBoxGrabMode && heldBoxMover != null)
+            if (IsInBoxGrabMode && heldBoxMover != null)
             {
                 ReleaseHeldBox();
                 return;
@@ -1149,12 +1196,21 @@ namespace Game
                     chestAnimation,
                     chestAnimation.transform,
                     chestAnimation.GetComponent<Collider>(),
-                    () => chestAnimation.Triggered(new TriggerEvent(
-                        InfluenceType.Object,
-                        gameObject,
-                        chestObject,
-                        true,
-                        string.Empty)),
+                    () =>
+                    {
+                        animationController?.InteractWith(new TriggerEvent(
+                            InfluenceType.Object,
+                            gameObject,
+                            chestObject,
+                            true,
+                            string.Empty));
+                        chestAnimation.Triggered(new TriggerEvent(
+                            InfluenceType.Object,
+                            gameObject,
+                            chestObject,
+                            true,
+                            string.Empty));
+                    },
                     InteractionTargetKind.Generic);
                 return true;
             }
@@ -1436,24 +1492,15 @@ namespace Game
             if (boxMover == null || boxObject == null)
                 return;
 
-            TriggerEvent eventData = new TriggerEvent(
-                InfluenceType.Object,
-                gameObject,
-                boxObject,
-                true,
-                string.Empty);
-
             if (boxMover.IsBeingHeld)
             {
                 boxMover.StopHolding();
-                interactManager?.InteractWith(eventData, false);
                 return;
             }
 
             if (heldBoxMover != null && heldBoxMover != boxMover)
                 heldBoxMover.StopHolding();
 
-            interactManager?.InteractWith(eventData, true);
             boxMover.StartHolding();
         }
 
@@ -1463,17 +1510,7 @@ namespace Game
             if (boxMover == null)
                 return;
 
-            GameObject boxObject = boxMover.gameObject;
-            TriggerEvent eventData = new TriggerEvent(
-                InfluenceType.Object,
-                gameObject,
-                boxObject,
-                true,
-                string.Empty);
-
             boxMover.StopHolding();
-            StopBoxGrabMode();
-            interactManager?.InteractWith(eventData, false);
         }
 
         private static Transform ResolveInteractionTransform(InfluenceArea influenceArea)
@@ -1488,20 +1525,6 @@ namespace Game
             return triggerZone.triggerObject != null
                 ? triggerZone.triggerObject.transform
                 : triggerZone.transform;
-        }
-
-        private static bool TryFindRelatedComponent<T>(Collider hitCollider, out T component) where T : Component
-        {
-            component = hitCollider.GetComponent<T>();
-            if (component != null)
-                return true;
-
-            component = hitCollider.GetComponentInParent<T>();
-            if (component != null)
-                return true;
-
-            component = hitCollider.GetComponentInChildren<T>(true);
-            return component != null;
         }
 
         private static bool TryFindComponentOnClickedObject<T>(Collider hitCollider, out T component) where T : Component
@@ -1673,54 +1696,8 @@ namespace Game
                 return null;
             }
         }
-
-        private void UpdateFootstep()
-        {
-            if (DialogManager.Instance.Active == true || footstepSource == null)
-            {
-                footstepTimer = 0f;
-                return;
-            }
-
-            if (!characterController.isGrounded || currentPlanarSpeed < footstepMinSpeed || leftClip == null || rightClip == null)
-            {
-                footstepTimer = 0f;
-                return;
-            }
-
-            footstepTimer += Time.deltaTime;
-
-            float interval = isRunning ? runningStepInterval : walkingStepInterval;
-            if (footstepTimer >= interval)
-            {
-                PlayFootstep();
-                footstepTimer = 0f;
-            }
-        }
-
-        private void PlayFootstep()
-        {
-            footstepSource.pitch = isRunning ? runningPitch : walkingPitch;
-            if (leftClip && rightClip)
-            {
-                footstepSource.PlayOneShot(isLeftFoot ? leftClip : rightClip);
-                isLeftFoot = !isLeftFoot;
-            }
-        }
-
-        private void OnSceneLoaded(Scene scene, LoadSceneMode mode) => UpdateFootstepSounds(scene.name);
-
-        private void UpdateFootstepSounds(string sceneName)
-        {
-            if (sceneFootstepSounds.TryGetValue(sceneName, out var list) && list.Count >= 2)
-            {
-                leftClip = list[0]; rightClip = list[1];
-            }
-            else leftClip = rightClip = null;
-        }
         #endregion
     }
 
     public static class Vector3Ext { public static Vector3 WithY(this Vector3 v, float y) => new(v.x, y, v.z); }
 }
-
