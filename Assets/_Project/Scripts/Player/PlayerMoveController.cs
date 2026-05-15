@@ -1136,20 +1136,6 @@ namespace Game
                 return true;
             }
 
-            if (TryFindComponentOnClickedObject(hitCollider, out InteractableItem interactableItem))
-            {
-                interactionTarget = new InteractionTarget(
-                    interactableItem,
-                    interactableItem.transform,
-                    interactableItem.GetComponent<Collider>(),
-                    interactableItem.ApproachDistance,
-                    interactableItem.Interact,
-                    InteractionTargetKind.Item,
-                    true,
-                    true);
-                return true;
-            }
-
             if (TryFindComponentOnClickedObject(hitCollider, out BoxMover boxMover))
             {
                 interactionTarget = CreateBoxInteractionTarget(boxMover, boxMover.gameObject);

@@ -5,6 +5,7 @@ using UnityEngine.InputSystem;
 
 namespace Game
 {
+    [DisallowMultipleComponent]
     [RequireComponent(typeof(Collider))]
     public class OutlineTrigger : MonoBehaviour
     {
@@ -31,17 +32,21 @@ namespace Game
         [SerializeField] private bool highlightOnGlobalHold = true;
         [SerializeField] private float fallbackInteractionRadius = 1.6f;
 
+        private static PlayerMoveController sharedPlayerController;
+        private static float nextSharedPlayerLookupTime;
+
+        private readonly HashSet<Collider> colliderLookup = new();
         private URPOutline[] outlines;
         private Collider[] colliders;
-        private InteractableItem interactable;
         private InteractableItemInfluenceArea interactableItemArea;
-        private PlayerMoveController playerController;
         private bool isPlayerInTrigger;
         private bool isPlayerInInteractionRadius;
         private bool isMouseOver;
         private bool isGlobalHighlightHeld;
+        private bool isHighlighted;
         private bool canHighlight = true;
-        private float nextPlayerLookupTime;
+        private bool isInitialized;
+        private int playerTriggerContacts;
 
         private void Start()
         {
@@ -51,69 +56,85 @@ namespace Game
             InitializeOutlines();
             InitializeColliders();
 
-            interactable = FindRelatedComponent<InteractableItem>();
             interactableItemArea = FindRelatedComponent<InteractableItemInfluenceArea>();
             canHighlight = CanHighlight();
+            isInitialized = true;
 
-            SetHighlighted(false);
+            UpdateHighlightState();
+        }
+
+        private void OnEnable()
+        {
+            if (!isInitialized)
+                return;
+
+            canHighlight = CanHighlight();
+            UpdateHighlightState();
         }
 
         private void InitializeOutlines()
         {
-            switch (outlineMethod)
+            bool autoCreateOutlines = outlineMethod != OutlineMethod.ChildOutlines;
+
+            if (autoCreateOutlines)
             {
-                case OutlineMethod.MaterialSwap:
-                case OutlineMethod.RendererFeature:
-                    outlines = targetObject.GetComponentsInChildren<URPOutline>(true);
-                    if (outlines.Length == 0)
-                    {
-                        Renderer[] renderers = targetObject.GetComponentsInChildren<Renderer>(true);
-                        foreach (Renderer renderer in renderers)
-                        {
-                            URPOutline outline = renderer.gameObject.AddComponent<URPOutline>();
-                            outline.OutlineColor = outlineColor;
-                            outline.OutlineWidth = outlineWidth;
-                        }
+                Renderer[] renderers = targetObject.GetComponentsInChildren<Renderer>(true);
+                foreach (Renderer renderer in renderers)
+                {
+                    if (!renderer.TryGetComponent(out URPOutline outline))
+                        outline = renderer.gameObject.AddComponent<URPOutline>();
 
-                        outlines = targetObject.GetComponentsInChildren<URPOutline>(true);
-                    }
-                    break;
-
-                case OutlineMethod.ChildOutlines:
-                    outlines = targetObject.GetComponentsInChildren<URPOutline>(true);
-                    break;
+                    outline.OutlineColor = outlineColor;
+                    outline.OutlineWidth = outlineWidth;
+                }
             }
+
+            outlines = targetObject.GetComponentsInChildren<URPOutline>(true);
         }
 
         private void InitializeColliders()
         {
             colliders = GetRelatedComponents<Collider>();
+            colliderLookup.Clear();
 
-            if (colliders.Length == 0)
+            foreach (Collider collider in colliders)
+            {
+                if (collider != null)
+                    colliderLookup.Add(collider);
+            }
+
+            if (colliderLookup.Count == 0)
                 Debug.LogError($"OutlineTrigger on {gameObject.name} has no colliders!");
         }
 
         private void Update()
         {
+            if (!isInitialized)
+                return;
+
             bool changed = false;
-
-            if (highlightOnHover)
-                changed |= UpdateHoverState();
-
-            if (highlightOnTrigger)
-                changed |= UpdateInteractionRadiusState();
-
-            bool globalHighlightHeld = highlightOnGlobalHold && IsGlobalHighlightHeld();
-            if (globalHighlightHeld != isGlobalHighlightHeld)
-            {
-                isGlobalHighlightHeld = globalHighlightHeld;
-                changed = true;
-            }
 
             bool currentCanHighlight = CanHighlight();
             if (currentCanHighlight != canHighlight)
             {
                 canHighlight = currentCanHighlight;
+                changed = true;
+            }
+
+            if (highlightOnHover && canHighlight)
+                changed |= UpdateHoverState();
+            else
+                changed |= SetMouseOver(false);
+
+            if (highlightOnTrigger && canHighlight)
+                changed |= UpdateInteractionRadiusState();
+            else
+                changed |= SetPlayerInInteractionRadius(false);
+
+            bool globalHighlightHeld = highlightOnGlobalHold && IsGlobalHighlightHeld();
+            if (globalHighlightHeld != isGlobalHighlightHeld)
+            {
+                isGlobalHighlightHeld = globalHighlightHeld;
                 changed = true;
             }
 
@@ -130,29 +151,15 @@ namespace Game
                 return SetMouseOver(false);
 
             Ray ray = Camera.main.ScreenPointToRay(pointerPosition);
-            bool hitThis = false;
-            RaycastHit[] hits = Physics.RaycastAll(ray, hoverCheckDistance, hoverLayerMask, QueryTriggerInteraction.Collide);
-
-            foreach (RaycastHit hit in hits)
-            {
-                if (BelongsToThisTrigger(hit.collider))
-                {
-                    hitThis = true;
-                    break;
-                }
-            }
+            bool hitThis = Physics.Raycast(ray, out RaycastHit hit, hoverCheckDistance, hoverLayerMask, QueryTriggerInteraction.Collide) &&
+                           BelongsToThisTrigger(hit.collider);
 
             return SetMouseOver(hitThis);
         }
 
         private bool UpdateInteractionRadiusState()
         {
-            bool playerInInteractionRadius = IsPlayerInsideInteractionRadius();
-            if (playerInInteractionRadius == isPlayerInInteractionRadius)
-                return false;
-
-            isPlayerInInteractionRadius = playerInInteractionRadius;
-            return true;
+            return SetPlayerInInteractionRadius(IsPlayerInsideInteractionRadius());
         }
 
         private bool SetMouseOver(bool value)
@@ -161,6 +168,15 @@ namespace Game
                 return false;
 
             isMouseOver = value;
+            return true;
+        }
+
+        private bool SetPlayerInInteractionRadius(bool value)
+        {
+            if (value == isPlayerInInteractionRadius)
+                return false;
+
+            isPlayerInInteractionRadius = value;
             return true;
         }
 
@@ -199,21 +215,21 @@ namespace Game
 
         private bool TryGetPlayerController(out PlayerMoveController controller)
         {
-            if (playerController != null && playerController.gameObject.activeInHierarchy)
+            if (sharedPlayerController != null && sharedPlayerController.gameObject.activeInHierarchy)
             {
-                controller = playerController;
+                controller = sharedPlayerController;
                 return true;
             }
 
-            if (Time.unscaledTime < nextPlayerLookupTime)
+            if (Time.unscaledTime < nextSharedPlayerLookupTime)
             {
                 controller = null;
                 return false;
             }
 
-            nextPlayerLookupTime = Time.unscaledTime + 0.5f;
-            playerController = UnityEngine.Object.FindAnyObjectByType<PlayerMoveController>();
-            controller = playerController;
+            nextSharedPlayerLookupTime = Time.unscaledTime + 0.5f;
+            sharedPlayerController = UnityEngine.Object.FindAnyObjectByType<PlayerMoveController>();
+            controller = sharedPlayerController;
             return controller != null;
         }
 
@@ -249,24 +265,11 @@ namespace Game
 
         private bool BelongsToThisTrigger(Collider hitCollider)
         {
-            if (hitCollider == null || colliders == null)
-                return false;
-
-            foreach (Collider col in colliders)
-            {
-                if (col == null)
-                    continue;
-
-                if (col == hitCollider)
-                    return true;
-            }
-
-            return false;
+            return hitCollider != null && colliderLookup.Contains(hitCollider);
         }
 
         private void UpdateHighlightState()
         {
-            canHighlight = CanHighlight();
             bool shouldHighlight = canHighlight &&
                 ((highlightOnTrigger && (isPlayerInTrigger || isPlayerInInteractionRadius)) ||
                  (highlightOnHover && isMouseOver) ||
@@ -277,8 +280,6 @@ namespace Game
 
         private bool CanHighlight()
         {
-            if (interactable != null && interactable.HasBeenUsed)
-                return false;
 
             if (interactableItemArea != null && interactableItemArea.HasBeenUsed)
                 return false;
@@ -288,13 +289,17 @@ namespace Game
 
         private void SetHighlighted(bool enabled)
         {
+            if (isHighlighted == enabled)
+                return;
+
+            isHighlighted = enabled;
+
             if (outlines != null)
             {
                 foreach (URPOutline outline in outlines)
                 {
                     if (outline != null)
                     {
-                        outline.enabled = enabled;
                         outline.SetHighlighted(enabled);
                     }
                 }
@@ -305,8 +310,13 @@ namespace Game
         {
             if (PlayerObjectUtility.TryGetPlayerObject(other, out _))
             {
-                isPlayerInTrigger = true;
-                UpdateHighlightState();
+                playerTriggerContacts++;
+                bool playerInsideTrigger = playerTriggerContacts > 0;
+                if (playerInsideTrigger != isPlayerInTrigger)
+                {
+                    isPlayerInTrigger = playerInsideTrigger;
+                    UpdateHighlightState();
+                }
             }
         }
 
@@ -314,8 +324,13 @@ namespace Game
         {
             if (PlayerObjectUtility.TryGetPlayerObject(other, out _))
             {
-                isPlayerInTrigger = false;
-                UpdateHighlightState();
+                playerTriggerContacts = Mathf.Max(0, playerTriggerContacts - 1);
+                bool playerInsideTrigger = playerTriggerContacts > 0;
+                if (playerInsideTrigger != isPlayerInTrigger)
+                {
+                    isPlayerInTrigger = playerInsideTrigger;
+                    UpdateHighlightState();
+                }
             }
         }
 
@@ -327,6 +342,9 @@ namespace Game
         public void SetOutlineColor(Color color)
         {
             outlineColor = color;
+            if (outlines == null)
+                return;
+
             foreach (URPOutline outline in outlines)
             {
                 if (outline != null)
@@ -337,11 +355,27 @@ namespace Game
         public void SetOutlineWidth(float width)
         {
             outlineWidth = width;
+            if (outlines == null)
+                return;
+
             foreach (URPOutline outline in outlines)
             {
                 if (outline != null)
                     outline.OutlineWidth = width;
             }
+        }
+
+        private void OnDisable()
+        {
+            if (!isInitialized)
+                return;
+
+            playerTriggerContacts = 0;
+            isPlayerInTrigger = false;
+            isPlayerInInteractionRadius = false;
+            isMouseOver = false;
+            isGlobalHighlightHeld = false;
+            SetHighlighted(false);
         }
 
         private void OnDestroy()

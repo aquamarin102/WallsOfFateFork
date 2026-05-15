@@ -14,7 +14,7 @@ namespace Game
         public int minItemsToEnable = 3;
         public int maxItemsToEnable = 6;
 
-        [Header("Перетащите сюда ВСЕ InteractableItem, которые могут появляться")]
+        [Header("Перетащите сюда ВСЕ InteractableItemInfluenceArea, которые могут появляться")]
         public List<InteractableItemInfluenceArea> items = new();   // только вручную
 
         /* ─────────────────────────────────────── */
@@ -53,7 +53,7 @@ namespace Game
             maxItemsToEnable = items.Count;
             itemsToEnableThisRun = Random.Range(minItemsToEnable, maxItemsToEnable + 1);
 
-            // ждём один кадр, чтобы все InteractableItem успели выполнить Start
+            // ждём один кадр, чтобы все InteractableItemInfluenceArea успели выполнить Start
             StartCoroutine(SpawnAtEndOfFrame());
         }
 

@@ -50,9 +50,6 @@ namespace Game
             if (TryGetComponent<Collider>(out var col))
                 col.enabled = true;
 
-            foreach (var o in GetComponentsInChildren<cakeslice.Outline>())
-                o.enabled = true;
-
             string scene = SceneManager.GetActiveScene().name;
             InteractableItemCollection.SetItemState(scene, gameObject.name, false);
         }

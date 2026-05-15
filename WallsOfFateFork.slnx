@@ -6,7 +6,6 @@
   <Project Path="Zenject-UnitTests-Editor.csproj" />
   <Project Path="Zenject-Editor.csproj" />
   <Project Path="Zenject-IntegrationTests.csproj" />
-  <Project Path="OEBIF.csproj" />
   <Project Path="Unity.AI.Navigation.Samples.csproj" />
   <Project Path="Zenject-TestFramework.csproj" />
   <Project Path="Assembly-CSharp-firstpass.csproj" />
