@@ -44,17 +44,30 @@ public class RotatingCrossSweepsPattern : PatternBehaviour
         if (gatePointA == null || gatePointB == null)
             yield break;
 
+        GateController gateControllerA = ResolveGateController(gatePointA);
+        GateController gateControllerB = ResolveGateController(gatePointB);
+        Vector3 gatePositionA = gatePointA.position;
+        Vector3 gatePositionB = gatePointB.position;
         Vector3 center = AgilitySceneUtility.ResolveArenaCenter(Ctx.arenaCenter);
-        center.y = gatePointA.position.y;
+        center.y = gatePositionA.y;
         float radius = Mathf.Max(passDistance, AgilitySceneUtility.ResolveArenaRadius(Ctx.arenaCenter) + 0.9f);
 
-        OpenGate(gatePointA.GetComponentInChildren<GateController>());
-        OpenGate(gatePointB.GetComponentInChildren<GateController>());
+        OpenGate(gateControllerA);
+        OpenGate(gateControllerB);
 
-        TokenAgent tokenA = SpawnToken(gatePointA.position + new Vector3(-returnSpacing, 0f, 0f));
-        TokenAgent tokenB = SpawnToken(gatePointB.position + new Vector3(+returnSpacing, 0f, 0f));
+        TokenAgent tokenA = SpawnToken(gatePositionA + new Vector3(-returnSpacing, 0f, 0f));
+        TokenAgent tokenB = SpawnToken(gatePositionB + new Vector3(+returnSpacing, 0f, 0f));
         if (tokenA == null || tokenB == null)
+        {
+            if (tokenA != null)
+                Destroy(tokenA.gameObject);
+            if (tokenB != null)
+                Destroy(tokenB.gameObject);
+
+            CloseGate(gateControllerA);
+            CloseGate(gateControllerB);
             yield break;
+        }
 
         CleanupTelegraphs();
 
@@ -102,16 +115,16 @@ public class RotatingCrossSweepsPattern : PatternBehaviour
             angleA = nextAngleA;
         }
 
-        tokenA.transform.position = gatePointA.position + new Vector3(-returnSpacing, 0f, 0f);
-        tokenB.transform.position = gatePointB.position + new Vector3(+returnSpacing, 0f, 0f);
+        tokenA.transform.position = gatePositionA + new Vector3(-returnSpacing, 0f, 0f);
+        tokenB.transform.position = gatePositionB + new Vector3(+returnSpacing, 0f, 0f);
 
         if (tokenA != null)
             Destroy(tokenA.gameObject);
         if (tokenB != null)
             Destroy(tokenB.gameObject);
 
-        CloseGate(gatePointA.GetComponentInChildren<GateController>());
-        CloseGate(gatePointB.GetComponentInChildren<GateController>());
+        CloseGate(gateControllerA);
+        CloseGate(gateControllerB);
     }
 
     public override void Cleanup()
@@ -202,10 +215,10 @@ public class RotatingCrossSweepsPattern : PatternBehaviour
 
     private float ResolveY()
     {
-        if (Ctx.playerHealth != null)
-            return Ctx.playerHealth.transform.position.y;
+        if (Ctx != null)
+            return Ctx.boardY + Ctx.hazardHeightOffset;
 
-        return AgilitySceneUtility.ResolveArenaCenter(Ctx.arenaCenter).y + 0.5f;
+        return AgilitySceneUtility.ResolveArenaCenter(Ctx != null ? Ctx.arenaCenter : null).y + 0.5f;
     }
 
     private void OpenGate(GateController gate)
@@ -218,5 +231,15 @@ public class RotatingCrossSweepsPattern : PatternBehaviour
     {
         if (gate?.animator != null)
             gate.animator.SetTrigger(gate.closeTrigger);
+    }
+
+    private static GateController ResolveGateController(Transform gatePoint)
+    {
+        if (gatePoint == null)
+            return null;
+
+        return gatePoint.GetComponent<GateController>()
+               ?? gatePoint.GetComponentInParent<GateController>()
+               ?? gatePoint.GetComponentInChildren<GateController>();
     }
 }

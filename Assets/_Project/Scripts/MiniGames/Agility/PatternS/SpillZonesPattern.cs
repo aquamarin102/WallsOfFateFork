@@ -101,9 +101,9 @@ public class SpillZonesPattern : PatternBehaviour
 
     private float ResolveY()
     {
-        if (Ctx.playerHealth != null)
-            return Ctx.playerHealth.transform.position.y + 0.2f;
+        if (Ctx != null)
+            return Ctx.boardY + Ctx.hazardHeightOffset + 0.2f;
 
-        return AgilitySceneUtility.ResolveArenaCenter(Ctx.arenaCenter).y + 0.5f;
+        return AgilitySceneUtility.ResolveArenaCenter(Ctx != null ? Ctx.arenaCenter : null).y + 0.5f;
     }
 }

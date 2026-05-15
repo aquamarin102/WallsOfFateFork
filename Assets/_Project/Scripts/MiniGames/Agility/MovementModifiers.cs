@@ -11,21 +11,36 @@ public class MovementModifiers : MonoBehaviour
     private float _speedUntil;
     private float _controlUntil;
 
+    private void Awake()
+    {
+        enabled = false;
+    }
+
     public void ApplySpeedMultiplier(float mult, float seconds)
     {
         speedMultiplier = Mathf.Min(speedMultiplier, mult);
         _speedUntil = Mathf.Max(_speedUntil, Time.time + seconds);
+        enabled = true;
     }
 
     public void ApplyControlMultiplier(float mult, float seconds)
     {
         controlMultiplier = Mathf.Min(controlMultiplier, mult);
         _controlUntil = Mathf.Max(_controlUntil, Time.time + seconds);
+        enabled = true;
     }   
 
     private void Update()
     {
-        if (Time.time > _speedUntil) speedMultiplier = 1f;
-        if (Time.time > _controlUntil) controlMultiplier = 1f;
+        float now = Time.time;
+
+        if (now > _speedUntil)
+            speedMultiplier = 1f;
+
+        if (now > _controlUntil)
+            controlMultiplier = 1f;
+
+        if (speedMultiplier >= 0.9999f && controlMultiplier >= 0.9999f)
+            enabled = false;
     }
 }

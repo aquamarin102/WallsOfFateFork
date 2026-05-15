@@ -26,14 +26,16 @@ public class PlusFormationPattern : FormationPhasePattern
         int pulses = Definition.intensity >= 0.75f ? 2 : 1;
         float moveDuration = Mathf.Max(0.28f, activeDuration * 0.22f);
         float holdDuration = Mathf.Max(0.18f, (activeDuration - moveDuration * pulses * 2f) / (pulses * 2f + 1f));
+        Vector3[] outerTargets = CardinalTargets(outer);
+        Vector3[] innerTargets = CardinalTargets(inner);
 
         yield return new WaitForSeconds(holdDuration);
 
         for (int i = 0; i < pulses; i++)
         {
-            yield return MoveActors(CardinalTargets(inner), moveDuration);
+            yield return MoveActors(innerTargets, moveDuration);
             yield return new WaitForSeconds(holdDuration);
-            yield return MoveActors(CardinalTargets(outer), moveDuration);
+            yield return MoveActors(outerTargets, moveDuration);
             yield return new WaitForSeconds(holdDuration);
         }
     }

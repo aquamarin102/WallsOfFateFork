@@ -1,51 +1,85 @@
+using System.Collections.Generic;
 using UnityEngine;
-using System.Collections;
 
 [RequireComponent(typeof(Collider))]
 public class DamageOnTouch : MonoBehaviour
 {
-    public int damage = 1;
-    public GameObject explosionEffect; // Префаб эффекта взрыва (VFX)
+    private const string ExplosionEffectPath = "MiniGames/Agility/Agility HitFX";
+    private static GameObject _cachedExplosionEffect;
 
-    [Tooltip("Если true — ожидаем, что коллайдер уронщика Trigger.")]
+    public int damage = 1;
+    public GameObject explosionEffect;
+
+    [Tooltip("If true, the damaging collider is expected to be a trigger.")]
     public bool requireTrigger = true;
+
+    private Collider _collider;
+    private readonly Dictionary<Collider, PlayerHealth> _healthCache = new();
+
+    private void Awake()
+    {
+        _collider = GetComponent<Collider>();
+        ResolveExplosionEffect();
+    }
 
     private void Reset()
     {
-        var c = GetComponent<Collider>();
-        if (c) c.isTrigger = true;
+        Collider collider = GetComponent<Collider>();
+        if (collider != null)
+            collider.isTrigger = true;
+    }
+
+    private void OnDisable()
+    {
+        _healthCache.Clear();
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        if (requireTrigger && !GetComponent<Collider>().isTrigger) return;
-        explosionEffect = Resources.Load<GameObject>("MiniGames/Agility/Agility HitFX");
+        if (requireTrigger && (_collider == null || !_collider.isTrigger))
+            return;
 
-        var hp = other.GetComponentInParent<PlayerHealth>();
-        if (hp != null)
-        {
-            hp.TakeDamage(damage);
+        PlayerHealth hp = ResolveHealth(other);
+        if (hp == null)
+            return;
 
-            // Создание эффекта взрыва в точке контакта
-            if (explosionEffect != null)
-            {
-                Vector3 contactPoint = GetContactPoint(transform, other.transform);
-                GameObject effectInstance = Instantiate(explosionEffect, contactPoint, Quaternion.identity);
-                StartCoroutine(DestroyAfterDelay(effectInstance, 10f));
-            }
-        }
+        hp.TakeDamage(damage);
+
+        GameObject effectPrefab = ResolveExplosionEffect();
+        if (effectPrefab == null)
+            return;
+
+        Vector3 contactPoint = other.ClosestPoint(transform.position);
+        GameObject effectInstance = Instantiate(effectPrefab, contactPoint, Quaternion.identity);
+        Destroy(effectInstance, 10f);
     }
 
-    private Vector3 GetContactPoint(Transform triggerTransform, Transform otherTransform)
+    private PlayerHealth ResolveHealth(Collider other)
     {
-        // Используем позицию вошедшего объекта как приблизительную точку контакта
-        return otherTransform.position;
+        if (other == null)
+            return null;
+
+        if (_healthCache.TryGetValue(other, out PlayerHealth cachedHealth) && cachedHealth != null)
+            return cachedHealth;
+
+        PlayerHealth health = other.GetComponentInParent<PlayerHealth>();
+        if (health != null)
+            _healthCache[other] = health;
+        else
+            _healthCache.Remove(other);
+
+        return health;
     }
 
-    private IEnumerator DestroyAfterDelay(GameObject target, float delay)
+    private GameObject ResolveExplosionEffect()
     {
-        yield return new WaitForSeconds(delay);
-        if (target != null)
-            Destroy(target);
+        if (explosionEffect != null)
+            return explosionEffect;
+
+        if (_cachedExplosionEffect == null)
+            _cachedExplosionEffect = Resources.Load<GameObject>(ExplosionEffectPath);
+
+        explosionEffect = _cachedExplosionEffect;
+        return explosionEffect;
     }
 }

@@ -30,6 +30,7 @@ public class DexMiniGameController : MonoBehaviour
     private Coroutine _runRoutine;
     private Transform _runtimePatternRoot;
     private bool _runtimePatternsInitialized;
+    private RunPlan _activePlan;
 
     public float TimeLeft { get; private set; }
 
@@ -42,6 +43,7 @@ public class DexMiniGameController : MonoBehaviour
         ResolveReferences();
         AgilityHazardFactory.SetPatternActorPrefab(threatActorPrefab);
         EnsureRuntimePatterns();
+        DisposeActivePlan();
 
         if (config == null || difficultyProfile == null || patternDatabase == null || sequencer == null || playerHealth == null)
         {
@@ -78,6 +80,7 @@ public class DexMiniGameController : MonoBehaviour
         yield return new WaitForSeconds(config.safePhaseSeconds);
 
         var plan = RunPlanGenerator.Generate(dex, seed, config, difficultyProfile, patternDatabase);
+        _activePlan = plan;
 
         SetState(MiniGameState.Running);
 
@@ -100,6 +103,7 @@ public class DexMiniGameController : MonoBehaviour
 
         SetState(playerHealth.IsDead ? MiniGameState.Lose : MiniGameState.Win);
         OnEndGame?.Invoke(state == MiniGameState.Win);
+        DisposeActivePlan();
         _runRoutine = null;
     }
 
@@ -113,6 +117,13 @@ public class DexMiniGameController : MonoBehaviour
 
         if (sequencer != null)
             sequencer.StopActivePattern();
+
+        DisposeActivePlan();
+    }
+
+    private void OnDestroy()
+    {
+        ResetRuntimePatterns();
     }
 
     private void ResolveReferences()
@@ -143,7 +154,7 @@ public class DexMiniGameController : MonoBehaviour
         if (!buildRuntimePatterns || patternDatabase == null || _runtimePatternsInitialized)
             return;
 
-        if (_runtimePatternRoot == null)
+        if (_runtimePatternRoot == null || !_runtimePatternRoot.gameObject.scene.IsValid())
         {
             var root = new GameObject("RuntimePatterns");
             root.hideFlags = HideFlags.HideInHierarchy;
@@ -167,5 +178,21 @@ public class DexMiniGameController : MonoBehaviour
         TimeLeft = Mathf.Max(0f, remaining);
         if (config != null)
             OnTimerChanged?.Invoke(TimeLeft, config.runDuration);
+    }
+
+    private void DisposeActivePlan()
+    {
+        if (_activePlan == null)
+            return;
+
+        _activePlan.DisposeRuntimeObjects();
+        _activePlan = null;
+    }
+
+    private void ResetRuntimePatterns()
+    {
+        patternDatabase?.ClearRuntimePatterns();
+        _runtimePatternRoot = null;
+        _runtimePatternsInitialized = false;
     }
 }

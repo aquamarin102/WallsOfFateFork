@@ -7,7 +7,7 @@ public static class RuntimePatternFactory
     {
         EnsureCleanRoot(root);
 
-        var patterns = new List<PatternDefinition>();
+        var patterns = new List<PatternDefinition>(3);
         patterns.Add(BuildPlus(root));
         patterns.Add(BuildCross(root));
         patterns.Add(BuildOrbit(root));
@@ -17,12 +17,13 @@ public static class RuntimePatternFactory
     private static PatternDefinition BuildPlus(Transform root)
     {
         var template = CreateTemplate<CrossThenPlusPattern>(root, "Runtime_CrossThenPlus_A");
-        template.actorHeightOffset = 0.75f;
+        template.actorHeightOffset = 0.02f;
         template.entryPortion = 0.24f;
         template.exitPortion = 0.2f;
         template.movementLerp = 1.55f;
         template.preMoveTurnDuration = 0.11f;
         template.preMoveHoldDuration = 0.03f;
+        template.postEntryHoldDuration = 0.22f;
         template.rimRadiusFactor = 0.62f;
         template.rimPathPadding = 0.6f;
         template.rimMovementLerpMultiplier = 0.55f;
@@ -37,12 +38,13 @@ public static class RuntimePatternFactory
     private static PatternDefinition BuildCross(Transform root)
     {
         var template = CreateTemplate<CrossThenPlusPattern>(root, "Runtime_CrossThenPlus_B");
-        template.actorHeightOffset = 0.75f;
+        template.actorHeightOffset = 0.02f;
         template.entryPortion = 0.24f;
         template.exitPortion = 0.2f;
         template.movementLerp = 1.55f;
         template.preMoveTurnDuration = 0.11f;
         template.preMoveHoldDuration = 0.03f;
+        template.postEntryHoldDuration = 0.22f;
         template.rimRadiusFactor = 0.62f;
         template.rimPathPadding = 0.6f;
         template.rimMovementLerpMultiplier = 0.55f;
@@ -57,12 +59,13 @@ public static class RuntimePatternFactory
     private static PatternDefinition BuildOrbit(Transform root)
     {
         var template = CreateTemplate<SlowClockwiseVolleyPattern>(root, "Runtime_SlowClockwiseVolley");
-        template.actorHeightOffset = 0.75f;
+        template.actorHeightOffset = 0.02f;
         template.entryPortion = 0.22f;
         template.exitPortion = 0.2f;
         template.movementLerp = 1.45f;
         template.preMoveTurnDuration = 0.11f;
         template.preMoveHoldDuration = 0.03f;
+        template.postEntryHoldDuration = 0.24f;
         template.rimRadiusFactor = 0.6f;
         template.rimPathPadding = 0.62f;
         template.rimMovementLerpMultiplier = 0.52f;
@@ -117,7 +120,7 @@ public static class RuntimePatternFactory
 
     private static void EnsureCleanRoot(Transform root)
     {
-        if (root == null)
+        if (root == null || root.childCount == 0)
             return;
 
         for (int i = root.childCount - 1; i >= 0; i--)

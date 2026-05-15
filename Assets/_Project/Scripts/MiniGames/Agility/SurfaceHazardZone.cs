@@ -18,7 +18,10 @@ public class SurfaceHazardZone : MonoBehaviour
     [SerializeField] private int burnDamage = 1;
 
     private readonly Dictionary<PlayerHealth, float> _nextBurnTick = new();
+    private readonly Dictionary<Collider, PlayerHealth> _healthCache = new();
+    private readonly Dictionary<Collider, MovementModifiers> _modifierCache = new();
     private ZoneEffect _zoneEffect;
+    private float _expireAt;
 
     public void Configure(ZoneEffect effect, float seconds, float speedMult = 0.65f, float controlMult = 0.65f)
     {
@@ -26,25 +29,26 @@ public class SurfaceHazardZone : MonoBehaviour
         lifetime = Mathf.Max(0.1f, seconds);
         speedMultiplier = speedMult;
         controlMultiplier = controlMult;
+        _expireAt = Time.time + lifetime;
     }
 
     private void Awake()
     {
         var collider = GetComponent<Collider>();
         collider.isTrigger = true;
+        _expireAt = Time.time + lifetime;
     }
 
     private void Update()
     {
-        lifetime -= Time.deltaTime;
-        if (lifetime <= 0f)
+        if (Time.time >= _expireAt)
             Destroy(gameObject);
     }
 
     private void OnTriggerStay(Collider other)
     {
-        var hp = other.GetComponentInParent<PlayerHealth>();
-        var mods = other.GetComponentInParent<MovementModifiers>();
+        var hp = ResolveHealth(other);
+        var mods = ResolveModifiers(other);
         if (hp == null && mods == null)
             return;
 
@@ -62,15 +66,57 @@ public class SurfaceHazardZone : MonoBehaviour
                 if (hp == null)
                     return;
 
+                float now = Time.time;
                 if (!_nextBurnTick.TryGetValue(hp, out float nextTick))
                     nextTick = 0f;
 
-                if (Time.time >= nextTick)
+                if (now >= nextTick)
                 {
                     hp.TakeDamage(burnDamage);
-                    _nextBurnTick[hp] = Time.time + damageInterval;
+                    _nextBurnTick[hp] = now + damageInterval;
                 }
                 break;
         }
+    }
+
+    private void OnDisable()
+    {
+        _nextBurnTick.Clear();
+        _healthCache.Clear();
+        _modifierCache.Clear();
+    }
+
+    private PlayerHealth ResolveHealth(Collider other)
+    {
+        if (other == null)
+            return null;
+
+        if (_healthCache.TryGetValue(other, out PlayerHealth cachedHealth) && cachedHealth != null)
+            return cachedHealth;
+
+        PlayerHealth health = other.GetComponentInParent<PlayerHealth>();
+        if (health != null)
+            _healthCache[other] = health;
+        else
+            _healthCache.Remove(other);
+
+        return health;
+    }
+
+    private MovementModifiers ResolveModifiers(Collider other)
+    {
+        if (other == null)
+            return null;
+
+        if (_modifierCache.TryGetValue(other, out MovementModifiers cachedModifiers) && cachedModifiers != null)
+            return cachedModifiers;
+
+        MovementModifiers modifiers = other.GetComponentInParent<MovementModifiers>();
+        if (modifiers != null)
+            _modifierCache[other] = modifiers;
+        else
+            _modifierCache.Remove(other);
+
+        return modifiers;
     }
 }

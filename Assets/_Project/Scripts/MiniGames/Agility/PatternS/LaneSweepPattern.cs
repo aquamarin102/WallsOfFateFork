@@ -109,9 +109,9 @@ public class LaneSweepPattern : PatternBehaviour
 
     private float ResolveY()
     {
-        if (Ctx.playerHealth != null)
-            return Ctx.playerHealth.transform.position.y;
+        if (Ctx != null)
+            return Ctx.boardY + Ctx.hazardHeightOffset;
 
-        return AgilitySceneUtility.ResolveArenaCenter(Ctx.arenaCenter).y + 0.5f;
+        return AgilitySceneUtility.ResolveArenaCenter(Ctx != null ? Ctx.arenaCenter : null).y + 0.5f;
     }
 }

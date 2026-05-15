@@ -16,10 +16,12 @@ public class PatternSequencer : MonoBehaviour
 
     public void Init(PlayerHealth hp, MovementModifiers mods)
     {
-        if (arenaCenter == null)
-            arenaCenter = AgilitySceneUtility.FindTransform("Board");
         if (entrances == null)
             entrances = AgilitySceneUtility.FindInLoadedScene<EntrancePoints>();
+
+        Transform board = AgilitySceneUtility.FindArenaRootTransform();
+        if (arenaCenter == null || IsLikelySpawnPoint(arenaCenter))
+            arenaCenter = board != null ? board : arenaCenter;
 
         _ctx = new PatternContext
         {
@@ -30,17 +32,25 @@ public class PatternSequencer : MonoBehaviour
             runner = this
         };
 
-        _ctx.boardY = _ctx.arenaCenter != null ? _ctx.arenaCenter.position.y : 0f;
+        _ctx.boardY = AgilitySceneUtility.ResolveArenaSurfaceY(_ctx.entrances, _ctx.arenaCenter);
         _ctx.hazardHeightOffset = hp != null ? Mathf.Max(0f, hp.transform.position.y - _ctx.boardY) : 0.5f;
+    }
+
+    private static bool IsLikelySpawnPoint(Transform candidate)
+    {
+        if (candidate == null)
+            return false;
+
+        return candidate.name == "PlayerSpawnPoint";
     }
 
     public IEnumerator Play(RunPlan plan)
     {
-        if (_ctx == null || _ctx.playerHealth == null)
+        if (_ctx == null || _ctx.playerHealth == null || plan == null || plan.items == null || plan.items.Count == 0)
             yield break;
 
         float runStartedAt = Time.time;
-        _totalPatterns = plan?.items?.Count ?? 0;
+        _totalPatterns = plan.items.Count;
 
         for (int patternIndex = 0; patternIndex < plan.items.Count; patternIndex++)
         {

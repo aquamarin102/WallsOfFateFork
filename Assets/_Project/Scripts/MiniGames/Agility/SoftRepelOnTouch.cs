@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(Collider))]
@@ -8,10 +9,16 @@ public class SoftRepelOnTouch : MonoBehaviour
     [SerializeField] private float maxDistanceBias = 1.1f;
 
     private Collider _collider;
+    private readonly Dictionary<Collider, PlayerMotor> _motorCache = new();
 
     private void Awake()
     {
         _collider = GetComponent<Collider>();
+    }
+
+    private void OnDisable()
+    {
+        _motorCache.Clear();
     }
 
     private void OnTriggerEnter(Collider other)
@@ -42,7 +49,7 @@ public class SoftRepelOnTouch : MonoBehaviour
 
     private void ApplyRepel(Collider other, float strength)
     {
-        var motor = other != null ? other.GetComponentInParent<PlayerMotor>() : null;
+        var motor = ResolveMotor(other);
         if (motor == null)
             return;
 
@@ -63,6 +70,23 @@ public class SoftRepelOnTouch : MonoBehaviour
         float distanceFactor = Mathf.Clamp01(maxDistanceBias - direction.magnitude);
         Vector3 push = direction.normalized * (strength * Mathf.Max(0.25f, distanceFactor));
         motor.AddExternalVelocity(push);
+    }
+
+    private PlayerMotor ResolveMotor(Collider other)
+    {
+        if (other == null)
+            return null;
+
+        if (_motorCache.TryGetValue(other, out PlayerMotor cachedMotor) && cachedMotor != null)
+            return cachedMotor;
+
+        PlayerMotor motor = other.GetComponentInParent<PlayerMotor>();
+        if (motor != null)
+            _motorCache[other] = motor;
+        else
+            _motorCache.Remove(other);
+
+        return motor;
     }
 
     private Vector3 ResolveHazardPoint(Collider other)

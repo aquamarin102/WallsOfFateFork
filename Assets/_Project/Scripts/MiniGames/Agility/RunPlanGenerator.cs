@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 public static class RunPlanGenerator
 {
+    private static readonly List<PatternDefinition> CandidateBuffer = new(32);
+
     public static RunPlan Generate(
         int dex,
         int seed,
@@ -12,7 +13,7 @@ public static class RunPlanGenerator
         DexDifficultyProfile profile,
         PatternDatabase db)
     {
-        var scriptedActs = TryGenerateScriptedActs(dex, config, profile, db);
+        RunPlan scriptedActs = TryGenerateScriptedActs(dex, config, profile, db);
         if (scriptedActs != null)
             return scriptedActs;
 
@@ -20,20 +21,16 @@ public static class RunPlanGenerator
         var rng = new System.Random(seed);
 
         float dex01 = profile.NormalizeDex(dex);
-
         float easyShare = profile.easyShare.Evaluate(dex01);
         float mediumShare = profile.mediumShare.Evaluate(dex01);
         float hardShare = profile.hardShare.Evaluate(dex01);
-
         float maxBudget = profile.maxIntensityBudget.Evaluate(dex01);
         float comboChance = profile.comboChance.Evaluate(dex01);
-
         int slots = Mathf.Max(1, Mathf.FloorToInt(config.runDuration / config.slotSeconds));
 
-        PatternDefinition? last = null;
+        PatternDefinition last = null;
         PatternTag recentTags = PatternTag.None;
         PatternTier lastTier = PatternTier.Easy;
-
         float time = 0f;
 
         for (int i = 0; i < slots; i++)
@@ -41,32 +38,29 @@ public static class RunPlanGenerator
             if (time >= config.runDuration)
                 break;
 
-            // “Кривая сложности по времени”: ближе к концу повышаем вероятность Medium/Hard
             float t01 = slots <= 1 ? 1f : i / (float)(slots - 1);
             (float e, float m, float h) = TimeBias(easyShare, mediumShare, hardShare, t01);
+            PatternTier targetTier = RollTier(rng, e, m, h);
 
-            var targetTier = RollTier(rng, e, m, h);
+            PatternDefinition firstPattern = PickPattern(rng, db, dex, targetTier, last, recentTags, maxBudget, 0f);
+            if (firstPattern == null)
+                break;
 
-            // Выбираем 1 паттерн
-            var p1 = PickPattern(rng, db, dex, targetTier, last, recentTags, maxBudget, 0f);
-            if (p1 == null) break;
+            Add(plan, firstPattern, ref time, config.slotSeconds, config.runDuration);
+            last = firstPattern;
+            recentTags = firstPattern.tags;
+            lastTier = firstPattern.tier;
 
-            Add(plan, p1, ref time, config.slotSeconds, config.runDuration);
-            last = p1;
-            recentTags = p1.tags;
-            lastTier = p1.tier;
-
-            // Опционально: связка (2 паттерна), если позволяет бюджет
-            bool wantCombo = rng.NextDouble() < comboChance && p1.tier != PatternTier.Hard;
+            bool wantCombo = rng.NextDouble() < comboChance && firstPattern.tier != PatternTier.Hard;
             if (wantCombo && time < config.runDuration)
             {
-                var p2 = PickPattern(rng, db, dex, targetTier, last, recentTags, maxBudget, p1.intensity);
-                if (p2 != null)
+                PatternDefinition secondPattern = PickPattern(rng, db, dex, targetTier, last, recentTags, maxBudget, firstPattern.intensity);
+                if (secondPattern != null)
                 {
-                    Add(plan, p2, ref time, config.slotSeconds * 0.5f, config.runDuration);
-                    last = p2;
-                    recentTags = p2.tags;
-                    lastTier = p2.tier;
+                    Add(plan, secondPattern, ref time, config.slotSeconds * 0.5f, config.runDuration);
+                    last = secondPattern;
+                    recentTags = secondPattern.tags;
+                    lastTier = secondPattern.tier;
                 }
             }
 
@@ -83,96 +77,82 @@ public static class RunPlanGenerator
         return plan;
     }
 
-    private static void Add(RunPlan plan, PatternDefinition p, ref float time, float slotSeconds, float maxRunDuration)
+    private static void Add(RunPlan plan, PatternDefinition pattern, ref float time, float slotSeconds, float maxRunDuration)
     {
-        float dur = Mathf.Min(p.duration + p.cooldownAfter, slotSeconds);
-        dur = Mathf.Min(dur, Mathf.Max(0f, maxRunDuration - time));
-        if (dur <= 0f) return;
+        float duration = Mathf.Min(pattern.duration + pattern.cooldownAfter, slotSeconds);
+        duration = Mathf.Min(duration, Mathf.Max(0f, maxRunDuration - time));
+        if (duration <= 0f)
+            return;
 
-        var item = new RunPlanItem
+        plan.items.Add(new RunPlanItem
         {
-            pattern = p,
+            pattern = pattern,
             startTime = time,
-            endTime = time + dur
-        };
-        plan.items.Add(item);
-        time += dur;
+            endTime = time + duration
+        });
+
+        time += duration;
     }
 
     private static (float e, float m, float h) TimeBias(float e, float m, float h, float t01)
     {
-        // Небольшой дрейф: чем ближе к концу, тем меньше easy и больше hard.
         float drift = Mathf.Lerp(0f, 0.25f, t01);
         e = Mathf.Clamp01(e - drift);
         h = Mathf.Clamp01(h + drift);
-        // m оставляем как есть, потом нормализуем
+
         float sum = e + m + h;
-        if (sum <= 0.0001f) return (0.33f, 0.33f, 0.34f);
+        if (sum <= 0.0001f)
+            return (0.33f, 0.33f, 0.34f);
+
         return (e / sum, m / sum, h / sum);
     }
 
     private static PatternTier RollTier(System.Random rng, float e, float m, float h)
     {
-        double r = rng.NextDouble();
-        if (r < e) return PatternTier.Easy;
-        if (r < e + m) return PatternTier.Medium;
+        double roll = rng.NextDouble();
+        if (roll < e)
+            return PatternTier.Easy;
+
+        if (roll < e + m)
+            return PatternTier.Medium;
+
         return PatternTier.Hard;
     }
 
-    private static PatternDefinition? PickPattern(
+    private static PatternDefinition PickPattern(
         System.Random rng,
         PatternDatabase db,
         int dex,
         PatternTier tier,
-        PatternDefinition? last,
+        PatternDefinition last,
         PatternTag recentTags,
         float maxBudget,
         float alreadyUsedBudget)
     {
-        var candidates = db.All
-            .Where(p => p != null)
-            .Where(p => p.tier == tier)
-            .Where(p => dex >= p.minDex && dex <= p.maxDex)
-            .Where(p => last == null || p != last)
-            .Where(p => (p.forbiddenWithTags & recentTags) == 0)
-            .Where(p => (alreadyUsedBudget + p.intensity) <= maxBudget)
-            .ToList();
+        CandidateBuffer.Clear();
+        CollectCandidates(CandidateBuffer, db, dex, last, recentTags, maxBudget, alreadyUsedBudget, tierOnly: true, tier);
 
-        if (candidates.Count == 0)
+        if (CandidateBuffer.Count == 0)
+            CollectCandidates(CandidateBuffer, db, dex, last, recentTags, maxBudget, alreadyUsedBudget, tierOnly: false, tier);
+
+        if (CandidateBuffer.Count == 0)
+            return null;
+
+        float dex01 = Mathf.InverseLerp(1f, 10f, dex);
+        float totalWeight = 0f;
+        for (int i = 0; i < CandidateBuffer.Count; i++)
+            totalWeight += Mathf.Max(0.001f, CandidateBuffer[i].weightByDex.Evaluate(dex01));
+
+        double roll = rng.NextDouble() * totalWeight;
+        float accumulatedWeight = 0f;
+        for (int i = 0; i < CandidateBuffer.Count; i++)
         {
-            // fallback: разрешаем tier ниже
-            candidates = db.All
-                .Where(p => p != null)
-                .Where(p => dex >= p.minDex && dex <= p.maxDex)
-                .Where(p => last == null || p != last)
-                .Where(p => (p.forbiddenWithTags & recentTags) == 0)
-                .Where(p => (alreadyUsedBudget + p.intensity) <= maxBudget)
-                .OrderBy(p => p.tier) // Easy сначала
-                .ToList();
+            accumulatedWeight += Mathf.Max(0.001f, CandidateBuffer[i].weightByDex.Evaluate(dex01));
+            if (roll <= accumulatedWeight)
+                return CandidateBuffer[i];
         }
 
-        if (candidates.Count == 0) return null;
-
-        // Взвешенный выбор по dex
-        float dex01 = Mathf.InverseLerp(1f, 10f, dex); // если у вас другой диапазон — замените
-        var weights = new float[candidates.Count];
-        float total = 0f;
-        for (int i = 0; i < candidates.Count; i++)
-        {
-            float w = Mathf.Max(0.001f, candidates[i].weightByDex.Evaluate(dex01));
-            weights[i] = w;
-            total += w;
-        }
-
-        double roll = rng.NextDouble() * total;
-        float acc = 0f;
-        for (int i = 0; i < candidates.Count; i++)
-        {
-            acc += weights[i];
-            if (roll <= acc) return candidates[i];
-        }
-
-        return candidates[^1];
+        return CandidateBuffer[CandidateBuffer.Count - 1];
     }
 
     private static RunPlan TryGenerateScriptedActs(
@@ -181,9 +161,9 @@ public static class RunPlanGenerator
         DexDifficultyProfile profile,
         PatternDatabase db)
     {
-        var plus = db.All.FirstOrDefault(p => p != null && p.id == "AGILITY_ACT_PLUS");
-        var cross = db.All.FirstOrDefault(p => p != null && p.id == "AGILITY_ACT_CROSS");
-        var orbit = db.All.FirstOrDefault(p => p != null && p.id == "AGILITY_ACT_ORBIT");
+        PatternDefinition plus = db.FindById("AGILITY_ACT_PLUS");
+        PatternDefinition cross = db.FindById("AGILITY_ACT_CROSS");
+        PatternDefinition orbit = db.FindById("AGILITY_ACT_ORBIT");
 
         if (plus == null || cross == null || orbit == null)
             return null;
@@ -193,21 +173,23 @@ public static class RunPlanGenerator
 
         var plan = new RunPlan();
         float startTime = 0f;
-
         PatternDefinition[] sourcePatterns = { plus, orbit, cross };
+
         for (int i = 0; i < sourcePatterns.Length; i++)
         {
             PatternDefinition source = sourcePatterns[i];
-            float segmentDuration = (i == sourcePatterns.Length - 1) ? config.runDuration - startTime : phaseDuration;
+            float segmentDuration = i == sourcePatterns.Length - 1
+                ? config.runDuration - startTime
+                : phaseDuration;
             float telegraph = Mathf.Min(source.telegraphTime, segmentDuration * 0.24f);
             float activeDuration = Mathf.Max(0.85f, segmentDuration - telegraph);
 
-            var timedPattern = UnityEngine.Object.Instantiate(source);
-            timedPattern.hideFlags = HideFlags.DontSave;
-            timedPattern.duration = activeDuration;
-            timedPattern.telegraphTime = telegraph;
-            timedPattern.cooldownAfter = 0f;
-            timedPattern.intensity = Mathf.Clamp01(source.intensity + dex01 * (0.08f + i * 0.04f));
+            PatternDefinition timedPattern = CreateTimedPatternDefinition(
+                source,
+                activeDuration,
+                telegraph,
+                Mathf.Clamp01(source.intensity + dex01 * (0.08f + i * 0.04f)));
+            plan.TrackRuntimeObject(timedPattern);
 
             plan.items.Add(new RunPlanItem
             {
@@ -220,5 +202,76 @@ public static class RunPlanGenerator
         }
 
         return plan;
+    }
+
+    private static PatternDefinition CreateTimedPatternDefinition(
+        PatternDefinition source,
+        float duration,
+        float telegraphTime,
+        float intensity)
+    {
+        var timedPattern = ScriptableObject.CreateInstance<PatternDefinition>();
+        timedPattern.hideFlags = HideFlags.DontSave;
+        timedPattern.id = source.id;
+        timedPattern.tier = source.tier;
+        timedPattern.duration = duration;
+        timedPattern.telegraphTime = telegraphTime;
+        timedPattern.cooldownAfter = 0f;
+        timedPattern.intensity = intensity;
+        timedPattern.tags = source.tags;
+        timedPattern.forbiddenWithTags = source.forbiddenWithTags;
+        timedPattern.minDex = source.minDex;
+        timedPattern.maxDex = source.maxDex;
+        timedPattern.weightByDex = source.weightByDex;
+        timedPattern.patternPrefab = source.patternPrefab;
+        return timedPattern;
+    }
+
+    private static void CollectCandidates(
+        List<PatternDefinition> buffer,
+        PatternDatabase db,
+        int dex,
+        PatternDefinition last,
+        PatternTag recentTags,
+        float maxBudget,
+        float alreadyUsedBudget,
+        bool tierOnly,
+        PatternTier tier)
+    {
+        int count = db != null ? db.AllCount : 0;
+        for (int i = 0; i < count; i++)
+        {
+            PatternDefinition pattern = db.GetAt(i);
+            if (IsCandidate(pattern, dex, last, recentTags, maxBudget, alreadyUsedBudget, tierOnly, tier))
+                buffer.Add(pattern);
+        }
+    }
+
+    private static bool IsCandidate(
+        PatternDefinition pattern,
+        int dex,
+        PatternDefinition last,
+        PatternTag recentTags,
+        float maxBudget,
+        float alreadyUsedBudget,
+        bool tierOnly,
+        PatternTier tier)
+    {
+        if (pattern == null)
+            return false;
+
+        if (tierOnly && pattern.tier != tier)
+            return false;
+
+        if (dex < pattern.minDex || dex > pattern.maxDex)
+            return false;
+
+        if (last != null && pattern == last)
+            return false;
+
+        if ((pattern.forbiddenWithTags & recentTags) != 0)
+            return false;
+
+        return alreadyUsedBudget + pattern.intensity <= maxBudget;
     }
 }

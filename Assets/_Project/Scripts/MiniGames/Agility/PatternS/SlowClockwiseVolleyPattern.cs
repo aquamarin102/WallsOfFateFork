@@ -11,6 +11,8 @@ public class SlowClockwiseVolleyPattern : FormationPhasePattern
     public float desiredStepDuration = 0.48f;
     [Range(0.1f, 0.8f)] public float innerRadiusFactor = 0.52f;
 
+    private readonly Vector3[] _orbitTargets = new Vector3[4];
+
     protected override void CreateTelegraphs()
     {
         IReadOnlyList<Vector3> orbitTargets = BuildOrbitTargets(CurrentOuterRadius());
@@ -35,7 +37,9 @@ public class SlowClockwiseVolleyPattern : FormationPhasePattern
 
         for (int step = 0; step < stepCount; step++)
         {
-            float normalizedTime = (step + 1f) / Mathf.Max(1f, stepCount);
+            float normalizedTime = stepCount <= 1
+                ? 1f
+                : step / Mathf.Max(1f, stepCount - 1f);
             float pulse = Mathf.PingPong(normalizedTime * pulseCount * 2f, 1f);
             float radius = Mathf.Lerp(outerRadius, innerRadius, pulse);
             angleOffset -= angularSpeed * stepDuration;
@@ -48,14 +52,14 @@ public class SlowClockwiseVolleyPattern : FormationPhasePattern
 
     private IReadOnlyList<Vector3> BuildOrbitTargets(float radius, float angleOffset = 0f)
     {
-        var targets = new List<Vector3>(SlotEntrances.Length);
-        for (int i = 0; i < SlotEntrances.Length; i++)
+        int count = Mathf.Min(SlotEntrances.Length, _orbitTargets.Length);
+        for (int i = 0; i < count; i++)
         {
-            float angle = angleOffset + i * (360f / Mathf.Max(1, SlotEntrances.Length));
-            targets.Add(PointOnRing(angle, radius));
+            float angle = angleOffset + i * (360f / Mathf.Max(1, count));
+            _orbitTargets[i] = PointOnRing(angle, radius);
         }
 
-        return targets;
+        return _orbitTargets;
     }
 
     private float CurrentOuterRadius()

@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Globalization;
-using System.Runtime.CompilerServices;
 using Game;
 using Game.UI;
 using Newtonsoft.Json.Linq;
@@ -11,6 +10,8 @@ namespace Game.MiniGame.Agility
 {
     public class AgilityInstaller : MonoInstaller, IMiniGameInstaller
     {
+        private const float MaxLegacyGroundClearance = 0.05f;
+
         [Header("Core")]
         [SerializeField] private DexMiniGameController controller;
         [SerializeField] private PatternSequencer sequencer;
@@ -21,10 +22,12 @@ namespace Game.MiniGame.Agility
         [SerializeField] private PlayerHealth playerHealth;
         [SerializeField] private PlayerMotor playerMotor;
         [SerializeField] private MovementModifiers playerModifiers;
-        [SerializeField] private float playerSpawnHeightOffset = 0.35f;
+        [SerializeField] private float playerSpawnHeightOffset = 0.02f;
+        [SerializeField] private float sharedGroundOffset = -0.025f;
         [SerializeField] private float playerSpeedMultiplier = 1.18f;
         [SerializeField] private float playerAccelerationMultiplier = 1.12f;
         [SerializeField] private float playerDecelerationMultiplier = 1.12f;
+        [SerializeField] private float telegraphSurfaceOffset = 0f;
 
         [Header("UI")]
         [SerializeField] private SliderTimerManager sliderTimerManager;
@@ -35,12 +38,14 @@ namespace Game.MiniGame.Agility
         [SerializeField] private float standaloneAutoStartDelay = 0.2f;
         [SerializeField] private KeyCode standaloneRestartKey = KeyCode.Space;
 
-        [Header("Enemy Prefab")]
-        [SerializeField] private Transform EnemySpawnPoint;
+        [Header("Enemy Visuals")]
+        [SerializeField] private GameObject patternEnemyPrefab;
 
         private MiniGameData _gameData;
         private Coroutine _standaloneStartRoutine;
         private bool _isTutorialPending;
+        private GameObject _defaultThreatActorPrefab;
+        private EntrancePoints _entrancePoints;
 
         public override void InstallBindings()
         {
@@ -77,13 +82,6 @@ namespace Game.MiniGame.Agility
             ApplyGameData();
             BindUi();
 
-            //string pathToEnemyPrefab = (string)_gameData.customParameters["EnemyPrefab"];
-            //if (!string.IsNullOrEmpty(pathToEnemyPrefab))
-            //{
-            //    GameObject EnemyPrefab = Resources.Load<GameObject>(pathToEnemyPrefab);
-            //    Instantiate(EnemyPrefab, EnemySpawnPoint.position, EnemyPrefab.transform.rotation);
-            //}
-
             if (controller == null)
             {
                 Debug.LogError("AgilityInstaller: DexMiniGameController не найден на сцене.");
@@ -119,6 +117,9 @@ namespace Game.MiniGame.Agility
                 controller.OnEndGame -= OnMiniGameEnded;
                 controller.OnTimerChanged -= HandleTimerChanged;
             }
+
+            if (playerMotor != null)
+                playerMotor.OnDashCooldownChanged -= HandleDashCooldownChanged;
 
             if (sequencer != null)
             {
@@ -159,12 +160,18 @@ namespace Game.MiniGame.Agility
             playerMotor ??= playerHealth != null ? playerHealth.GetComponent<PlayerMotor>() : AgilitySceneUtility.FindInLoadedScene<PlayerMotor>("Player");
             playerModifiers ??= playerHealth != null ? playerHealth.GetComponent<MovementModifiers>() : AgilitySceneUtility.FindInLoadedScene<MovementModifiers>("Player");
             playerStartPoint ??= AgilitySceneUtility.FindTransform("PlayerSpawnPoint");
+            _entrancePoints ??= AgilitySceneUtility.FindInLoadedScene<EntrancePoints>();
             sliderTimerManager ??= AgilitySceneUtility.FindInLoadedScene<SliderTimerManager>();
             playerHPManager ??= AgilitySceneUtility.FindInLoadedScene<PlayerHPManager>();
+
+            if (controller != null && _defaultThreatActorPrefab == null)
+                _defaultThreatActorPrefab = controller.threatActorPrefab;
         }
 
         private void PrepareScene()
         {
+            AgilitySceneUtility.ConfigureMiniGamePlacement(sharedGroundOffset, telegraphSurfaceOffset);
+
             //var legacyProcess = AgilitySceneUtility.FindInLoadedScene<GameProcess>();
             //if (legacyProcess != null)
             //    legacyProcess.enabled = false;
@@ -218,6 +225,20 @@ namespace Game.MiniGame.Agility
             controller.seed = TryGetInt("seed", out int seed)
                 ? seed
                 : System.Environment.TickCount;
+            ApplyPatternEnemyPrefab();
+        }
+
+        private void ApplyPatternEnemyPrefab()
+        {
+            if (controller == null)
+                return;
+
+            if (_defaultThreatActorPrefab == null)
+                _defaultThreatActorPrefab = controller.threatActorPrefab;
+
+            controller.threatActorPrefab = patternEnemyPrefab != null
+                ? patternEnemyPrefab
+                : _defaultThreatActorPrefab;
         }
 
         private void BindUi()
@@ -226,6 +247,7 @@ namespace Game.MiniGame.Agility
                 return;
 
             controller.OnTimerChanged -= HandleTimerChanged;
+            controller.OnTimerChanged += HandleTimerChanged;
             playerHealth.OnHpChanged -= HandleHpChanged;
             playerHealth.OnHpChanged += HandleHpChanged;
             if (sequencer != null)
@@ -240,6 +262,14 @@ namespace Game.MiniGame.Agility
             {
                 sliderTimerManager?.InitializeTimer(controller.config.runDuration, 3);
                 playerHPManager?.InitializeHP(controller.config.startingHp);
+            }
+
+            if (playerMotor != null)
+            {
+                playerMotor.OnDashCooldownChanged -= HandleDashCooldownChanged;
+                playerMotor.OnDashCooldownChanged += HandleDashCooldownChanged;
+                sliderTimerManager?.InitializeDashCooldown(playerMotor.DashCooldownDuration);
+                playerMotor.ForcePublishDashCooldown();
             }
         }
 
@@ -261,6 +291,11 @@ namespace Game.MiniGame.Agility
         private void HandlePatternCoreCompleted(int patternIndex, int totalPatterns)
         {
             sliderTimerManager?.SnapToDivider(patternIndex + 1, totalPatterns);
+        }
+
+        private void HandleDashCooldownChanged(float remaining, float total, bool isReady)
+        {
+            sliderTimerManager?.SetDashCooldown(remaining, total, isReady);
         }
 
         private void RestartStandaloneAutoStart()
@@ -313,12 +348,21 @@ namespace Game.MiniGame.Agility
                 ? playerStartPoint.position
                 : playerHealth.transform.position;
 
-            Transform board = AgilitySceneUtility.FindTransform("Board");
-            float boardTopY = AgilitySceneUtility.ResolveTopY(board, spawnPosition.y);
-            float playerBottomOffset = AgilitySceneUtility.ResolveBottomOffset(playerHealth.transform, 0f);
-
-            spawnPosition.y = boardTopY - playerBottomOffset + playerSpawnHeightOffset;
+            Transform board = AgilitySceneUtility.FindArenaRootTransform();
+            float surfaceTopY = AgilitySceneUtility.ResolveArenaSurfaceY(_entrancePoints, board, playerStartPoint, spawnPosition.y);
+            float groundClearance = ResolveGroundClearance(playerSpawnHeightOffset, sharedGroundOffset);
+            spawnPosition.y = AgilitySceneUtility.ResolveAlignedRootY(playerHealth.transform, surfaceTopY, spawnPosition.y, groundClearance);
             return spawnPosition;
+        }
+
+        private static float ResolveGroundClearance(float legacyClearance, float sharedOffset)
+        {
+            return NormalizeLegacyClearance(legacyClearance) + sharedOffset;
+        }
+
+        private static float NormalizeLegacyClearance(float clearance)
+        {
+            return Mathf.Abs(clearance) <= MaxLegacyGroundClearance ? clearance : 0f;
         }
 
         private Quaternion ResolvePlayerSpawnRotation()

@@ -13,7 +13,8 @@ public class EntranceVolleyPattern : PatternBehaviour
     public Color activeColor = new Color(0.88f, 0.25f, 0.08f);
 
     private readonly List<GameObject> _telegraphs = new();
-    private ArenaCardinal[] _plannedDirections;
+    private readonly ArenaCardinal[] _plannedDirections = new ArenaCardinal[4];
+    private bool _hasPlannedDirections;
 
     public override void BeginTelegraph()
     {
@@ -22,7 +23,8 @@ public class EntranceVolleyPattern : PatternBehaviour
         Vector3 center = AgilitySceneUtility.ResolveArenaCenter(Ctx.arenaCenter);
         float radius = AgilitySceneUtility.ResolveArenaRadius(Ctx.arenaCenter);
         float y = ResolveY();
-        _plannedDirections = AgilitySceneUtility.ShuffleCardinals();
+        AgilitySceneUtility.ShuffleCardinals(_plannedDirections);
+        _hasPlannedDirections = true;
 
         int laneCount = Mathf.Clamp(shotsPerVolley, 2, 4);
         for (int i = 0; i < laneCount; i++)
@@ -45,7 +47,11 @@ public class EntranceVolleyPattern : PatternBehaviour
         Vector3 center = AgilitySceneUtility.ResolveArenaCenter(Ctx.arenaCenter);
         float radius = AgilitySceneUtility.ResolveArenaRadius(Ctx.arenaCenter);
         float y = ResolveY();
-        _plannedDirections ??= AgilitySceneUtility.ShuffleCardinals();
+        if (!_hasPlannedDirections)
+        {
+            AgilitySceneUtility.ShuffleCardinals(_plannedDirections);
+            _hasPlannedDirections = true;
+        }
 
         int laneCount = Mathf.Clamp(shotsPerVolley, 2, 4);
         float interval = Mathf.Max(0.18f, Definition.duration / Mathf.Max(2f, laneCount + 1f));
@@ -84,9 +90,9 @@ public class EntranceVolleyPattern : PatternBehaviour
 
     private float ResolveY()
     {
-        if (Ctx.playerHealth != null)
-            return Ctx.playerHealth.transform.position.y + 0.2f;
+        if (Ctx != null)
+            return Ctx.boardY + Ctx.hazardHeightOffset + 0.2f;
 
-        return AgilitySceneUtility.ResolveArenaCenter(Ctx.arenaCenter).y + 0.6f;
+        return AgilitySceneUtility.ResolveArenaCenter(Ctx != null ? Ctx.arenaCenter : null).y + 0.6f;
     }
 }

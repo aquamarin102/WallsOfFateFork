@@ -29,31 +29,43 @@ public class SlowPlusPulsePattern : FormationPhasePattern
         Vector3[] oppositeOuterTargets = RotateTargets(outerTargets, 2);
         Vector3[] innerTargets = CardinalTargets(CurrentCenterRadius());
 
-        var sequence = new List<IReadOnlyList<Vector3>>();
+        int cycleCount = Mathf.Max(1, sweepCount);
+        int steps = cycleCount * 2;
         bool useOpposite = true;
-        for (int cycle = 0; cycle < Mathf.Max(1, sweepCount); cycle++)
-        {
-            sequence.Add(innerTargets);
-            sequence.Add(useOpposite ? oppositeOuterTargets : outerTargets);
-            useOpposite = !useOpposite;
-        }
-
-        int steps = sequence.Count;
         float totalPause = pauseBetweenSweeps * Mathf.Max(0, steps - 1);
         float moveDuration = Mathf.Max(0.3f, (activeDuration - totalPause) / steps);
         float timelineDuration = moveDuration * steps + totalPause;
         float timelineElapsed = 0f;
+        int stepIndex = 0;
 
-        for (int stepIndex = 0; stepIndex < steps; stepIndex++)
+        for (int cycle = 0; cycle < cycleCount; cycle++)
         {
-            IReadOnlyList<Vector3> targets = sequence[stepIndex];
+            IReadOnlyList<Vector3> targets = innerTargets;
 
             float moveStart = timelineDuration > 0f ? timelineElapsed / timelineDuration : 0f;
             timelineElapsed += moveDuration;
             float moveEnd = timelineDuration > 0f ? timelineElapsed / timelineDuration : 1f;
             yield return MoveActors(targets, moveDuration, 1f, moveStart, moveEnd);
+            stepIndex++;
 
-            if (stepIndex < steps - 1 && pauseBetweenSweeps > 0f)
+            if (stepIndex < steps && pauseBetweenSweeps > 0f)
+            {
+                float pauseStart = moveEnd;
+                timelineElapsed += pauseBetweenSweeps;
+                float pauseEnd = timelineDuration > 0f ? timelineElapsed / timelineDuration : 1f;
+                yield return WaitForSecondsWithCoreProgress(pauseBetweenSweeps, pauseStart, pauseEnd);
+            }
+
+            targets = useOpposite ? oppositeOuterTargets : outerTargets;
+            useOpposite = !useOpposite;
+
+            moveStart = timelineDuration > 0f ? timelineElapsed / timelineDuration : 0f;
+            timelineElapsed += moveDuration;
+            moveEnd = timelineDuration > 0f ? timelineElapsed / timelineDuration : 1f;
+            yield return MoveActors(targets, moveDuration, 1f, moveStart, moveEnd);
+            stepIndex++;
+
+            if (stepIndex < steps && pauseBetweenSweeps > 0f)
             {
                 float pauseStart = moveEnd;
                 timelineElapsed += pauseBetweenSweeps;

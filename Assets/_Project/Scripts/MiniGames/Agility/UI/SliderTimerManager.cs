@@ -10,16 +10,30 @@ namespace Game.MiniGame.Agility
         [SerializeField] private Slider timerSlider;
         [SerializeField] private Image committedFillImage;
         [SerializeField] private RectTransform[] dividerMarkers;
+        [Header("Dash Cooldown")]
+        [SerializeField] private RectTransform dashCooldownRoot;
+        [SerializeField] private Image dashCooldownBackgroundImage;
+        [SerializeField] private Image dashCooldownFillImage;
+        [SerializeField] private Text dashCooldownLabel;
+        [SerializeField] private Vector2 dashCooldownSize = new(132f, 32f);
+        [SerializeField] private Vector2 dashCooldownAnchoredPosition = new(-18f, -60f);
+        [SerializeField] private Color dashReadyColor = new(0.24f, 0.82f, 1f, 1f);
+        [SerializeField] private Color dashCooldownColor = new(1f, 0.62f, 0.18f, 1f);
+        [SerializeField] private Color dashBackgroundColor = new(0.08f, 0.11f, 0.16f, 0.88f);
+        private static Font s_legacyRuntimeFont;
         private float gameDuration;
+        private float dashCooldownDuration = 1f;
         private int segmentCount = 1;
         private readonly List<float> dividerStops = new();
+        private int _cachedDividerSegmentCount = -1;
 
         public void InitializeTimer(float duration, int segments = 1)
         {
             gameDuration = duration;
             segmentCount = Mathf.Max(1, segments);
             EnsureCommittedFillResolved();
-            RefreshDividerStops(segmentCount);
+            InvalidateDividerStops();
+            EnsureDividerStops(segmentCount);
 
             ConfigureSlider(timerSlider);
             ConfigureFillImage(committedFillImage);
@@ -46,7 +60,7 @@ namespace Game.MiniGame.Agility
                 return;
 
             segmentCount = Mathf.Max(1, totalSegments);
-            RefreshDividerStops(segmentCount);
+            EnsureDividerStops(segmentCount);
             int stopIndex = Mathf.Clamp(completedSegments, 0, dividerStops.Count - 1);
             float overallProgress = dividerStops[stopIndex];
             SetFillAmount(committedFillImage, overallProgress);
@@ -82,9 +96,58 @@ namespace Game.MiniGame.Agility
             SetSliderValue(timerSlider, 0f);
         }
 
+        public void InitializeDashCooldown(float cooldownDuration)
+        {
+            dashCooldownDuration = Mathf.Max(0f, cooldownDuration);
+            EnsureDashCooldownUiResolved();
+
+            bool visible = dashCooldownDuration > 0.01f;
+            if (dashCooldownRoot != null)
+                dashCooldownRoot.gameObject.SetActive(visible);
+
+            if (!visible)
+                return;
+
+            SetDashCooldown(0f, dashCooldownDuration, true);
+        }
+
+        public void SetDashCooldown(float remaining, float totalDuration, bool isReady)
+        {
+            EnsureDashCooldownUiResolved();
+            if (dashCooldownRoot == null)
+                return;
+
+            dashCooldownDuration = totalDuration > 0.01f ? totalDuration : dashCooldownDuration;
+            bool visible = dashCooldownDuration > 0.01f;
+            dashCooldownRoot.gameObject.SetActive(visible);
+            if (!visible)
+                return;
+
+            float safeTotal = Mathf.Max(0.0001f, dashCooldownDuration);
+            float readyProgress = Mathf.Clamp01(1f - Mathf.Max(0f, remaining) / safeTotal);
+
+            if (dashCooldownBackgroundImage != null)
+                dashCooldownBackgroundImage.color = dashBackgroundColor;
+
+            if (dashCooldownFillImage != null)
+            {
+                dashCooldownFillImage.type = Image.Type.Filled;
+                dashCooldownFillImage.fillMethod = Image.FillMethod.Horizontal;
+                dashCooldownFillImage.fillOrigin = (int)Image.OriginHorizontal.Left;
+                dashCooldownFillImage.fillAmount = readyProgress;
+                dashCooldownFillImage.color = isReady ? dashReadyColor : dashCooldownColor;
+            }
+
+            if (dashCooldownLabel != null)
+            {
+                dashCooldownLabel.text = isReady ? "Dash Ready" : $"Dash {remaining:0.0}s";
+                dashCooldownLabel.color = isReady ? dashReadyColor : Color.white;
+            }
+        }
+
         private float ResolveOverallProgress(int segmentIndex, float normalizedInSegment, int totalSegments)
         {
-            RefreshDividerStops(totalSegments);
+            EnsureDividerStops(totalSegments);
 
             if (dividerStops.Count < 2)
                 return 0f;
@@ -95,8 +158,11 @@ namespace Game.MiniGame.Agility
             return Mathf.Lerp(start, end, normalizedInSegment);
         }
 
-        private void RefreshDividerStops(int totalSegments)
+        private void EnsureDividerStops(int totalSegments)
         {
+            if (_cachedDividerSegmentCount == totalSegments && dividerStops.Count == totalSegments + 1)
+                return;
+
             dividerStops.Clear();
             dividerStops.Add(0f);
 
@@ -114,6 +180,12 @@ namespace Game.MiniGame.Agility
             }
 
             dividerStops.Add(1f);
+            _cachedDividerSegmentCount = totalSegments;
+        }
+
+        private void InvalidateDividerStops()
+        {
+            _cachedDividerSegmentCount = -1;
         }
 
         private List<float> CollectMarkerStops()
@@ -209,6 +281,73 @@ namespace Game.MiniGame.Agility
                     break;
                 }
             }
+        }
+
+        private void EnsureDashCooldownUiResolved()
+        {
+            if (dashCooldownRoot != null && dashCooldownFillImage != null && dashCooldownLabel != null)
+                return;
+
+            if (timerSlider == null)
+                return;
+
+            if (dashCooldownRoot == null)
+                CreateDashCooldownUi();
+        }
+
+        private void CreateDashCooldownUi()
+        {
+            RectTransform anchorRect = timerSlider != null ? timerSlider.GetComponent<RectTransform>() : null;
+            if (anchorRect == null)
+                return;
+
+            Transform parent = anchorRect.parent != null ? anchorRect.parent : anchorRect;
+
+            var rootObject = new GameObject("DashCooldown", typeof(RectTransform), typeof(Image));
+            dashCooldownRoot = rootObject.GetComponent<RectTransform>();
+            dashCooldownRoot.SetParent(parent, false);
+            dashCooldownRoot.anchorMin = new Vector2(1f, 1f);
+            dashCooldownRoot.anchorMax = new Vector2(1f, 1f);
+            dashCooldownRoot.pivot = new Vector2(1f, 1f);
+            dashCooldownRoot.sizeDelta = dashCooldownSize;
+            dashCooldownRoot.anchoredPosition = dashCooldownAnchoredPosition;
+
+            dashCooldownBackgroundImage = rootObject.GetComponent<Image>();
+            dashCooldownBackgroundImage.color = dashBackgroundColor;
+            dashCooldownBackgroundImage.raycastTarget = false;
+
+            var fillObject = new GameObject("Fill", typeof(RectTransform), typeof(Image));
+            RectTransform fillRect = fillObject.GetComponent<RectTransform>();
+            fillRect.SetParent(dashCooldownRoot, false);
+            fillRect.anchorMin = Vector2.zero;
+            fillRect.anchorMax = Vector2.one;
+            fillRect.offsetMin = new Vector2(3f, 3f);
+            fillRect.offsetMax = new Vector2(-3f, -3f);
+
+            dashCooldownFillImage = fillObject.GetComponent<Image>();
+            dashCooldownFillImage.raycastTarget = false;
+            dashCooldownFillImage.color = dashReadyColor;
+            dashCooldownFillImage.type = Image.Type.Filled;
+            dashCooldownFillImage.fillMethod = Image.FillMethod.Horizontal;
+            dashCooldownFillImage.fillOrigin = (int)Image.OriginHorizontal.Left;
+
+            var labelObject = new GameObject("Label", typeof(RectTransform), typeof(Text));
+            RectTransform labelRect = labelObject.GetComponent<RectTransform>();
+            labelRect.SetParent(dashCooldownRoot, false);
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = Vector2.zero;
+            labelRect.offsetMax = Vector2.zero;
+
+            dashCooldownLabel = labelObject.GetComponent<Text>();
+            dashCooldownLabel.raycastTarget = false;
+            dashCooldownLabel.alignment = TextAnchor.MiddleCenter;
+            dashCooldownLabel.fontSize = 14;
+            dashCooldownLabel.fontStyle = FontStyle.Bold;
+            dashCooldownLabel.text = "Dash";
+            dashCooldownLabel.color = dashReadyColor;
+            s_legacyRuntimeFont ??= Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            dashCooldownLabel.font = s_legacyRuntimeFont;
         }
 
         private static void ConfigureSlider(Slider slider)

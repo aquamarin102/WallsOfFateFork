@@ -1,10 +1,17 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public static class AgilityHazardFactory
 {
     private const string PatternActorPrefabPath = "MiniGames/Agility/figurka_magnat";
     private const string ChickenPrefabPath = "MiniGames/Agility/Enemies/Chicken";
+    private static readonly int ColorPropertyId = Shader.PropertyToID("_Color");
+    private static readonly int BaseColorPropertyId = Shader.PropertyToID("_BaseColor");
+    private static readonly MaterialPropertyBlock SharedPropertyBlock = new();
+    private static readonly Dictionary<GameObject, bool> PrebuiltThreatActorCache = new();
     private static GameObject _patternActorPrefabOverride;
+    private static GameObject _cachedPatternActorPrefab;
+    private static GameObject _cachedChickenPrefab;
 
     public static void SetPatternActorPrefab(GameObject prefab)
     {
@@ -53,8 +60,7 @@ public static class AgilityHazardFactory
     {
         var root = new GameObject(name);
         root.transform.SetParent(parent, false);
-        float verticalOffset = -Mathf.Max(0.04f, size.y * 0.45f) - 1.43f;
-        root.transform.position = position + Vector3.up * verticalOffset;
+        root.transform.position = position;
         root.transform.rotation = Quaternion.identity;
 
         bool alongX = size.x >= size.z;
@@ -81,10 +87,13 @@ public static class AgilityHazardFactory
                 ? new Vector3(dashLength, dashHeight, dashWidth)
                 : new Vector3(dashWidth, dashHeight, dashLength);
 
-            Object.Destroy(dash.GetComponent<Collider>());
+            var collider = dash.GetComponent<Collider>();
+            if (collider != null)
+                collider.enabled = false;
             ConfigureVisual(dash, color);
         }
 
+        AlignRootToSurface(root.transform, position.y);
         return root;
     }
 
@@ -93,7 +102,7 @@ public static class AgilityHazardFactory
         var go = CreateZone(parent, name, position, radius, color);
         var collider = go.GetComponent<Collider>();
         if (collider != null)
-            Object.Destroy(collider);
+            collider.enabled = false;
         return go;
     }
 
@@ -104,7 +113,11 @@ public static class AgilityHazardFactory
 
     public static GameObject CreateChickenHazard(Transform parent, string name, Vector3 position, int damage = 1)
     {
-        var actor = CreateVisualActor(parent, name, position, ResolveChickenPrefab(), damage, 0.5f, 2.5f, new Vector3(0f, 0f, 0f), solidBody: true);
+        GameObject threatPrefab = ResolveThreatActorPrefab();
+        if (IsPrebuiltThreatActor(threatPrefab))
+            return CreatePrebuiltThreatActor(parent, name, position, threatPrefab, damage);
+
+        var actor = CreateVisualActor(parent, name, position, threatPrefab, damage, 0.5f, 2.5f, new Vector3(0f, 0f, 0f), solidBody: true);
         var repel = actor.AddComponent<SoftRepelOnTouch>();
         repel.hideFlags = HideFlags.None;
         return actor;
@@ -135,10 +148,7 @@ public static class AgilityHazardFactory
         CapsuleCollider damageCapsule = capsule;
         if (solidBody)
         {
-            var rigidbody = actor.GetComponent<Rigidbody>();
-            if (rigidbody == null)
-                rigidbody = actor.AddComponent<Rigidbody>();
-
+            var rigidbody = actor.AddComponent<Rigidbody>();
             rigidbody.useGravity = false;
             rigidbody.isKinematic = true;
             rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
@@ -202,8 +212,7 @@ public static class AgilityHazardFactory
         if (renderer == null)
             return;
 
-        renderer.material = new Material(renderer.sharedMaterial);
-        renderer.material.color = color;
+        ApplyColor(renderer, color);
     }
 
     public static void SetColor(GameObject go, Color color)
@@ -213,7 +222,17 @@ public static class AgilityHazardFactory
 
         var renderer = go.GetComponent<Renderer>();
         if (renderer != null)
-            renderer.material.color = color;
+            ApplyColor(renderer, color);
+    }
+
+    private static void AlignRootToSurface(Transform root, float surfaceY)
+    {
+        if (root == null)
+            return;
+
+        Vector3 position = root.position;
+        position.y = AgilitySceneUtility.ResolveAlignedRootY(root, surfaceY, position.y);
+        root.position = position;
     }
 
     private static void AttachVisual(Transform actorRoot, CapsuleCollider capsule, GameObject visualPrefab)
@@ -223,10 +242,10 @@ public static class AgilityHazardFactory
             var fallback = CreateBodyHazard(actorRoot, "ActorFallback", actorRoot.position + Vector3.up * 0.45f, new Vector3(0.4f, 0.9f, 0.4f), new Color(0.76f, 0.2f, 0.08f));
             var fallbackCollider = fallback.GetComponent<Collider>();
             if (fallbackCollider != null)
-                Object.Destroy(fallbackCollider);
+                fallbackCollider.enabled = false;
             var fallbackDamage = fallback.GetComponent<DamageOnTouch>();
             if (fallbackDamage != null)
-                Object.Destroy(fallbackDamage);
+                fallbackDamage.enabled = false;
             return;
         }
 
@@ -239,13 +258,12 @@ public static class AgilityHazardFactory
         foreach (var rigidbody in visual.GetComponentsInChildren<Rigidbody>(true))
         {
             rigidbody.isKinematic = true;
-            Object.Destroy(rigidbody);
+            rigidbody.detectCollisions = false;
         }
 
         foreach (var collider in visual.GetComponentsInChildren<Collider>(true))
         {
             collider.enabled = false;
-            Object.Destroy(collider);
         }
 
         //AlignVisualToGround(actorRoot, visual.transform, capsule);
@@ -296,11 +314,83 @@ public static class AgilityHazardFactory
         if (_patternActorPrefabOverride != null)
             return _patternActorPrefabOverride;
 
-        return Resources.Load<GameObject>(PatternActorPrefabPath);
+        if (_cachedPatternActorPrefab == null)
+            _cachedPatternActorPrefab = Resources.Load<GameObject>(PatternActorPrefabPath);
+
+        return _cachedPatternActorPrefab;
     }
 
     private static GameObject ResolveChickenPrefab()
     {
-        return Resources.Load<GameObject>(ChickenPrefabPath);
+        if (_cachedChickenPrefab == null)
+            _cachedChickenPrefab = Resources.Load<GameObject>(ChickenPrefabPath);
+
+        return _cachedChickenPrefab;
+    }
+
+    private static GameObject ResolveThreatActorPrefab()
+    {
+        if (_patternActorPrefabOverride != null)
+            return _patternActorPrefabOverride;
+
+        GameObject chickenPrefab = ResolveChickenPrefab();
+        if (chickenPrefab != null)
+            return chickenPrefab;
+
+        return ResolvePatternActorPrefab();
+    }
+
+    private static bool IsPrebuiltThreatActor(GameObject prefab)
+    {
+        if (prefab == null)
+            return false;
+
+        if (PrebuiltThreatActorCache.TryGetValue(prefab, out bool cachedResult))
+            return cachedResult;
+
+        bool isPrebuilt = prefab.GetComponentInChildren<DamageOnTouch>(true) != null
+                          || prefab.GetComponentInChildren<SoftRepelOnTouch>(true) != null;
+        PrebuiltThreatActorCache[prefab] = isPrebuilt;
+        return isPrebuilt;
+    }
+
+    private static GameObject CreatePrebuiltThreatActor(Transform parent, string name, Vector3 position, GameObject prefab, int damage)
+    {
+        var actor = Object.Instantiate(prefab, position, Quaternion.identity, parent);
+        actor.name = name;
+
+        foreach (var damageOnTouch in actor.GetComponentsInChildren<DamageOnTouch>(true))
+        {
+            damageOnTouch.damage = damage;
+            damageOnTouch.requireTrigger = true;
+            damageOnTouch.enabled = true;
+        }
+
+        foreach (var rigidbody in actor.GetComponentsInChildren<Rigidbody>(true))
+        {
+            rigidbody.useGravity = false;
+            rigidbody.isKinematic = true;
+            rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
+            rigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+        }
+
+        var repel = actor.GetComponent<SoftRepelOnTouch>();
+        if (repel == null)
+            repel = actor.AddComponent<SoftRepelOnTouch>();
+
+        repel.hideFlags = HideFlags.None;
+        return actor;
+    }
+
+    private static void ApplyColor(Renderer renderer, Color color)
+    {
+        if (renderer == null)
+            return;
+
+        SharedPropertyBlock.Clear();
+        renderer.GetPropertyBlock(SharedPropertyBlock);
+        SharedPropertyBlock.SetColor(ColorPropertyId, color);
+        SharedPropertyBlock.SetColor(BaseColorPropertyId, color);
+        renderer.SetPropertyBlock(SharedPropertyBlock);
     }
 }

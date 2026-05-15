@@ -4,6 +4,9 @@ using UnityEngine;
 
 public abstract class FormationPhasePattern : PatternBehaviour
 {
+    private const float MaxLegacyGroundClearance = 0.05f;
+    private const float ZoneTelegraphHalfHeight = 0.1f;
+
     [Header("Formation")]
     public float formationRadius = 1.55f;
     public float entryPortion = 0.22f;
@@ -16,10 +19,12 @@ public abstract class FormationPhasePattern : PatternBehaviour
     [Header("Motion Feel")]
     public float preMoveTurnDuration = 0.11f;
     public float preMoveHoldDuration = 0.03f;
+    public float postEntryHoldDuration = 0.22f;
 
     [Header("Rim Routing")]
     public bool routeEntryAlongRim = true;
     public bool routeExitAlongRim = true;
+    public float gateSpawnPadding = 0f;
     public float rimPathPadding = 0.45f;
     [Range(0.45f, 0.9f)] public float rimRadiusFactor = 0.72f;
     [Range(0.35f, 1f)] public float rimMovementLerpMultiplier = 0.72f;
@@ -30,6 +35,7 @@ public abstract class FormationPhasePattern : PatternBehaviour
 
     protected Vector3 Center;
     protected float ArenaRadius;
+    protected float BoardTopY;
     protected float GroundY;
 
     protected virtual Entrance[] SlotEntrances => new[]
@@ -52,11 +58,18 @@ public abstract class FormationPhasePattern : PatternBehaviour
         ResolveArena();
         CleanupTelegraphs();
         EnsureActors();
+        SnapActorsToSpawnPoints();
         yield return PlayGateAnimation(open: true);
+        SnapActorsToSpawnPoints();
 
         float entryDuration = Mathf.Clamp(Definition.duration * entryPortion, 0.2f, 1.1f);
         float exitDuration = Mathf.Clamp(Definition.duration * exitPortion, 0.2f, 1f);
         float activeDuration = Mathf.Max(0.6f, Definition.duration - entryDuration - exitDuration);
+        float entryHoldDuration = Mathf.Min(postEntryHoldDuration, activeDuration * 0.35f);
+        activeDuration = Mathf.Max(0.35f, activeDuration - entryHoldDuration);
+
+        if (entryHoldDuration > 0.001f)
+            yield return new WaitForSeconds(entryHoldDuration);
 
         IReadOnlyList<Vector3> entryTargets = BuildEntryTargets();
         if (routeEntryAlongRim)
@@ -127,12 +140,14 @@ public abstract class FormationPhasePattern : PatternBehaviour
 
     protected void AddTelegraphZone(Vector3 position, float radius)
     {
+        position.y = BoardTopY + ZoneTelegraphHalfHeight;
         var telegraph = AgilityHazardFactory.CreateTelegraphZone(transform, "FormationTelegraph", position, radius, telegraphColor);
         Telegraphs.Add(telegraph);
     }
 
     protected void AddTelegraphLine(Vector3 position, Vector3 size, float yRotation)
     {
+        position.y = BoardTopY;
         var telegraph = AgilityHazardFactory.CreateLaneTelegraph(transform, "FormationLineTelegraph", position, size, telegraphColor);
         telegraph.transform.rotation = Quaternion.Euler(0f, yRotation, 0f);
         Telegraphs.Add(telegraph);
@@ -288,14 +303,12 @@ public abstract class FormationPhasePattern : PatternBehaviour
             if (actor == null)
                 continue;
 
-            Vector3 gatePoint = Actors[i].gatePoint != null ? Actors[i].gatePoint.position : actor.transform.position;
-            gatePoint = WithGroundY(gatePoint);
-
             Vector3 currentPosition = actor.transform.position;
+            Vector3 gatePoint = Actors[i].spawnPoint;
             Vector3 finalTarget = targets[Mathf.Min(i, targets.Count - 1)];
 
-            float startAngle = exiting ? AngleFromCenter(currentPosition) : AngleFromCenter(gatePoint);
-            float endAngle = exiting ? AngleFromCenter(gatePoint) : AngleFromCenter(finalTarget);
+            float startAngle = AngleFromCenter(exiting ? currentPosition : gatePoint);
+            float endAngle = AngleFromCenter(exiting ? gatePoint : finalTarget);
 
             rimAnglesFrom[i] = startAngle;
             rimAnglesTo[i] = endAngle;
@@ -347,8 +360,10 @@ public abstract class FormationPhasePattern : PatternBehaviour
         Center = AgilitySceneUtility.ResolveArenaCenter(Ctx.arenaCenter);
         ArenaRadius = AgilitySceneUtility.ResolveArenaRadius(Ctx.arenaCenter);
 
-        Transform board = Ctx.arenaCenter != null ? Ctx.arenaCenter : AgilitySceneUtility.FindTransform("Board");
-        GroundY = AgilitySceneUtility.ResolveTopY(board, Center.y) + actorHeightOffset;
+        float groundClearance = ResolveGroundClearance();
+        float floorY = Ctx != null ? Ctx.boardY : Center.y;
+        BoardTopY = AgilitySceneUtility.ResolveTelegraphSurfaceY(Ctx != null ? Ctx.entrances : null, Ctx != null ? Ctx.arenaCenter : null, floorY);
+        GroundY = floorY + groundClearance;
         Center.y = GroundY;
     }
 
@@ -366,34 +381,65 @@ public abstract class FormationPhasePattern : PatternBehaviour
             if (gatePoint == null)
                 continue;
 
-            Vector3 spawnPosition = gatePoint.position;
-            spawnPosition.y = GroundY;
+            Vector3 spawnPosition = ResolveGateSpawnPosition(entrance, gatePoint);
 
             GameObject actor = AgilityHazardFactory.CreateChickenHazard(transform, $"ThreatActor_{entrance}", spawnPosition);
-            //actor.transform.SetParent(transform, worldPositionStays: true);
-            //actor.transform.position = spawnPosition;
+            float groundClearance = ResolveGroundClearance();
+            Vector3 alignedPosition = actor.transform.position;
+            alignedPosition.y = AgilitySceneUtility.ResolveAlignedRootY(actor.transform, Ctx != null ? Ctx.boardY : BoardTopY, alignedPosition.y, groundClearance);
+            actor.transform.position = alignedPosition;
+
+            GroundY = alignedPosition.y;
+            Center.y = GroundY;
 
             Actors.Add(new FormationActorSlot
             {
                 entrance = entrance,
                 gatePoint = gatePoint,
                 gateController = ResolveGateController(gatePoint),
-                actor = actor
+                actor = actor,
+                spawnPoint = WithGroundY(alignedPosition)
             });
         }
     }
 
+    private float ResolveGroundClearance()
+    {
+        return NormalizeLegacyClearance(actorHeightOffset) + AgilitySceneUtility.SharedPieceGroundOffset;
+    }
+
+    private static float NormalizeLegacyClearance(float clearance)
+    {
+        return Mathf.Abs(clearance) <= MaxLegacyGroundClearance ? clearance : 0f;
+    }
+
     private IReadOnlyList<Vector3> BuildExitTargets()
     {
-        var targets = new List<Vector3>(Actors.Count);
+        var targets = new Vector3[Actors.Count];
         for (int i = 0; i < Actors.Count; i++)
-        {
-            Vector3 point = Actors[i].gatePoint != null ? Actors[i].gatePoint.position : Center;
-            point.y = GroundY;
-            targets.Add(point);
-        }
+            targets[i] = Actors[i].spawnPoint;
 
         return targets;
+    }
+
+    private Vector3 ResolveGateSpawnPosition(Entrance entrance, Transform gatePoint)
+    {
+        Vector3 basePoint = gatePoint != null
+            ? gatePoint.position
+            : Center + ResolveGateDirection(entrance) * Mathf.Max(CurrentRimRadius(), ArenaRadius * 0.72f);
+        return WithGroundY(basePoint + ResolveGateDirection(entrance) * Mathf.Max(0f, gateSpawnPadding));
+    }
+
+    private static Vector3 ResolveGateDirection(Entrance entrance)
+    {
+        return entrance switch
+        {
+            Entrance.NorthEast => new Vector3(1f, 0f, 1f).normalized,
+            Entrance.NorthWest => new Vector3(-1f, 0f, 1f).normalized,
+            Entrance.SouthEast => new Vector3(1f, 0f, -1f).normalized,
+            Entrance.SouthWest => new Vector3(-1f, 0f, -1f).normalized,
+            _ => Vector3.forward
+        };
     }
 
     private IEnumerator PlayGateAnimation(bool open)
@@ -644,11 +690,24 @@ public abstract class FormationPhasePattern : PatternBehaviour
         Actors.Clear();
     }
 
+    private void SnapActorsToSpawnPoints()
+    {
+        for (int i = 0; i < Actors.Count; i++)
+        {
+            GameObject actor = Actors[i].actor;
+            if (actor == null)
+                continue;
+
+            actor.transform.position = Actors[i].spawnPoint;
+        }
+    }
+
     protected sealed class FormationActorSlot
     {
         public Entrance entrance;
         public Transform gatePoint;
         public GateController gateController;
         public GameObject actor;
+        public Vector3 spawnPoint;
     }
 }
