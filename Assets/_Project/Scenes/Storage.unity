@@ -62743,8 +62743,8 @@ GameObject:
   - component: {fileID: 1552768966}
   - component: {fileID: 1552768965}
   - component: {fileID: 1552768964}
-  - component: {fileID: 1552768968}
   - component: {fileID: 1552768970}
+  - component: {fileID: 1552768971}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -62792,13 +62792,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   offset: {x: 0, y: 15, z: 0}
-  smoothSpeed: 0.125
+  followSmoothness: 0.125
+  verticalBias: 0
   angleX: 89
   angleY: 180
-  verticalBias: 0
+  movementLeadDistance: 1.1
+  movementLeadFullAtSpeed: 3.5
+  minMovementLeadSpeed: 0.05
+  movementLeadSmoothing: 7
+  movementLeadReturnSpeed: 5
+  movementLeadTeleportResetDistance: 3
   zoomSpeed: 10
-  minFOV: 20
-  maxFOV: 40
+  minFOV: 30
+  maxFOV: 33
+  defaultFieldOfView: 30
+  zoomTransitionSpeed: 8
+  zoomInEffectRange: 5
+  zoomOutEffectRange: 12
+  zoomInDistanceOffset: 2.25
+  zoomOutDistanceOffset: 4.5
+  zoomInVerticalOffset: -0.375
+  zoomOutVerticalOffset: 0.625
+  zoomInAngleXOffset: -2.1
+  zoomOutAngleXOffset: 2.8
 --- !u!81 &1552768966
 AudioListener:
   m_ObjectHideFlags: 0
@@ -62858,40 +62874,6 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
---- !u!114 &1552768968
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1552768962}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a78da3f00f3328541b4526c0b0b5ec5c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  lineThickness: 1.25
-  lineIntensity: 0.5
-  fillAmount: 0
-  lineColor0: {r: 0, g: 0.4745098, b: 1, a: 1}
-  lineColor1: {r: 0, g: 1, b: 0, a: 1}
-  lineColor2: {r: 0.4627451, g: 0, b: 1, a: 1}
-  lineColor3: {r: 1, g: 0.5506037, b: 0, a: 1}
-  additiveRendering: 0
-  backfaceCulling: 1
-  fillColor: {r: 0, g: 0, b: 1, a: 1}
-  useFillColor: 0
-  cornerOutlines: 0
-  addLinesBetweenColors: 0
-  scaleWithScreenSize: 1
-  alphaCutoff: 0.5
-  flipY: 0
-  sourceCamera: {fileID: 0}
-  autoEnableOutlines: 0
-  outlineCamera: {fileID: 0}
-  outlineShaderMaterial: {fileID: 0}
-  renderTexture: {fileID: 0}
-  extraRenderTexture: {fileID: 0}
 --- !u!114 &1552768970
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -62936,6 +62918,50 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
+--- !u!114 &1552768971
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1552768962}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 380145f62de55524f8bd7ad7df09305f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Game.CameraObstacleTransparency
+  detectionMode: 0
+  obstacleMask:
+    serializedVersion: 2
+    m_Bits: 65523
+  probeRadius: 0.35
+  distancePadding: 0.25
+  rendererCacheRefreshInterval: 1
+  triggerInteraction: 1
+  targetHeight: 1.1
+  ignoredRendererLayers:
+    serializedVersion: 2
+    m_Bits: 16384
+  ignoreNpcControllers: 1
+  ignoreWhenCloserToTargetThan: 0.9
+  ignoreWhenCloserToCameraThan: 0.15
+  minOccluderTopHeightFromTarget: 1.71
+  requiredCoveredBodySamples: 2
+  screenBoundsPadding: 0.015
+  requireScreenOverlap: 1
+  revealRadius: 1.85
+  revealFeather: 0.9
+  transparentAlpha: 0.18
+  fadeInSpeed: 7
+  fadeOutSpeed: 4.5
+  centerFollowSpeed: 12
+  rimColor: {r: 1, g: 0.42, b: 0.12, a: 1}
+  rimStrength: 1.15
+  ditherStrength: 0.28
+  noiseScale: 4
+  noiseSpeed: 1
+  occlusionShader: {fileID: 0}
+  useRuntimeProxyMaterials: 1
 --- !u!4 &1554659884 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 400000, guid: cb063e835546c0349906488c5789719b, type: 3}

@@ -82,7 +82,9 @@ namespace Game
         private PlayerAnimationController animationController;
 
         // --------------------------------------------------
-        [Inject] private void Construct(Transform camTransform) => cameraTransform = camTransform;
+        [Inject]
+        private void Construct([Inject(Id = ScenePlayerLocator.GameplayCameraTransformBindingId)] Transform camTransform)
+            => cameraTransform = camTransform;
 
         private void Awake()
         {

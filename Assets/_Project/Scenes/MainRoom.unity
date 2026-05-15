@@ -145,6 +145,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: bag of flour_1
       objectReference: {fileID: 0}
+    - target: {fileID: 4063920029770460090, guid: ab71371d1fc474941878d14ccb9aea1e, type: 3}
+      propertyPath: m_TagString
+      value: PickupFloor
+      objectReference: {fileID: 0}
     - target: {fileID: 4997101177413668026, guid: ab71371d1fc474941878d14ccb9aea1e, type: 3}
       propertyPath: m_LocalScale.x
       value: 1.221
@@ -881,6 +885,10 @@ PrefabInstance:
     - target: {fileID: 9162977112175897390, guid: 9973adf6e3bdf6b4082d7a86e963d44f, type: 3}
       propertyPath: m_Name
       value: shield
+      objectReference: {fileID: 0}
+    - target: {fileID: 9162977112175897390, guid: 9973adf6e3bdf6b4082d7a86e963d44f, type: 3}
+      propertyPath: m_TagString
+      value: PickupFloor
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 5160334442580920615, guid: 9973adf6e3bdf6b4082d7a86e963d44f, type: 3}
@@ -20573,6 +20581,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Food_bottle2
       objectReference: {fileID: 0}
+    - target: {fileID: 4787011207294565013, guid: 1dfa768d0d8db4d4d8fb3bec8a7bd960, type: 3}
+      propertyPath: m_TagString
+      value: PickupFloor
+      objectReference: {fileID: 0}
     - target: {fileID: 8381570866490252787, guid: 1dfa768d0d8db4d4d8fb3bec8a7bd960, type: 3}
       propertyPath: message
       value: "\u041E\u0434\u043D\u0430 \u0431\u0443\u0442\u044B\u043B\u043A\u0430
@@ -28185,6 +28197,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Food_cup3
       objectReference: {fileID: 0}
+    - target: {fileID: 6392328649347371323, guid: 02d674e7d6519604e8bc6d1ba44b2474, type: 3}
+      propertyPath: m_TagString
+      value: PickupFloor
+      objectReference: {fileID: 0}
     - target: {fileID: 8529349933048582221, guid: 02d674e7d6519604e8bc6d1ba44b2474, type: 3}
       propertyPath: message
       value: "\u041F\u0438\u0432\u043E \u043A\u0440\u0435\u043F\u043A\u043E\u0435
@@ -28700,6 +28716,10 @@ PrefabInstance:
     - target: {fileID: 8024666607362748442, guid: 027d23aa3c9ece248a364e465592b27d, type: 3}
       propertyPath: m_Name
       value: Food_bottle1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8024666607362748442, guid: 027d23aa3c9ece248a364e465592b27d, type: 3}
+      propertyPath: m_TagString
+      value: PickupFloor
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 25445321185295068, guid: 027d23aa3c9ece248a364e465592b27d, type: 3}
@@ -34115,6 +34135,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Food_bread_2
       objectReference: {fileID: 0}
+    - target: {fileID: 2799865253331758379, guid: 7946f705c88d84c4c9c0db75e51afed1, type: 3}
+      propertyPath: m_TagString
+      value: PickupFloor
+      objectReference: {fileID: 0}
     - target: {fileID: 4284590015306685824, guid: 7946f705c88d84c4c9c0db75e51afed1, type: 3}
       propertyPath: m_LocalPosition.x
       value: -7.951376
@@ -36703,6 +36727,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Furniture_book2
       objectReference: {fileID: 0}
+    - target: {fileID: 6618202140530622419, guid: cd8211410c2de304db7140a975a500c4, type: 3}
+      propertyPath: m_TagString
+      value: PickupFloor
+      objectReference: {fileID: 0}
     - target: {fileID: 7653165636496170195, guid: cd8211410c2de304db7140a975a500c4, type: 3}
       propertyPath: m_LocalPosition.x
       value: 3.218624
@@ -36835,6 +36863,10 @@ PrefabInstance:
     - target: {fileID: 7079153560732737179, guid: 016dbb1069e791242add79b992226a7f, type: 3}
       propertyPath: m_Name
       value: Sword_01
+      objectReference: {fileID: 0}
+    - target: {fileID: 7079153560732737179, guid: 016dbb1069e791242add79b992226a7f, type: 3}
+      propertyPath: m_TagString
+      value: PickupFloor
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 556158591861648671, guid: 016dbb1069e791242add79b992226a7f, type: 3}
@@ -51183,6 +51215,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Axe_02
       objectReference: {fileID: 0}
+    - target: {fileID: 7538521133082309620, guid: fb418c6d5de239f4fa09b48bbc6661c7, type: 3}
+      propertyPath: m_TagString
+      value: PickupFloor
+      objectReference: {fileID: 0}
     - target: {fileID: 7697125624677019377, guid: fb418c6d5de239f4fa09b48bbc6661c7, type: 3}
       propertyPath: message
       value: "\u041D\u0435 \u0438\u0437\u044B\u0441\u043A\u0430\u043D \u043A\u043B\u0438\u043D\u043E\u043A
@@ -52605,6 +52641,10 @@ PrefabInstance:
     - target: {fileID: 7666064319267002487, guid: b2cc7de08220d814c9b3d3f49ef1bcfd, type: 3}
       propertyPath: m_Name
       value: Furniture_book1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7666064319267002487, guid: b2cc7de08220d814c9b3d3f49ef1bcfd, type: 3}
+      propertyPath: m_TagString
+      value: PickupFloor
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 2629837014045295105, guid: b2cc7de08220d814c9b3d3f49ef1bcfd, type: 3}
@@ -58446,6 +58486,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Food_knife
       objectReference: {fileID: 0}
+    - target: {fileID: 1312570359333616163, guid: 7bdd58f3beafcce418b177d641664495, type: 3}
+      propertyPath: m_TagString
+      value: PickupFloor
+      objectReference: {fileID: 0}
     - target: {fileID: 4789873776806276223, guid: 7bdd58f3beafcce418b177d641664495, type: 3}
       propertyPath: m_Size.x
       value: 1.5
@@ -60055,6 +60099,10 @@ PrefabInstance:
     - target: {fileID: 1096793387542289378, guid: 773869b957cc4e54ab6aed6a1b885317, type: 3}
       propertyPath: m_Name
       value: Food_chicken
+      objectReference: {fileID: 0}
+    - target: {fileID: 1096793387542289378, guid: 773869b957cc4e54ab6aed6a1b885317, type: 3}
+      propertyPath: m_TagString
+      value: PickupFloor
       objectReference: {fileID: 0}
     - target: {fileID: 5430430914279418229, guid: 773869b957cc4e54ab6aed6a1b885317, type: 3}
       propertyPath: amount
@@ -64008,6 +64056,10 @@ PrefabInstance:
     - target: {fileID: 2112949344464362567, guid: de3a70a181d21d849842ac59e40438bf, type: 3}
       propertyPath: m_Name
       value: Food_fish
+      objectReference: {fileID: 0}
+    - target: {fileID: 2112949344464362567, guid: de3a70a181d21d849842ac59e40438bf, type: 3}
+      propertyPath: m_TagString
+      value: PickupFloor
       objectReference: {fileID: 0}
     - target: {fileID: 3568134449082444593, guid: de3a70a181d21d849842ac59e40438bf, type: 3}
       propertyPath: amount
@@ -259270,13 +259322,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fbf3575480402db40813e763382412fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <Renderer>k__BackingField: {fileID: 0}
-  <SpriteRenderer>k__BackingField: {fileID: 0}
-  <SkinnedMeshRenderer>k__BackingField: {fileID: 0}
-  <MeshFilter>k__BackingField: {fileID: 0}
-  color: 3
-  eraseRenderer: 0
-  _SharedMaterials: []
 --- !u!114 &6595881499566010130
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -286409,13 +286454,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fbf3575480402db40813e763382412fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <Renderer>k__BackingField: {fileID: 0}
-  <SpriteRenderer>k__BackingField: {fileID: 0}
-  <SkinnedMeshRenderer>k__BackingField: {fileID: 0}
-  <MeshFilter>k__BackingField: {fileID: 0}
-  color: 1
-  eraseRenderer: 0
-  _SharedMaterials: []
 --- !u!114 &6976823813096045310
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -286452,19 +286490,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65393348ff72ffd4381fa218907a33d4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _dependFromQuests: 0
-  resourceType: 0
-  amount: 0
-  message: "\u041D\u0435\u0442 \u0432\u0440\u0435\u043C\u0435\u043D\u0438 \u043D\u0430
-    \u043E\u0442\u0434\u044B\u0445"
-  Key: +1 resource
-  localizationFileName: +1 resource
-  floatingTextPrefab: {fileID: 4848396624485697127, guid: b674c6ddfaf88fa4c8200c48bc74b5fa, type: 3}
-  spawnOffset: {x: 0, y: 2.3, z: 0}
-  destroyAfterUse: 0
-  approachDistance: 1.2
-  playerTransform: {fileID: 0}
-  _hasBeenUsed: 0
 --- !u!65 &6976823813096045312
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -335277,13 +335302,31 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   offset: {x: 10.5, y: 15.5, z: 10.5}
-  smoothSpeed: 0.125
+  followSmoothness: 0.125
+  verticalBias: 0
+  framingForwardOffset: 0.75
+  framingRightOffset: 0
+  movementLookAheadDistance: 0.8
+  movementLookAheadFullAtSpeed: 3.5
+  movementLookAheadMinSpeed: 0.05
+  movementLookAheadSmoothTime: 0.18
+  movementLookAheadReturnSmoothTime: 0.35
+  movementLookAheadTeleportResetDistance: 3
   angleX: 45
   angleY: -135
-  verticalBias: 0
   zoomSpeed: 10
-  minFOV: 15
-  maxFOV: 40
+  minFOV: 20
+  maxFOV: 35
+  defaultFieldOfView: 30
+  zoomTransitionSpeed: 8
+  zoomInEffectRange: 5
+  zoomOutEffectRange: 12
+  zoomInDistanceOffset: 2.25
+  zoomOutDistanceOffset: 4.5
+  zoomInVerticalOffset: -0.375
+  zoomOutVerticalOffset: 0.625
+  zoomInAngleXOffset: -2.1
+  zoomOutAngleXOffset: 2.8
 --- !u!114 &8909679293929560633
 MonoBehaviour:
   m_ObjectHideFlags: 0

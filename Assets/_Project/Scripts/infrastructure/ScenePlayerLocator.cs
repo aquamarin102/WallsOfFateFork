@@ -1,4 +1,3 @@
-﻿using System;
 using UnityEngine;
 using Zenject;
 
@@ -6,6 +5,8 @@ namespace Game
 {
     public class ScenePlayerLocator : MonoInstaller
     {
+        public const string GameplayCameraTransformBindingId = "GameplayCameraTransform";
+
         public Transform StartPoint;
         public GameObject Prefab;
         public Transform Parent;
@@ -14,24 +15,37 @@ namespace Game
         public override void InstallBindings()
         {
             BindCameraTransform();
-            InstantiateMainCharacter();
+            PlayerMoveController playerMoveController = InstantiateMainCharacter();
+            ConfigureCameraTargets(playerMoveController);
             BindCameraController();
         }
 
         private void BindCameraController()
         {
-            Container.Bind<CameraMovementController>().FromComponentInHierarchy().AsSingle();
-        }
-
-        private void InstantiateMainCharacter()
-        {
-            if (Prefab == null)
+            if (CameraTransform == null)
             {
-                Debug.LogError("Prefab не назначен в инспекторе!", this);
+                Debug.LogError("CameraTransform is not assigned in the inspector.", this);
                 return;
             }
 
-            // Определяем начальную позицию: берём из PlayerSpawnData, если она задана
+            CameraMovementController cameraController = CameraTransform.GetComponent<CameraMovementController>();
+            if (cameraController == null)
+            {
+                Debug.LogError("CameraMovementController was not found on CameraTransform.", CameraTransform);
+                return;
+            }
+
+            Container.Bind<CameraMovementController>().FromInstance(cameraController).AsSingle();
+        }
+
+        private PlayerMoveController InstantiateMainCharacter()
+        {
+            if (Prefab == null)
+            {
+                Debug.LogError("Prefab is not assigned in the inspector.", this);
+                return null;
+            }
+
             Vector3 spawnPosition = PlayerSpawnData.SpawnPosition != Vector3.zero
                 ? PlayerSpawnData.SpawnPosition
                 : StartPoint.position;
@@ -48,11 +62,42 @@ namespace Game
                 .Bind<PlayerMoveController>()
                 .FromInstance(playerMoveController)
                 .AsSingle();
+
+            return playerMoveController;
         }
 
         private void BindCameraTransform()
         {
-            Container.Bind<Transform>().FromInstance(CameraTransform).AsSingle();
+            if (CameraTransform == null)
+            {
+                Debug.LogError("CameraTransform is not assigned in the inspector.", this);
+                return;
+            }
+
+            Container.Bind<Transform>()
+                .WithId(GameplayCameraTransformBindingId)
+                .FromInstance(CameraTransform)
+                .AsSingle();
+        }
+
+        private void ConfigureCameraTargets(PlayerMoveController playerMoveController)
+        {
+            if (playerMoveController == null || CameraTransform == null)
+            {
+                return;
+            }
+
+            CameraMovementController cameraController = CameraTransform.GetComponent<CameraMovementController>();
+            if (cameraController != null)
+            {
+                cameraController.SetTarget(playerMoveController.transform);
+            }
+
+            CameraObstacleTransparency obstacleTransparency = CameraTransform.GetComponent<CameraObstacleTransparency>();
+            if (obstacleTransparency != null)
+            {
+                obstacleTransparency.SetTarget(playerMoveController.transform);
+            }
         }
     }
 }
