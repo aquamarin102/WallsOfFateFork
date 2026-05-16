@@ -48,7 +48,7 @@
       {
         "Id": 0,
         "Name": "Найти ключи",
-        "Description": "Найти ключи",
+        "Description": "Найти ключи в подвале",
         "Dependencies": [],
         "ResourcesReward": {
           "CastleStrength": 10
