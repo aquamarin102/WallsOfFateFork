@@ -3,8 +3,6 @@ using UnityEngine;
 
 namespace Game
 {
-
-
     public class RouteGridOccupant : MonoBehaviour
     {
         public Vector2Int GridPosition;

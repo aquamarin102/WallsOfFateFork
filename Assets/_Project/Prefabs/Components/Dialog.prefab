@@ -53,6 +53,9 @@ MonoBehaviour:
   nextSentenceDelay: 0.35
   firstSentenceDelay: 0.1
   optionTextScale: 0.8
+  sentencePanelTopPadding: 0
+  sentencePanelBottomPadding: 6
+  sentencePanelSpacing: 2
 --- !u!1 &1083940094336715344
 GameObject:
   m_ObjectHideFlags: 0

@@ -1680,11 +1680,12 @@ MonoBehaviour:
   endGameScreenManager: {fileID: 0}
   candleDurationSeconds: 60
   betweenCommandsDelay: 0.12
-  postRunPause: 0.35
   requireExitToWin: 0
   requireOrderedArgumentCollection: 0
   startingDirection: 0
   lowMovesWarningThreshold: 3
+  logWarningsToConsole: 1
+  logInfoToConsole: 0
   liveInputCooldown: 0.015
   liveWaitDuration: 0.05
   liveMoveDuration: 0.11
@@ -3676,14 +3677,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GridManager
   width: 4
   height: 4
-  cells: []
   origin: {fileID: 1913309499}
   boardPlane: 0
   cellSpacing: {x: 0.000438, y: 0.000438}
   rightCellReference: {fileID: 747185317}
   forwardCellReference: {fileID: 1510019296}
   surfaceOffset: 0
-  autoCollectCellsFromChildren: 1
   autoCollectOccupantsFromScene: 1
 --- !u!4 &2000309454
 Transform:

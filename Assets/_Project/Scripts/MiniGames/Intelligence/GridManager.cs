@@ -4,12 +4,10 @@ using UnityEngine;
 
 namespace Game
 {
-
     public class GridManager : MonoBehaviour
     {
         public int width = 3;
         public int height = 3;
-        public List<GridCell> cells = new();
 
         [Header("Virtual Grid")]
         [SerializeField] private Transform origin;
@@ -18,12 +16,9 @@ namespace Game
         [SerializeField] private Transform rightCellReference;
         [SerializeField] private Transform forwardCellReference;
         [SerializeField] private float surfaceOffset;
-        [SerializeField] private bool autoCollectCellsFromChildren = true;
         [SerializeField] private bool autoCollectOccupantsFromScene = true;
 
-        private readonly Dictionary<Vector2Int, GridCell> _cellLookup = new();
         private readonly Dictionary<Vector2Int, List<RouteGridOccupant>> _occupantLookup = new();
-
         public int RemainingArguments { get; private set; }
         public int TotalArguments { get; private set; }
         public bool HasExitCell { get; private set; }
@@ -31,27 +26,6 @@ namespace Game
 
         public void RefreshLayout()
         {
-            if ((cells == null || cells.Count == 0) && autoCollectCellsFromChildren)
-            {
-                cells = new List<GridCell>(GetComponentsInChildren<GridCell>(true));
-            }
-
-            _cellLookup.Clear();
-
-            if (cells != null)
-            {
-                for (int index = 0; index < cells.Count; index++)
-                {
-                    GridCell cell = cells[index];
-                    if (cell == null)
-                    {
-                        continue;
-                    }
-
-                    _cellLookup[cell.GridPosition] = cell;
-                }
-            }
-
             BuildOccupantLookup();
             ResetBoardState();
         }
@@ -62,33 +36,6 @@ namespace Game
             RemainingArguments = 0;
             TotalArguments = 0;
             HasSequencedArguments = false;
-
-            foreach (KeyValuePair<Vector2Int, GridCell> pair in _cellLookup)
-            {
-                GridCell cell = pair.Value;
-                if (cell == null)
-                {
-                    continue;
-                }
-
-                cell.ResetState();
-
-                if (cell.IsArgumentCell)
-                {
-                    TotalArguments++;
-                    HasSequencedArguments |= cell.ArgumentSequenceOrder > 0;
-                }
-
-                if (cell.HasAvailableArgument)
-                {
-                    RemainingArguments++;
-                }
-
-                if (cell.IsExit())
-                {
-                    HasExitCell = true;
-                }
-            }
 
             foreach (KeyValuePair<Vector2Int, List<RouteGridOccupant>> pair in _occupantLookup)
             {
@@ -124,30 +71,22 @@ namespace Game
 
         public bool IsInside(Vector2Int position)
         {
-            if (_cellLookup.Count > 0)
-            {
-                return _cellLookup.ContainsKey(position);
-            }
-
             return position.x >= 0 && position.x < width && position.y >= 0 && position.y < height;
         }
 
         public bool IsBlocked(Vector2Int position)
         {
-            if (_cellLookup.TryGetValue(position, out GridCell cell) && cell != null && cell.IsBlocked())
+            if (!_occupantLookup.TryGetValue(position, out List<RouteGridOccupant> occupants))
             {
-                return true;
+                return false;
             }
 
-            if (_occupantLookup.TryGetValue(position, out List<RouteGridOccupant> occupants))
+            for (int index = 0; index < occupants.Count; index++)
             {
-                for (int index = 0; index < occupants.Count; index++)
+                RouteGridOccupant occupant = occupants[index];
+                if (occupant != null && occupant.BlocksMovement)
                 {
-                    RouteGridOccupant occupant = occupants[index];
-                    if (occupant != null && occupant.BlocksMovement)
-                    {
-                        return true;
-                    }
+                    return true;
                 }
             }
 
@@ -156,20 +95,17 @@ namespace Game
 
         public bool IsBlockedAtTurn(Vector2Int position, int turnIndex)
         {
-            if (_cellLookup.TryGetValue(position, out GridCell cell) && cell != null && cell.IsBlockedAtTurn(turnIndex))
+            if (!_occupantLookup.TryGetValue(position, out List<RouteGridOccupant> occupants))
             {
-                return true;
+                return false;
             }
 
-            if (_occupantLookup.TryGetValue(position, out List<RouteGridOccupant> occupants))
+            for (int index = 0; index < occupants.Count; index++)
             {
-                for (int index = 0; index < occupants.Count; index++)
+                RouteGridOccupant occupant = occupants[index];
+                if (occupant != null && occupant.IsBlockedAtTurn(turnIndex))
                 {
-                    RouteGridOccupant occupant = occupants[index];
-                    if (occupant != null && occupant.IsBlockedAtTurn(turnIndex))
-                    {
-                        return true;
-                    }
+                    return true;
                 }
             }
 
@@ -178,20 +114,17 @@ namespace Game
 
         public bool IsForbidden(Vector2Int position)
         {
-            if (_cellLookup.TryGetValue(position, out GridCell cell) && cell != null && cell.IsForbidden())
+            if (!_occupantLookup.TryGetValue(position, out List<RouteGridOccupant> occupants))
             {
-                return true;
+                return false;
             }
 
-            if (_occupantLookup.TryGetValue(position, out List<RouteGridOccupant> occupants))
+            for (int index = 0; index < occupants.Count; index++)
             {
-                for (int index = 0; index < occupants.Count; index++)
+                RouteGridOccupant occupant = occupants[index];
+                if (occupant != null && occupant.IsForbidden)
                 {
-                    RouteGridOccupant occupant = occupants[index];
-                    if (occupant != null && occupant.IsForbidden)
-                    {
-                        return true;
-                    }
+                    return true;
                 }
             }
 
@@ -200,20 +133,17 @@ namespace Game
 
         public bool IsForbiddenAtTurn(Vector2Int position, int turnIndex)
         {
-            if (_cellLookup.TryGetValue(position, out GridCell cell) && cell != null && cell.IsForbiddenAtTurn(turnIndex))
+            if (!_occupantLookup.TryGetValue(position, out List<RouteGridOccupant> occupants))
             {
-                return true;
+                return false;
             }
 
-            if (_occupantLookup.TryGetValue(position, out List<RouteGridOccupant> occupants))
+            for (int index = 0; index < occupants.Count; index++)
             {
-                for (int index = 0; index < occupants.Count; index++)
+                RouteGridOccupant occupant = occupants[index];
+                if (occupant != null && occupant.IsForbiddenAtTurn(turnIndex))
                 {
-                    RouteGridOccupant occupant = occupants[index];
-                    if (occupant != null && occupant.IsForbiddenAtTurn(turnIndex))
-                    {
-                        return true;
-                    }
+                    return true;
                 }
             }
 
@@ -222,20 +152,17 @@ namespace Game
 
         public bool IsExit(Vector2Int position)
         {
-            if (_cellLookup.TryGetValue(position, out GridCell cell) && cell != null && cell.IsExit())
+            if (!_occupantLookup.TryGetValue(position, out List<RouteGridOccupant> occupants))
             {
-                return true;
+                return false;
             }
 
-            if (_occupantLookup.TryGetValue(position, out List<RouteGridOccupant> occupants))
+            for (int index = 0; index < occupants.Count; index++)
             {
-                for (int index = 0; index < occupants.Count; index++)
+                RouteGridOccupant occupant = occupants[index];
+                if (occupant != null && occupant.IsExit)
                 {
-                    RouteGridOccupant occupant = occupants[index];
-                    if (occupant != null && occupant.IsExit)
-                    {
-                        return true;
-                    }
+                    return true;
                 }
             }
 
@@ -245,11 +172,6 @@ namespace Game
         public int CollectArguments(Vector2Int position)
         {
             int collected = 0;
-
-            if (_cellLookup.TryGetValue(position, out GridCell cell) && cell != null && cell.TryCollectArgument())
-            {
-                collected++;
-            }
 
             if (_occupantLookup.TryGetValue(position, out List<RouteGridOccupant> occupants))
             {
@@ -280,14 +202,6 @@ namespace Game
 
             int collected = 0;
 
-            if (_cellLookup.TryGetValue(position, out GridCell cell) && cell != null)
-            {
-                if (cell.HasAvailableArgument && cell.ArgumentSequenceOrder <= 0 && cell.TryCollectArgument())
-                {
-                    collected++;
-                }
-            }
-
             if (_occupantLookup.TryGetValue(position, out List<RouteGridOccupant> occupants))
             {
                 for (int index = 0; index < occupants.Count; index++)
@@ -307,22 +221,6 @@ namespace Game
             do
             {
                 collectedOrderedArgument = false;
-
-                if (_cellLookup.TryGetValue(position, out cell) &&
-                    cell != null &&
-                    cell.HasAvailableArgument &&
-                    cell.ArgumentSequenceOrder == nextRequiredSequence &&
-                    cell.TryCollectArgument())
-                {
-                    nextRequiredSequence++;
-                    collected++;
-                    collectedOrderedArgument = true;
-                }
-
-                if (collectedOrderedArgument)
-                {
-                    continue;
-                }
 
                 if (!_occupantLookup.TryGetValue(position, out occupants))
                 {
@@ -362,17 +260,6 @@ namespace Game
 
         public void AdvanceTurnState(Vector2Int? protectedPosition)
         {
-            foreach (KeyValuePair<Vector2Int, GridCell> pair in _cellLookup)
-            {
-                GridCell cell = pair.Value;
-                if (cell == null || (protectedPosition.HasValue && pair.Key == protectedPosition.Value))
-                {
-                    continue;
-                }
-
-                cell.AdvanceTurn();
-            }
-
             foreach (KeyValuePair<Vector2Int, List<RouteGridOccupant>> pair in _occupantLookup)
             {
                 List<RouteGridOccupant> occupants = pair.Value;
@@ -391,11 +278,6 @@ namespace Game
 
         public Vector3 GetWorldPosition(Vector2Int position)
         {
-            if (_cellLookup.TryGetValue(position, out GridCell cell) && cell != null)
-            {
-                return cell.transform.position + GetSurfaceNormal() * surfaceOffset;
-            }
-
             Transform targetOrigin = origin != null ? origin : transform;
             Vector2 resolvedSpacing = GetResolvedCellSpacing();
             Vector3 localOffset = boardPlane == RouteBoardPlane.XY
@@ -407,33 +289,6 @@ namespace Game
 
         public bool TryGetGridPositionFromWorld(Vector3 worldPosition, out Vector2Int position)
         {
-            if (_cellLookup.Count > 0)
-            {
-                bool hasCandidate = false;
-                float bestDistance = float.MaxValue;
-                Vector2Int bestPosition = Vector2Int.zero;
-
-                foreach (KeyValuePair<Vector2Int, GridCell> pair in _cellLookup)
-                {
-                    GridCell cell = pair.Value;
-                    if (cell == null)
-                    {
-                        continue;
-                    }
-
-                    float distance = (cell.transform.position - worldPosition).sqrMagnitude;
-                    if (!hasCandidate || distance < bestDistance)
-                    {
-                        hasCandidate = true;
-                        bestDistance = distance;
-                        bestPosition = pair.Key;
-                    }
-                }
-
-                position = bestPosition;
-                return hasCandidate;
-            }
-
             Vector2 resolvedSpacing = GetResolvedCellSpacing();
             if (Mathf.Abs(resolvedSpacing.x) < 0.000001f || Mathf.Abs(resolvedSpacing.y) < 0.000001f)
             {
@@ -462,14 +317,6 @@ namespace Game
                 for (int index = 0; index < hits.Length; index++)
                 {
                     RaycastHit hit = hits[index];
-
-                    GridCell cell = hit.collider.GetComponentInParent<GridCell>();
-                    if (cell != null)
-                    {
-                        position = cell.GridPosition;
-                        return true;
-                    }
-
                     RouteGridOccupant occupant = hit.collider.GetComponentInParent<RouteGridOccupant>();
                     if (occupant != null)
                     {
@@ -563,9 +410,8 @@ namespace Game
         {
             Vector2Int gridOffset = RouteDirectionUtility.ToVector2Int(direction);
 
-            foreach (KeyValuePair<Vector2Int, GridCell> pair in _cellLookup)
+            foreach (Vector2Int from in EnumerateSelectablePositions())
             {
-                Vector2Int from = pair.Key;
                 Vector2Int to = from + gridOffset;
                 if (!IsInside(to))
                 {
@@ -611,18 +457,6 @@ namespace Game
 
         public void ApplyRoutePreviewHighlights(ISet<Vector2Int> highlightedPositions)
         {
-            foreach (KeyValuePair<Vector2Int, GridCell> pair in _cellLookup)
-            {
-                GridCell cell = pair.Value;
-                if (cell == null)
-                {
-                    continue;
-                }
-
-                bool highlighted = highlightedPositions != null && highlightedPositions.Contains(pair.Key);
-                cell.SetRoutePreviewHighlighted(highlighted);
-            }
-
             foreach (KeyValuePair<Vector2Int, List<RouteGridOccupant>> pair in _occupantLookup)
             {
                 bool highlighted = highlightedPositions != null && highlightedPositions.Contains(pair.Key);
@@ -630,11 +464,7 @@ namespace Game
 
                 for (int index = 0; index < occupants.Count; index++)
                 {
-                    RouteGridOccupant occupant = occupants[index];
-                    if (occupant != null)
-                    {
-                        occupant.SetRoutePreviewHighlighted(highlighted);
-                    }
+                    occupants[index]?.SetRoutePreviewHighlighted(highlighted);
                 }
             }
         }
@@ -737,16 +567,6 @@ namespace Game
 
         private IEnumerable<Vector2Int> EnumerateSelectablePositions()
         {
-            if (_cellLookup.Count > 0)
-            {
-                foreach (KeyValuePair<Vector2Int, GridCell> pair in _cellLookup)
-                {
-                    yield return pair.Key;
-                }
-
-                yield break;
-            }
-
             for (int y = 0; y < height; y++)
             {
                 for (int x = 0; x < width; x++)
@@ -758,11 +578,6 @@ namespace Game
 
         private Vector3 GetPickWorldPosition(Vector2Int position)
         {
-            if (_cellLookup.TryGetValue(position, out GridCell cell) && cell != null)
-            {
-                return cell.transform.position;
-            }
-
             return GetWorldPosition(position);
         }
 
